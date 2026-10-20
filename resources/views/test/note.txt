@@ -1,0 +1,74 @@
+To Run project :
+=> php artisan serve
+
+
+
+Method Route:
+=> get / view
+=> post
+=> put
+=> delete
+
+
+
+To Connect Database wiht php My Admin
+
+1- 
+-> Schema::defaultStringLength(191);
+-> use Illuminate\Support\Facades\Schema;
+
+2-  create new database in in php my Admin
+-> name database
+-> utf8 uncicode ci
+
+3- in  .env
+-> port = 3308
+-> name of database :  name database
+
+4- php artisan migrate
+
+
+
+******
+
+To Creaet New Migraton:
+-> php artisan make:migration create_cities_table                        [انشاء جدول]
+
+To Alter Exsiet Migration
+->  php artisan make:migration add_coulmnName_to_tableName_ table        [عملية تعديل ]
+
+
+
+Type of function in migration
+-> up (Caeate or appdete)
+-> down (drop)
+
+In up function 
+-> id => PK + AI + Us + NN
+-> timestams => -> created_at
+updated_at
+
+Tybes of migrate:
+-> php artisan migrate 
+-> php artisan migrate:status
+-> php artisan migrate:rollback
+-> php artisan migrate: rollback --step=1
+-> php artisan migrate:reset
+-> php artisan migrate:refresh
+-> php artisan migrate:fresh  
+-> php artisan route:list
+-> php artisan make:migration create_cities_table
+
+-> php artisan make:factory EloquentFactory
+-> php artisan make:seeder EloquentSeeder
+-> php artisan db:seed --class=EloquentSeeder
+-> clear
+-> php artisan make:model Schoole -mfscr 
+-> php artisan make:migration add_city_to_users
+
+To Deal With Databese to excute crud system :   
+
+1- SQL Native
+2- DB Builder
+3- Eloquent
+            

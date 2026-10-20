@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Modals", "description": "Bootstrap 5 modal dialogs: small, large, scrollable, and centered variations." }
+  - var activePage = 'modal.html'
+
+block content
+  include ../partials/content/modal.html
+
+block post_main
+  include ../partials/content/modal.post.html

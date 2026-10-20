@@ -1,0 +1,8 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Invoice", "description": "Sample invoice with print stylesheet." }
+  - var activePage = 'invoice.html'
+
+block content
+  include ../partials/content/invoice.html

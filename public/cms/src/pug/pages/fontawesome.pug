@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Font Awesome", "description": "Browse the Font Awesome 7 icon set bundled with the CoolAdmin template." }
+  - var activePage = 'fontawesome.html'
+
+block content
+  include ../partials/content/fontawesome.html
+
+block extra_scripts
+  include ../partials/content/fontawesome.scripts.html

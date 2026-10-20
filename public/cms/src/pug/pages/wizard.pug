@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Setup wizard", "description": "Multi-step form wizard with progress indicator." }
+  - var activePage = 'wizard.html'
+
+block content
+  include ../partials/content/wizard.html
+
+block extra_scripts
+  include ../partials/content/wizard.scripts.html

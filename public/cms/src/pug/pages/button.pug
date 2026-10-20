@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Buttons", "description": "Bootstrap 5 button styles, sizes, states, and icon-button examples." }
+  - var activePage = 'button.html'
+
+block content
+  include ../partials/content/button.html
+
+block extra_scripts
+  include ../partials/content/button.scripts.html

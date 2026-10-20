@@ -1,0 +1,254 @@
+                        <div class="page-header">
+                            <div>
+                                <h1>Documentation</h1>
+                                <p class="subtitle">Everything you need to customize, extend, and deploy CoolAdmin v3.5.0.</p>
+                            </div>
+                            <div class="page-header__actions">
+                                <a href="https://github.com/puikinsh/CoolAdmin" target="_blank" rel="noopener" class="m-btn m-btn--ghost"><i class="fa-brands fa-github"></i> GitHub</a>
+                                <a href="#install" class="m-btn m-btn--primary"><i class="fa-solid fa-rocket"></i> Quick start</a>
+                            </div>
+                        </div>
+
+                        <div class="docs-layout">
+                            <aside class="docs-toc" id="docs-toc">
+                                <p class="docs-toc__title">On this page</p>
+                                <ul class="docs-toc__list">
+                                    <li><a href="#install">Quick start</a></li>
+                                    <li><a href="#workflow">Build and testing</a></li>
+                                    <li><a href="#structure">File structure</a></li>
+                                    <li><a href="#themes">Color themes</a></li>
+                                    <li><a href="#typography">Typography</a></li>
+                                    <li><a href="#components">Components</a></li>
+                                    <li><a href="#js-apis">JavaScript APIs</a></li>
+                                    <li><a href="#charts">Chart configurations</a></li>
+                                    <li><a href="#new-page">Adding a new page</a></li>
+                                    <li><a href="#dark-mode">Dark mode</a></li>
+                                    <li><a href="#deploy">Deployment</a></li>
+                                </ul>
+                            </aside>
+
+                            <div class="docs-content">
+
+                                <section class="docs-section" id="install">
+                                    <h2>Quick start <a class="anchor" href="#install" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>CoolAdmin is a static HTML template &mdash; no build step, no toolchain. Open any <code>.html</code> file via a local server and you&rsquo;re running.</p>
+                                    <pre><button class="docs-copy-btn" type="button">Copy</button><code># Clone or download the template
+git clone https://github.com/puikinsh/CoolAdmin.git
+cd CoolAdmin
+
+# Serve locally (Python 3 example)
+python3 -m http.server 8000
+
+# Or with Node
+npx serve .</code></pre>
+                                    <p>Then visit <code>http://localhost:8000/index.html</code>. CSS is shipped pre-built &mdash; no Sass watcher to run.</p>
+
+                                    <blockquote>
+                                        <strong>Important</strong>
+                                        <p>Open files via a local server, not <code>file://</code>. Some browsers block JavaScript and CSS loading from the <code>file://</code> protocol for security reasons.</p>
+                                    </blockquote>
+                                </section>
+
+                                <section class="docs-section" id="workflow">
+                                    <h2>Contributor workflow</h2>
+                                    <p>Use Node &ge;22.12 to edit the Pug and SCSS sources. Built pages still run without Node.</p>
+                                    <pre><button class="docs-copy-btn" type="button">Copy</button><code>npm ci
+npm run dev       # Pug + Sass watchers, Vite at localhost:3000
+npm run build     # minified calendar assets + HTML + CSS
+npm test          # six Node regression tests
+npm run check     # build and tests</code></pre>
+                                    <p>Edit <code>src/pug/pages/</code>, shared templates in <code>src/pug/partials/</code>, and styles in <code>src/scss/</code>. Commit generated HTML/CSS with the source changes. Pug saves are debounced; unchanged pages are not rewritten.</p>
+                                    <p>v3.5.0 uses Vite 8.3.4, Sass 1.105.1, concurrently 10.0.6, Pug 3.0.4, Chokidar 5.0.0, and Terser 5.51.2. FullCalendar 7.1.2 runs on the calendar page; Chart.js 4.5.1 loads only on the five pages with chart canvases.</p>
+                                    <p>The calendar scripts shrink from 803 KB to 341 KB raw (165 KB to 96 KB gzip). Removing Chart.js avoids a 208 KB script request on 23 pages. Dashboard refresh releases old chart instances before replacing canvases. These are asset-size measurements, not page-speed scores.</p>
+                                    <p>CI checks Node 22/24, local assets, chart loading, calendar versions, Pug builds/watchers, chart cleanup, and generated output consistency. See <a href="https://cooladmin.colorlib.com/docs/testing-workflow/">the testing guide</a> and <a href="https://cooladmin.colorlib.com/docs/changelog/">release notes</a>.</p>
+                                </section>
+
+                                <section class="docs-section" id="structure">
+                                    <h2>File structure <a class="anchor" href="#structure" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <pre><code>cooladmin/
+├── *.html                    35 generated pages (dashboards, tables, forms, etc.)
+├── css/
+│   ├── theme.css             legacy CoolAdmin styles (kept for compat)
+│   ├── app.css        modern v3 design system
+│   └── font-face.css         Poppins font-face declarations
+├── js/
+│   ├── vanilla-utils.js      jQuery shim ($, on, ready, etc.)
+│   ├── bootstrap5-init.js    Bootstrap 5 component init
+│   ├── main-vanilla.js       chart configs + UI behaviors + JS APIs
+│   └── modern-plugins.js     counters, lightbox, progress
+├── vendor/                   third-party CSS/JS
+│   ├── bootstrap-5.3.8.bundle.min.js
+│   ├── fontawesome-7.3.1/
+│   ├── chartjs/
+│   └── fullcalendar-7.1.2/
+├── src/pug/                  page templates and shared partials
+├── src/scss/                 theme and app style sources
+├── test/                     Node regression tests
+├── scripts/                  Pug and vendor build helpers
+├── images/                   logos, avatars, backgrounds
+└── README.md</code></pre>
+                                    <p>Every page links the same canonical CSS chain in this order:</p>
+                                    <ol>
+                                        <li><code>css/font-face.css</code> &mdash; Poppins (legacy)</li>
+                                        <li><code>https://rsms.me/inter/inter.css</code> &mdash; Inter (the modern font)</li>
+                                        <li><code>vendor/fontawesome-7.3.1/css/all.min.css</code> &mdash; icons</li>
+                                        <li><code>vendor/bootstrap-5.3.8.min.css</code> &mdash; Bootstrap base</li>
+                                        <li><code>css/theme.css</code> &mdash; legacy theme</li>
+                                        <li><code>css/app.css</code> &mdash; modern overlay (this is where almost everything lives)</li>
+                                    </ol>
+                                </section>
+
+                                <section class="docs-section" id="themes">
+                                    <h2>Color themes <a class="anchor" href="#themes" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>Six accent-color presets ship out of the box. Use the floating palette button (bottom-right of any page) to try them, or set the body class directly:</p>
+                                    <pre><code>&lt;body class=&quot;app theme-purple&quot;&gt;</code></pre>
+                                    <p>Available themes: <code>theme-blue</code> (default), <code>theme-purple</code>, <code>theme-teal</code>, <code>theme-rose</code>, <code>theme-amber</code>, <code>theme-graphite</code>.</p>
+                                    <p>To define your own theme, override the four accent variables on <code>body.app.theme-yourname</code>:</p>
+                                    <pre><code>body.app.theme-mycolor {
+    --m-accent:        #ff5722;
+    --m-accent-rgb:    255, 87, 34;
+    --m-accent-hover:  #e64a19;
+    --m-accent-soft:   #fff3e0;
+}</code></pre>
+                                    <p>The user&rsquo;s choice is persisted automatically in <code>localStorage</code> under the key <code>cooladmin.theme</code>.</p>
+                                </section>
+
+                                <section class="docs-section" id="typography">
+                                    <h2>Typography <a class="anchor" href="#typography" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>The default sans-serif is <strong style="color:var(--m-text);">Inter</strong> served from <code>rsms.me</code>. The legacy <strong style="color:var(--m-text);">Poppins</strong> is also bundled in <code>fonts/poppins</code> for offline use.</p>
+                                    <p>To swap fonts globally, change <code>--m-font</code> in <code>src/scss/app/_variables.scss</code> and run <code>npm run build:sass</code>:</p>
+                                    <pre><code>body.app {
+    --m-font: &quot;Your Font&quot;, system-ui, sans-serif;
+}</code></pre>
+                                    <p>The type scale used across pages:</p>
+                                    <table>
+                                        <thead><tr><th>Element</th><th>Size</th><th>Weight</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>Page header h1</td><td>22 px</td><td>600</td></tr>
+                                            <tr><td>Card title</td><td>14 px</td><td>600</td></tr>
+                                            <tr><td>Body</td><td>14 px</td><td>400</td></tr>
+                                            <tr><td>Subtitle / muted</td><td>13 px</td><td>400</td></tr>
+                                            <tr><td>KPI value</td><td>26 px</td><td>600 (tabular)</td></tr>
+                                            <tr><td>Eyebrow / label</td><td>11 px</td><td>600 uppercase</td></tr>
+                                        </tbody>
+                                    </table>
+                                </section>
+
+                                <section class="docs-section" id="components">
+                                    <h2>Components <a class="anchor" href="#components" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>Modern reusable patterns live under <code>.m-*</code> class names in <code>app.css</code>:</p>
+                                    <table>
+                                        <thead><tr><th>Class</th><th>Purpose</th></tr></thead>
+                                        <tbody>
+                                            <tr><td><code>.m-card</code></td><td>White surface with header / body / footer</td></tr>
+                                            <tr><td><code>.m-btn</code></td><td>Modern button (with <code>--primary</code>, <code>--ghost</code>)</td></tr>
+                                            <tr><td><code>.m-table</code></td><td>Borderless table with hover rows</td></tr>
+                                            <tr><td><code>.stat-card</code></td><td>KPI tile with label, value, delta, sparkline</td></tr>
+                                            <tr><td><code>.profile-card</code></td><td>User card with avatar, name, role, socials</td></tr>
+                                            <tr><td><code>.cover-card</code></td><td>Card with image cover + body</td></tr>
+                                            <tr><td><code>.pricing-card</code></td><td>Pricing tier card with <code>--featured</code></td></tr>
+                                            <tr><td><code>.notice-card</code></td><td>Inline alert card (info / success / warning / danger)</td></tr>
+                                            <tr><td><code>.rank-list</code></td><td>Numbered list with bars (top-N rankings)</td></tr>
+                                            <tr><td><code>.empty-state</code></td><td>"No data" placeholder with icon + title</td></tr>
+                                            <tr><td><code>.skeleton</code></td><td>Loading placeholder (with shimmer)</td></tr>
+                                        </tbody>
+                                    </table>
+                                </section>
+
+                                <section class="docs-section" id="js-apis">
+                                    <h2>JavaScript APIs <a class="anchor" href="#js-apis" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+
+                                    <h3>Toast notifications</h3>
+                                    <p>The toast system is auto-initialized on every page. Trigger it from anywhere:</p>
+                                    <pre><code>// Simple
+toast.success('Saved');
+toast.info('Heads up');
+toast.warning('Storage almost full');
+toast.error('Something went wrong');
+
+// Full options
+toast.show({
+    title: 'New version',
+    message: 'v3.1.0 is now live',
+    type: 'success',
+    duration: 6000,    // ms; 0 = no auto-dismiss
+});</code></pre>
+
+                                    <h3>Command palette</h3>
+                                    <p>Press <kbd>⌘</kbd><kbd>K</kbd> (or <kbd>Ctrl</kbd><kbd>K</kbd>) anywhere to open. Programmatic control:</p>
+                                    <pre><code>window.cmdk.open();
+window.cmdk.close();</code></pre>
+                                    <p>To add new commands, edit the <code>COMMANDS</code> array in <code>js/main-vanilla.js</code>:</p>
+                                    <pre><code>{ section: 'Pages', title: 'My new page', sub: 'Custom workflow',
+  href: 'my-page.html', icon: 'fa-bolt' }</code></pre>
+
+                                    <h3>Theme switcher</h3>
+                                    <p>The floating palette button auto-injects on every page. The user&rsquo;s choice is persisted in <code>localStorage</code>. To force a theme programmatically, just toggle the body class:</p>
+                                    <pre><code>document.body.classList.remove('theme-blue', 'theme-purple', 'theme-teal',
+                                'theme-rose', 'theme-amber', 'theme-graphite');
+document.body.classList.add('theme-purple');</code></pre>
+                                </section>
+
+                                <section class="docs-section" id="charts">
+                                    <h2>Chart configurations <a class="anchor" href="#charts" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>Charts use <strong style="color:var(--m-text);">Chart.js 4.5</strong>. Shared helpers in <code>main-vanilla.js</code> keep configs DRY:</p>
+                                    <ul>
+                                        <li><code>withCanvas(id, fn)</code> &mdash; safe per-canvas init (skips if canvas isn&rsquo;t on the page)</li>
+                                        <li><code>kpiSparkline(ctx, opts)</code> &mdash; gradient-fill sparkline for KPI tiles</li>
+                                        <li><code>sparklineOptions()</code>, <code>lightTooltip</code>, <code>modernTooltip</code> &mdash; reusable option blocks</li>
+                                    </ul>
+                                    <p>To add a new chart, append a <code>withCanvas</code> block:</p>
+                                    <pre><code>withCanvas('my-chart', (ctx) =&gt; {
+    new Chart(ctx, {
+        type: 'line',
+        data: { /* ... */ },
+        options: { ...sparklineOptions(), /* overrides */ },
+    });
+});</code></pre>
+                                </section>
+
+                                <section class="docs-section" id="new-page">
+                                    <h2>Adding a new page</h2>
+                                    <ol>
+                                        <li>Create <code>src/pug/pages/my-page.pug</code> from an existing page entry and update its metadata and <code>activePage</code>.</li>
+                                        <li>Add markup to <code>src/pug/partials/content/my-page.html</code> and include it from the page entry.</li>
+                                        <li>Add sidebar/mobile navigation in <code>src/pug/partials/_nav-data.pug</code>.</li>
+                                        <li>Add any palette entry separately to <code>COMMANDS</code> in <code>js/main-vanilla.js</code>.</li>
+                                        <li>Run <code>npm run check</code> and commit both sources and generated files.</li>
+                                    </ol>
+                                </section>
+
+<section class="docs-section" id="dark-mode">
+                                    <h2>Dark mode <a class="anchor" href="#dark-mode" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>Dark-mode tokens are pre-wired but not enabled by default. To enable, set <code>data-bs-theme="dark"</code> on the <code>&lt;html&gt;</code> element:</p>
+                                    <pre><code>&lt;html lang=&quot;en&quot; data-bs-theme=&quot;dark&quot;&gt;</code></pre>
+                                    <p>The <code>:root</code> tokens swap to dark surfaces (<code>--m-bg</code>, <code>--m-surface</code>, <code>--m-text</code>, etc.). Note: a few legacy CoolAdmin styles still use hardcoded colors &mdash; a thorough dark pass is on the roadmap for v3.1.</p>
+                                </section>
+
+                                <section class="docs-section" id="deploy">
+                                    <h2>Deployment <a class="anchor" href="#deploy" aria-label="Link"><i class="fa-solid fa-link"></i></a></h2>
+                                    <p>Publish only built HTML, CSS, JS, vendor libraries, fonts, images, and required media to a static host. Keep source files, <code>node_modules</code>, Git metadata, and credentials out of the public directory:</p>
+                                    <ul>
+                                        <li><strong style="color:var(--m-text);">Netlify / Vercel:</strong> drag-and-drop the folder, no build command needed</li>
+                                        <li><strong style="color:var(--m-text);">Cloudflare Pages:</strong> deploy the staged runtime directory</li>
+                                        <li><strong style="color:var(--m-text);">GitHub Pages:</strong> push the repo, publish a staged runtime directory from your chosen branch</li>
+                                        <li><strong style="color:var(--m-text);">S3 + CloudFront:</strong> sync to a bucket with public-read</li>
+                                        <li><strong style="color:var(--m-text);">Plain shared hosting:</strong> FTP / rsync the folder up</li>
+                                    </ul>
+                                    <p>Inter loads from <code>rsms.me</code>; the map page also uses Leaflet CDN assets and external map tiles. Self-host those assets and provide an appropriate tile source if offline use is required. Forms, authentication, payments, and data persistence require your own backend.</p>
+                                    <blockquote>
+                                        <strong>Tip</strong>
+                                        <p>Strip unused vendor folders before deploy if you don&rsquo;t need them &mdash; for example, drop <code>fullcalendar-7.1.2</code> if you don&rsquo;t use the calendar page (removes the calendar scripts and styles).</p>
+                                    </blockquote>
+                                </section>
+
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-top: 28px;">
+                            <div class="col-md-12">
+                                <div class="copyright">
+                                    <p>Copyright © 2026 Colorlib. All rights reserved. Template by <a href="https://colorlib.com" rel="nofollow" target="_blank">Colorlib</a>.</p>
+                                </div>
+                            </div>
+                        </div>

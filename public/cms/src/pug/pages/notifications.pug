@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Notifications", "description": "Activity log with date grouping and category filters." }
+  - var activePage = 'notifications.html'
+
+block content
+  include ../partials/content/notifications.html
+
+block extra_scripts
+  include ../partials/content/notifications.scripts.html

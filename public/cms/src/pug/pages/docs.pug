@@ -1,0 +1,11 @@
+extends ../layouts/_default
+
+block variables
+  - var pageMeta = { "title": "Documentation", "description": "Quick start, file structure, customization, JavaScript APIs, and deployment." }
+  - var activePage = 'docs.html'
+
+block content
+  include ../partials/content/docs.html
+
+block extra_scripts
+  include ../partials/content/docs.scripts.html
