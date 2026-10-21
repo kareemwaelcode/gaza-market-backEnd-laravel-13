@@ -43,7 +43,6 @@ class UnitController extends Controller
             $unit->unit_name_ar = $request->input('unit_name_ar');
             $unit->unit_is_active = $request->boolean('unit_is_active');
             $unit->unit_sort_order = $request->input('unit_sort_order');
-            // الـ slug بيتولد تلقائي من الاسم الإنجليزي ولا يتغير بعد الإنشاء
             $unit->unit_slug = $this->generateUniqueSlug($request->input('unit_name_en'));
             $isSaved = $unit->save();
 
@@ -84,7 +83,6 @@ class UnitController extends Controller
             $unit->unit_name_ar = $request->input('unit_name_ar');
             $unit->unit_is_active = $request->boolean('unit_is_active');
             $unit->unit_sort_order = $request->input('unit_sort_order');
-            // unit_slug ما بيتغير عند التعديل عشان ما تنكسر الروابط
             $isUpdated = $unit->save();
 
             if ($isUpdated) {
@@ -106,18 +104,16 @@ class UnitController extends Controller
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
 
-    /* ---------------- Helpers ---------------- */
-
     private function generateUniqueSlug(string $name): string
     {
-        $base = rtrim(Str::limit(Str::slug($name), 40, ''), '-');
-        $slug = $base;
-        $i = 2;
+    $base = rtrim(Str::limit(Str::slug($name), 40, ''), '-');
+    $slug = $base;
+    $i = 2;
 
-        while (Unit::where('unit_slug', $slug)->exists()) {
-            $slug = $base . '-' . $i++;
-        }
-
-        return $slug;
+    while (Unit::where('unit_slug', $slug)->exists()) {
+        $slug = $base . '-' . $i++;
     }
+
+    return $slug;
+}
 }

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
@@ -30,5 +32,11 @@ Route::post('area_update/{id}' , [AreaController::class, 'update'])->name('area_
 
 Route::resource('unit', UnitController::class);
 Route::post('unit_update/{id}' , [UnitController::class, 'update'])->name('unit_update');
+
+Route::resource('category_group', CategoryGroupController::class);
+Route::post('category_group_update/{id}' , [CategoryGroupController::class, 'update'])->name('category_group_update');
+
+Route::resource('category', CategoryController::class);
+Route::post('category_update/{id}' , [CategoryController::class, 'update'])->name('category_update');
 
 });

@@ -24,7 +24,7 @@
                 <div class="col-lg-6 mb-3">
                     <label for="unit_name_ar" class="form-control-label">Unit Name (Arabic)</label>
                     <input type="text" id="unit_name_ar" name="unit_name_ar" maxlength="45"
-                    value="{{ $unit->unit_name_ar }}" placeholder="Enter Unit Name in Arabic.." class="form-control" dir="rtl">
+                    value="{{ $unit->unit_name_ar }}" placeholder="Enter Unit Name in Arabic.." class="form-control">
                     <span class="help-block">Please enter the unit name in Arabic</span>
                 </div>
             </div>
