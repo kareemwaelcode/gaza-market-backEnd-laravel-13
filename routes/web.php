@@ -5,6 +5,8 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\RegionsController;
+use App\Http\Controllers\StoreCategoryController;
+use App\Http\Controllers\StoreCategoryGroupController;
 use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,4 +41,9 @@ Route::post('category_group_update/{id}' , [CategoryGroupController::class, 'upd
 Route::resource('category', CategoryController::class);
 Route::post('category_update/{id}' , [CategoryController::class, 'update'])->name('category_update');
 
+Route::resource('store_category_group', StoreCategoryGroupController::class);
+Route::post('store_category_group_update/{id}' , [StoreCategoryGroupController::class, 'update'])->name('store_category_group_update');
+
+Route::resource('store_category', StoreCategoryController::class);
+Route::post('store_category_update/{id}' , [StoreCategoryController::class, 'update'])->name('store_category_update');
 });
