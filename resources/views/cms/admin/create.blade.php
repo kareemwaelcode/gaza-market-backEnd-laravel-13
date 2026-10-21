@@ -1,6 +1,6 @@
 @extends('cms.parent')
 
-@section('title', 'create')
+@section('title', 'create admin')
 
 @section('styles')
 

@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AreaController;
+use App\Http\Controllers\RegionsController;
+use App\Http\Controllers\UnitController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,5 +22,13 @@ Route::view('' , 'cms.parent');
 Route::resource('admin', AdminController::class);
 Route::post('admins_update/{id}' , [AdminController::class, 'update'])->name('admins_update');
 
+Route::resource('region', RegionsController::class);
+Route::post('region_update/{id}' , [RegionsController::class, 'update'])->name('region_update');
+
+Route::resource('area', AreaController::class);
+Route::post('area_update/{id}' , [AreaController::class, 'update'])->name('area_update');
+
+Route::resource('unit', UnitController::class);
+Route::post('unit_update/{id}' , [UnitController::class, 'update'])->name('unit_update');
 
 });

@@ -97,17 +97,14 @@ class AdminController extends Controller
     return ['redirect' => route('admin.index')];
     if ($isUpdated) {
         return response()->json(['icon' => 'success' , 'title'=> 'Updated is Successfully'] , 200);
-
         }
     else {
         return response()->json(['icon' => 'error' , 'title' => 'Updated is Failed'] , 400);
-
     }
         
     }
     else {
     return response()->json(['icon' => 'error' ,'title' => $validator->getMessageBag()->first()] , 400);
-
     }
     }
 
