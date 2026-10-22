@@ -17,8 +17,13 @@
             <div class="row">
                 <div class="col-lg-6 mb-3">
                     <label for="store_category_variant_key" class="form-control-label">Variant Key</label>
-                    <input type="text" id="store_category_variant_key" name="store_category_variant_key" maxlength="45" placeholder="e.g. restaurant, pharmacy.." value="{{ $store_category->store_category_variant_key }}" class="form-control">
-                    <span class="help-block">Key used by the dashboard to pick this store type (lowercase letters, numbers, - and _ only)</span>
+                    <select id="store_category_variant_key" name="store_category_variant_key" class="form-control">
+                        <option value="">Select Variant Key</option>
+                        @foreach ($store_category_variants as $store_category_variant)
+                            <option value="{{ $store_category_variant->value }}" @selected($store_category->store_category_variant_key === $store_category_variant->value)>{{ $store_category_variant->value }}</option>
+                        @endforeach
+                    </select>
+                    <span class="help-block">Selects which dashboard configuration this store category uses (it must match a variant in the dashboard store type config)</span>
                 </div>
             </div>
             <div class="row">
@@ -31,7 +36,7 @@
                 <div class="col-lg-6 mb-3">
                     <label for="store_category_name_ar" class="form-control-label">Store Category Name (Arabic)</label>
                     <input type="text" id="store_category_name_ar" name="store_category_name_ar" maxlength="45"
-                    value="{{ $store_category->store_category_name_ar }}" placeholder="Enter Store Category Name in Arabic.." class="form-control" dir="rtl">
+                    value="{{ $store_category->store_category_name_ar }}" placeholder="Enter Store Category Name in Arabic.." class="form-control">
                     <span class="help-block">Please enter the store category name in Arabic</span>
                 </div>
             </div>

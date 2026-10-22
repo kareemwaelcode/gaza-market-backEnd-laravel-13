@@ -32,7 +32,7 @@ class StoreCategoryGroupController extends Controller
             $store_category_group = new StoreCategoryGroup();
             $store_category_group->store_category_group_name_en = $request->input('store_category_group_name_en');
             $store_category_group->store_category_group_name_ar = $request->input('store_category_group_name_ar');
-            $store_category_group->store_category_group_sort_order = $request->input('store_category_group_sort_order');
+            $store_category_group->store_category_group_sort_order = $request->integer('store_category_group_sort_order');
             $store_category_group->store_category_group_slug = $this->generateUniqueSlug($request->input('store_category_group_name_en'));
             $isSaved = $store_category_group->save();
 
@@ -64,7 +64,7 @@ class StoreCategoryGroupController extends Controller
             $store_category_group = StoreCategoryGroup::findOrFail($id);
             $store_category_group->store_category_group_name_en = $request->input('store_category_group_name_en');
             $store_category_group->store_category_group_name_ar = $request->input('store_category_group_name_ar');
-            $store_category_group->store_category_group_sort_order = $request->input('store_category_group_sort_order');
+            $store_category_group->store_category_group_sort_order = $request->integer('store_category_group_sort_order');
             $isUpdated = $store_category_group->save();
 
             if ($isUpdated) {

@@ -24,7 +24,7 @@
                 <div class="col-lg-6 mb-3">
                     <label for="category_name_ar" class="form-control-label">Category Name (Arabic)</label>
                     <input type="text" id="category_name_ar" name="category_name_ar" maxlength="45"
-                    value="{{ $category->category_name_ar }}" placeholder="Enter Category Name in Arabic.." class="form-control" dir="rtl">
+                    value="{{ $category->category_name_ar }}" placeholder="Enter Category Name in Arabic.." class="form-control">
                     <span class="help-block">Please enter the category name in Arabic</span>
                 </div>
             </div>

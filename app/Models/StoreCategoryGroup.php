@@ -24,7 +24,7 @@ class StoreCategoryGroup extends Model
 
     public function storeCategories(): HasMany
     {
-        return $this->hasMany(StoreCategoryGroup::class, "store_category_group_id")->orderBy("store_category_sort_order");
+        return $this->hasMany(StoreCategory::class, "store_category_group_id")->orderBy("store_category_sort_order");
     }
 
     public function scopeOrdered(Builder $query): Builder
