@@ -8,6 +8,7 @@ use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\StoreCategoryGroupController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -46,4 +47,8 @@ Route::post('store_category_group_update/{id}' , [StoreCategoryGroupController::
 
 Route::resource('store_category', StoreCategoryController::class);
 Route::post('store_category_update/{id}' , [StoreCategoryController::class, 'update'])->name('store_category_update');
+
+Route::resource('user', UserController::class)->only(['index', 'destroy']);
+Route::post('user_toggle_status/{id}' , [UserController::class, 'toggleStatus'])->name('user_toggle_status');
+
 });
