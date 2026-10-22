@@ -2,31 +2,60 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable([
+'user_phone',
+'user_full_name',
+'user_password',
+'user_role',
+'user_status',
+'user_preferred_lang',
+'user_theme',
+'area_id',
+])]
+#[Hidden(['user_password'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+/** @use HasFactory<UserFactory> */
+use HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+const CREATED_AT = 'user_created_at';
+const UPDATED_AT = 'updated_at';
+const DELETED_AT = 'user_deleted_at';
+
+protected function casts(): array
+{
+return [
+    'user_password' => 'hashed',
+    'user_phone_verified_at' => 'datetime',
+    'user_last_login_at' => 'datetime',
+    'user_created_at' => 'datetime',
+    'user_deleted_at' => 'datetime',
+    'user_points_total' => 'integer',
+    'area_id' => 'integer',
+];
+}
+
+public function getAuthPasswordName(): string
+{
+    return 'user_password';
+}
+
+public function getRememberTokenName(): string
+{
+    return '';
+}
+
+public function area(): BelongsTo
+{
+    return $this->belongsTo(Area::class, 'area_id');
+}
 }
