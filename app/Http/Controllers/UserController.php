@@ -17,6 +17,7 @@ class UserController extends Controller
             'id',
             'user_full_name',
             'user_phone',
+            'user_avatar',
             'user_role',
             'user_status',
             'user_preferred_lang',

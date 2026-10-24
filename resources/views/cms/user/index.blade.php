@@ -35,6 +35,7 @@
             <table class="table table-borderless table-data3">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>User</th>
                         <th>Role</th>
                         <th>Status</th>
@@ -51,9 +52,20 @@
                         $status = $statuses[$user->user_status] ?? [$user->user_status, 'text-bg-secondary'];
                     @endphp
                     <tr>
+                        <td>{{ $users->firstItem() + $loop->index }}</td>
                         <td>
-                            <span class="d-block fw-semibold">{{ $user->user_full_name }}</span>
-                            <small class="d-block text-muted" dir="ltr">{{ $user->user_phone }}</small>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="position-relative d-inline-flex align-items-center justify-content-center flex-shrink-0 overflow-hidden rounded-circle text-bg-secondary fw-semibold" style="width: 36px; height: 36px;">
+                                    {{ mb_substr($user->user_full_name, 0, 1) }}
+                                    @if ($user->avatar_url)
+                                        <img src="{{ $user->avatar_url }}" alt="" width="36" height="36" loading="lazy" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" onerror="this.remove()">
+                                    @endif
+                                </span>
+                                <div>
+                                    <span class="d-block fw-semibold">{{ $user->user_full_name }}</span>
+                                    <small class="d-block text-muted" dir="ltr">{{ $user->user_phone }}</small>
+                                </div>
+                            </div>
                         </td>
                         <td><span class="badge {{ $role[1] }}">{{ $role[0] }}</span></td>
                         <td><span class="badge {{ $status[1] }}">{{ $status[0] }}</span></td>
@@ -62,9 +74,9 @@
                             <span class="d-block">{{ $langs[$user->user_preferred_lang] ?? '-' }}</span>
                             <small class="d-flex align-items-center gap-1 text-muted">
                             @if ($user->user_theme === 'dark')
-                            Dark
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon preview-icon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>داكن
                             @else
-                            Light
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun preview-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>فاتح
                             @endif
                             </small>
                         </td>
@@ -76,7 +88,7 @@
                             <div class="btn-group" role="group" aria-label="Toolbar group">
                             @if ($user->user_status === 'active')
                                 <button type="button" onclick="performToggle({{ $user->id }}, 'block')" class="btn btn-warning" title="Block"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban preview-icon"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg></button>
-                            @else
+                            @elseif ($user->user_status === 'suspended')
                                 <button type="button" onclick="performToggle({{ $user->id }}, 'unblock')" class="btn btn-success" title="Unblock"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big preview-icon"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></button>
                             @endif
                                 <button type="button" onclick="performDestroy({{ $user->id }}, this)" class="btn btn-danger" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash preview-icon"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
@@ -85,7 +97,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center">No users yet</td>
+                        <td colspan="8" class="text-center">No users yet</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -129,7 +141,7 @@ function performToggle(id, action){
                 setTimeout(function () { location.reload(); }, 1200);
             })
             .catch(function (error) {
-                showMessage(error.response.data);
+                showMessage(error.response ? error.response.data : { icon: 'error', title: 'حدث خطأ غير متوقع' });
             });
     });
 }
