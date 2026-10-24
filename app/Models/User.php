@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,8 +22,7 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['user_password'])]
 class User extends Authenticatable
 {
-/** @use HasFactory<UserFactory> */
-use HasFactory, Notifiable, SoftDeletes;
+use Notifiable, SoftDeletes;
 
 const CREATED_AT = 'user_created_at';
 const UPDATED_AT = 'updated_at';
@@ -59,4 +56,3 @@ public function area(): BelongsTo
     return $this->belongsTo(Area::class, 'area_id');
 }
 }
-

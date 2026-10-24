@@ -7,6 +7,20 @@
 
 
 @section('content')
+    @php
+        $roles = [
+            'user' => ['مستخدم', 'text-bg-secondary'],
+            'store_owner' => ['صاحب نشاط', 'text-bg-primary'],
+            'admin' => ['أدمن', 'text-bg-info'],
+        ];
+        $statuses = [
+            'active' => ['فعّال', 'text-bg-success'],
+            'suspended' => ['موقوف', 'text-bg-danger'],
+            'deleted' => ['محذوف', 'text-bg-secondary'],
+        ];
+        $langs = ['ar' => 'العربية', 'en' => 'English'];
+    @endphp
+
     <!-- Users table -->
     <div class="row row-tight" style="margin-top: 16px;">
     <div class="col-md-12">
@@ -21,34 +35,43 @@
             <table class="table table-borderless table-data3">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Full Name</th>
-                        <th>Mobile</th>
+                        <th>User</th>
                         <th>Role</th>
-                        <th>Area</th>
                         <th>Status</th>
-                        <th>Registered</th>
-                        <th>Last Login</th>
+                        <th>Area</th>
+                        <th>Language / Theme</th>
+                        <th>Registered / Last Login</th>
                         <th>Setting</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ( $users as $user )
+                    @php
+                        $role = $roles[$user->user_role] ?? [$user->user_role, 'text-bg-secondary'];
+                        $status = $statuses[$user->user_status] ?? [$user->user_status, 'text-bg-secondary'];
+                    @endphp
                     <tr>
-                        <td>{{ $users->firstItem() + $loop->index }}</td>
-                        <td>{{ $user->user_full_name }}</td>
-                        <td>{{ $user->user_phone }}</td>
-                        <td>{{ $user->user_role }}</td>
-                        <td>{{ $user->area?->area_name_en ?? '-' }}</td>
                         <td>
-                            @if ($user->user_status === 'active')
-                                <span class="badge bg-success">Active</span>
-                            @else
-                                <span class="badge bg-danger">Blocked</span>
-                            @endif
+                            <span class="d-block fw-semibold">{{ $user->user_full_name }}</span>
+                            <small class="d-block text-muted" dir="ltr">{{ $user->user_phone }}</small>
                         </td>
-                        <td>{{ $user->user_created_at?->format('Y-m-d') ?? '-' }}</td>
-                        <td>{{ $user->user_last_login_at?->format('Y-m-d H:i') ?? '-' }}</td>
+                        <td><span class="badge {{ $role[1] }}">{{ $role[0] }}</span></td>
+                        <td><span class="badge {{ $status[1] }}">{{ $status[0] }}</span></td>
+                        <td>{{ $user->area?->area_name_ar ?? '-' }}</td>
+                        <td>
+                            <span class="d-block">{{ $langs[$user->user_preferred_lang] ?? '-' }}</span>
+                            <small class="d-flex align-items-center gap-1 text-muted">
+                            @if ($user->user_theme === 'dark')
+                            Dark
+                            @else
+                            Light
+                            @endif
+                            </small>
+                        </td>
+                        <td>
+                            <span class="d-block"><small class="text-muted">Registered:</small> {{ $user->user_created_at?->format('Y-m-d') ?? '-' }}</span>
+                            <span class="d-block"><small class="text-muted">Last login:</small> {{ $user->user_last_login_at?->format('Y-m-d') ?? '-' }}</span>
+                        </td>
                         <td>
                             <div class="btn-group" role="group" aria-label="Toolbar group">
                             @if ($user->user_status === 'active')
@@ -62,7 +85,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center">No users yet</td>
+                        <td colspan="7" class="text-center">No users yet</td>
                     </tr>
                     @endforelse
                 </tbody>

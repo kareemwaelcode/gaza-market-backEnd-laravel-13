@@ -51,4 +51,4 @@ Route::post('store_category_update/{id}' , [StoreCategoryController::class, 'upd
 Route::resource('user', UserController::class)->only(['index', 'destroy']);
 Route::post('user_toggle_status/{id}' , [UserController::class, 'toggleStatus'])->name('user_toggle_status');
 
-});
+}); 

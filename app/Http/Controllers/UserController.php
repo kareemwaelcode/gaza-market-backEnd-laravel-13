@@ -14,16 +14,18 @@ class UserController extends Controller
     public function index()
     {
         $users = User::select([
-                'id',
-                'user_full_name',
-                'user_phone',
-                'user_role',
-                'user_status',
-                'user_last_login_at',
-                'user_created_at',
-                'area_id',
-            ])
-            ->with('area:id,area_name_en')
+            'id',
+            'user_full_name',
+            'user_phone',
+            'user_role',
+            'user_status',
+            'user_preferred_lang',
+            'user_theme',
+            'user_last_login_at',
+            'user_created_at',
+            'area_id',
+        ])
+            ->with('area:id,area_name_ar')
             ->orderByDesc('id')
             ->paginate(10);
 
