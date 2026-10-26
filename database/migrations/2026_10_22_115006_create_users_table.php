@@ -13,7 +13,7 @@ Schema::create('users', function (Blueprint $table) {
     $table->string('user_phone', 45)->unique();
     $table->string('user_full_name', 45);
     $table->string('user_password', 255)->nullable();
-    $table->enum('user_role', ['user', 'store_owner', 'admin'])->default('user');
+    $table->enum('user_role', ['user', 'store_owner'])->default('user');
     $table->enum('user_status', ['active', 'suspended', 'deleted'])->default('active');
     $table->enum('user_preferred_lang', ['en', 'ar'])->default('ar');
     $table->enum('user_theme', ['light', 'dark'])->default('light');

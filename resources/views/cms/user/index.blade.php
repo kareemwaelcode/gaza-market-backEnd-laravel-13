@@ -11,7 +11,6 @@
         $roles = [
             'user' => ['مستخدم', 'text-bg-secondary'],
             'store_owner' => ['صاحب نشاط', 'text-bg-primary'],
-            'admin' => ['أدمن', 'text-bg-info'],
         ];
         $statuses = [
             'active' => ['فعّال', 'text-bg-success'],
