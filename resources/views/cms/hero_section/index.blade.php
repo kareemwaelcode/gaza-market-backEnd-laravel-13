@@ -16,6 +16,9 @@
             <h2 class="m-card__title" id="hero-sections-title">Hero Section</h2>
             <p class="m-card__subtitle">Texts of the home page hero section</p>
         </div>
+        @if ($heroSections->isEmpty())
+        <a href="{{ route('hero_section.create') }}" type="button" class="m-btn m-btn--primary" style="height:30px;padding:0 12px;font-size:12.5px;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus preview-icon"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add Hero Section</a>
+        @endif
     </header>
         <div class="table-responsive">
             <table class="table table-borderless table-data3">
@@ -51,7 +54,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8">No hero section row found. Insert the first row using the SQL statement, then reload this page.</td>
+                        <td colspan="8">No hero section yet. Click "Add Hero Section" to create it.</td>
                     </tr>
                     @endforelse
                 </tbody>
