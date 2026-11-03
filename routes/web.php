@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
+use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\StoreCategoryGroupController;
@@ -50,5 +51,8 @@ Route::post('store_category_update/{id}' , [StoreCategoryController::class, 'upd
 
 Route::resource('user', UserController::class)->only(['index', 'destroy']);
 Route::post('user_toggle_status/{id}' , [UserController::class, 'toggleStatus'])->name('user_toggle_status');
+
+Route::resource('point_rule', PointRuleController::class)->only(['index', 'edit']);
+Route::post('point_rule_update/{id}' , [PointRuleController::class, 'update'])->name('point_rule_update');
 
 }); 
