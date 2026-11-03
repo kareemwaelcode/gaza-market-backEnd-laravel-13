@@ -7,10 +7,6 @@ use Illuminate\Http\Request;
 
 class HeroSectionController extends Controller
 {
-    /**
-     * field => [label, max length]. Each field has an _ar and an _en column:
-     * hero_section_{field}_ar / hero_section_{field}_en
-     */
     private const FIELDS = [
         'eyebrow'        => ['Eyebrow', 100],
         'title'          => ['Title', 150],
@@ -36,17 +32,9 @@ class HeroSectionController extends Controller
         return response()->view('cms.hero_section.edit', compact('heroSection', 'fields'));
     }
 
-    /**
-     * The row is inserted once via SQL and is never created or deleted from the CMS.
-     */
     public function update(Request $request, string $id)
     {
-        $rules = [];
-        foreach (self::FIELDS as $field => [$label, $max]) {
-            $rules["hero_section_{$field}_ar"] = ['required', 'string', "max:{$max}"];
-            $rules["hero_section_{$field}_en"] = ['required', 'string', "max:{$max}", 'regex:/[A-Za-z0-9]/'];
-        }
-
+        $rules = $this->rules();
         $validator = validator($request->all(), $rules);
 
         if (! $validator->fails()) {
@@ -64,5 +52,15 @@ class HeroSectionController extends Controller
         } else {
             return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
         }
+    }
+
+    private function rules(): array
+    {
+        $rules = [];
+        foreach (self::FIELDS as $field => [$label, $max]) {
+            $rules["hero_section_{$field}_ar"] = ['required', 'string', "max:{$max}"];
+            $rules["hero_section_{$field}_en"] = ['required', 'string', "max:{$max}", 'regex:/[A-Za-z0-9]/'];
+        }
+        return $rules;
     }
 }

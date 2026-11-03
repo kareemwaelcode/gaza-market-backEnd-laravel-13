@@ -63,4 +63,4 @@ Route::post('point_level_update/{id}' , [PointLevelController::class, 'update'])
 Route::resource('hero_section', HeroSectionController::class)->only(['index', 'edit']);
 Route::post('hero_section_update/{id}' , [HeroSectionController::class, 'update'])->name('hero_section_update');
 
-}); 
+});
