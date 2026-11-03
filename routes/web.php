@@ -4,6 +4,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
+use App\Http\Controllers\HeroSectionController;
+use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\StoreCategoryController;
@@ -54,5 +56,11 @@ Route::post('user_toggle_status/{id}' , [UserController::class, 'toggleStatus'])
 
 Route::resource('point_rule', PointRuleController::class)->only(['index', 'edit']);
 Route::post('point_rule_update/{id}' , [PointRuleController::class, 'update'])->name('point_rule_update');
+
+Route::resource('point_level', PointLevelController::class)->only(['index', 'edit']);
+Route::post('point_level_update/{id}' , [PointLevelController::class, 'update'])->name('point_level_update');
+
+Route::resource('hero_section', HeroSectionController::class)->only(['index', 'edit']);
+Route::post('hero_section_update/{id}' , [HeroSectionController::class, 'update'])->name('hero_section_update');
 
 }); 
