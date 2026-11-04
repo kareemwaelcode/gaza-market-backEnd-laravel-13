@@ -176,6 +176,19 @@
 </ul>
 </li>
 
+<li class="has-sub"><a class="js-arrow" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trophy preview-icon"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>Point Transactions</a>
+<ul class="list-unstyled navbar__sub-list js-sub-list">
+  <li><a href="{{ route('point_transaction.index') }}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv-minimal preview-icon"><path d="M7 21h10"/><rect width="20" height="14" x="2" y="3" rx="2"/></svg>Index</a></li>
+</ul>
+</li>
+
+<li class="has-sub"><a class="js-arrow" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-sort-ascending preview-icon"><path d="M3 19h18"/><path d="M15 12H3"/><path d="M9 5H3"/></svg>Listing Categories</a>
+<ul class="list-unstyled navbar__sub-list js-sub-list">
+  <li><a href="{{ route('listing_category.index') }}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv-minimal preview-icon"><path d="M7 21h10"/><rect width="20" height="14" x="2" y="3" rx="2"/></svg>Index</a></li>
+  <li><a href="{{ route('listing_category.create') }}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-diamond-plus preview-icon"><path d="M12 8v8"/><path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41L13.7 2.71a2.41 2.41 0 0 0-3.41 0z"/><path d="M8 12h8"/></svg>Create</a></li>
+</ul>
+</li>
+
 </ul>
 </nav>
 </div>
