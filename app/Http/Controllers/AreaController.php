@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Models\Regions;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -103,7 +104,12 @@ class AreaController extends Controller
      */
     public function destroy(string $id)
     {
-        Area::destroy($id);
+        try {
+            Area::destroy($id);
+        } catch (QueryException $e) {
+            return response()->json(['icon' => 'error', 'title' => 'Cannot delete an area that has users'], 409);
+        }
+
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
     private function generateUniqueSlug(string $name): string

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NavigationItem;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,8 +27,7 @@ class NavigationItemController extends Controller
         if (! $validator->fails()) {
             $item = new NavigationItem();
             $this->fill($item, $request);
-            $item->navigation_item_slug = $this->generateUniqueSlug($request->input('navigation_item_name_en'));
-            $isSaved = $item->save();
+            $isSaved = $this->saveWithUniqueSlug($item, $request->input('navigation_item_name_en'));
 
             if ($isSaved) {
                 return response()->json(['icon' => 'success', 'title' => 'Created is Successfully'], 200);
@@ -76,7 +76,7 @@ class NavigationItemController extends Controller
             'navigation_item_name_en' => ['required', 'string', 'max:45', 'regex:/[A-Za-z0-9]/'],
             'navigation_item_name_ar' => ['required', 'string', 'max:45'],
             'navigation_item_icon' => ['required', 'string', 'max:45', 'regex:/^[a-z0-9-]+$/'],
-            'navigation_item_url' => ['nullable', 'string', 'max:255', 'regex:/^(#|https?:\/\/\S+|[A-Za-z0-9_\-\/\.]+(\?\S*)?(#\S*)?)$/'],
+            'navigation_item_url' => ['nullable', 'string', 'max:255', 'regex:/^(#|https?:\/\/\S+|(?!\/\/)[A-Za-z0-9_\-\/\.]+(\?\S*)?(#\S*)?)$/'],
             'navigation_item_sort_order' => ['nullable', 'integer', 'min:0', 'max:255'],
             'navigation_item_is_active' => ['required', 'boolean'],
             'navigation_item_is_mobile' => ['required', 'boolean'],
@@ -91,11 +91,35 @@ class NavigationItemController extends Controller
         $item->navigation_item_name_ar = $request->input('navigation_item_name_ar');
         $item->navigation_item_icon = $request->input('navigation_item_icon');
         $item->navigation_item_url = $request->filled('navigation_item_url') ? $request->input('navigation_item_url') : null;
-        $item->navigation_item_sort_order = $request->filled('navigation_item_sort_order') ? $request->input('navigation_item_sort_order') : null;
+        $item->navigation_item_sort_order = $request->filled('navigation_item_sort_order') ? (int) $request->input('navigation_item_sort_order') : 0;
         $item->navigation_item_is_active = $request->boolean('navigation_item_is_active');
         $item->navigation_item_is_mobile = $request->boolean('navigation_item_is_mobile');
         $item->navigation_item_is_desktop = $request->boolean('navigation_item_is_desktop');
         $item->navigation_item_is_coming_soon = $request->boolean('navigation_item_is_coming_soon');
+    }
+
+    /**
+     * The unique index on the slug is the real protection against duplicates.
+     * If two requests pick the same slug at the same time, the loser retries
+     * with a fresh slug instead of returning a 500.
+     */
+    private function saveWithUniqueSlug(NavigationItem $item, string $name): bool
+    {
+        $attempts = 3;
+
+        for ($i = 1; $i <= $attempts; $i++) {
+            $item->navigation_item_slug = $this->generateUniqueSlug($name);
+
+            try {
+                return $item->save();
+            } catch (UniqueConstraintViolationException $e) {
+                if ($i === $attempts) {
+                    throw $e;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function generateUniqueSlug(string $name): string

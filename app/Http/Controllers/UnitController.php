@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -100,7 +101,12 @@ class UnitController extends Controller
      */
     public function destroy(string $id)
     {
-        Unit::destroy($id);
+        try {
+            Unit::destroy($id);
+        } catch (QueryException $e) {
+            return response()->json(['icon' => 'error', 'title' => 'Cannot delete a unit that is in use'], 409);
+        }
+
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
 

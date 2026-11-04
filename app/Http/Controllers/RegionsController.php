@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Regions;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -95,7 +96,12 @@ class RegionsController extends Controller
      */
     public function destroy(string $id)
     {
-        Regions::destroy($id);
+        try {
+            Regions::destroy($id);
+        } catch (QueryException $e) {
+            return response()->json(['icon' => 'error', 'title' => 'Cannot delete a region that has areas'], 409);
+        }
+
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
 

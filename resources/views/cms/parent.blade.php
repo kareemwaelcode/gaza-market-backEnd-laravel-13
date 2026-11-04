@@ -367,7 +367,7 @@
 <script src="{{asset('cms/js/modern-plugins.js')}}"></script>
 //new links
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
 <script src="{{ asset('cms/js/crud.js') }}"></script>
 @yield('scripts')
 </body>

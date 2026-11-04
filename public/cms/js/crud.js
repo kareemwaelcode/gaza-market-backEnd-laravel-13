@@ -134,16 +134,28 @@ Swal.fire({
     cancelButtonText: 'لا',
 }).then((result) => {
     if (result.isConfirmed) {
-        destroy(url, td);
-        Swal.fire({
-            position: 'center',
-            icon: 'success',
-            title: 'تمت عملية الحذف بنجاح',
-            showConfirmButton: false,
-            timer: 1500
+        destroy(url, td)
+            .then(function () {
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'تمت عملية الحذف بنجاح',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
             })
-
-
+            .catch(function (error) {
+                // Show the server's own message when there is one (e.g. 409: row is in use)
+                var title = (error.response && error.response.data && error.response.data.title)
+                    ? error.response.data.title
+                    : 'فشلت عملية الحذف .';
+                Swal.fire({
+                    icon: 'error',
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            });
     }else{
 
         Swal.fire({
@@ -159,20 +171,10 @@ Swal.fire({
 
 
 function destroy(url, td) {
-axios.delete(url)
+return axios.delete(url)
     .then(function (response) {
-        // handle success
-        console.log(response.data);
         td.closest('tr').remove();
-        // showToaster(response.data.message, true);
-    })
-    .catch(function (error) {
-        // handle error
-        console.log(error.response);
-        // showToaster(error.response.data.message, false);
-    })
-    .then(function () {
-        // always executed
+        return response;
     });
 }
 
@@ -212,5 +214,3 @@ Swal.fire({
     timer: 1500
 })
 }
-
-
