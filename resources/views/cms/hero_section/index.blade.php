@@ -51,7 +51,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8">No hero section yet. Run php artisan db:seed.</td>
+                        <td colspan="8">No hero section yet.</td>
                     </tr>
                     @endforelse
                 </tbody>

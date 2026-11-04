@@ -5,6 +5,7 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\HeroSectionController;
+use App\Http\Controllers\NavigationItemController;
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\RegionsController;
@@ -62,5 +63,8 @@ Route::post('point_level_update/{id}' , [PointLevelController::class, 'update'])
 
 Route::resource('hero_section', HeroSectionController::class)->only(['index', 'edit']);
 Route::post('hero_section_update/{id}' , [HeroSectionController::class, 'update'])->name('hero_section_update');
+
+Route::resource('navigation_item', NavigationItemController::class)->only(['index', 'create', 'store', 'edit', 'destroy']);
+Route::post('navigation_item_update/{id}' , [NavigationItemController::class, 'update'])->name('navigation_item_update');
 
 });
