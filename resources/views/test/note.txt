@@ -76,3 +76,7 @@ To Deal With Databese to excute crud system :
 git add .
 git commit -m "Update project"
 git push
+
+
+
+استخدم موضوع ال Debouncingبعد مرور  500ms يتم إرسال Request واحد فقط عن كلمة

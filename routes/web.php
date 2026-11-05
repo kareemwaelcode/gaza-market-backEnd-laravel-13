@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\HeroSectionController;
 use App\Http\Controllers\ListingCategoryController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\NavigationItemController;
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
@@ -67,5 +68,9 @@ Route::resource('point_transaction', PointTransactionController::class)->only(['
 
 Route::resource('listing_category', ListingCategoryController::class)->only(['index', 'create', 'store', 'edit' , 'destroy']);
 Route::post('listing_category_update/{id}' , [ListingCategoryController::class, 'update'])->name('listing_category_update');
+
+Route::resource('listing', ListingController::class)->only(['index', 'show', 'destroy']);
+Route::post('listing_approve/{id}' , [ListingController::class, 'approve'])->name('listing_approve');
+Route::post('listing_reject/{id}' , [ListingController::class, 'reject'])->name('listing_reject');
 
 });
