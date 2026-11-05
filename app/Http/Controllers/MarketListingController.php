@@ -19,7 +19,7 @@ class MarketListingController extends Controller
 
         try {
             $listing = DB::transaction(function () use ($request, &$storedPaths, &$directory) {
-                $listing = new Listing();
+                $listing = new Listing;
                 $listing->fill($request->safe()->except(['images', 'listing_is_negotiable']));
                 $listing->listing_is_negotiable = $request->boolean('listing_is_negotiable');
                 $listing->listing_status = Listing::STATUS_PENDING;
