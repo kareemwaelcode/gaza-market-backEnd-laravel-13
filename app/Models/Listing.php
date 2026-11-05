@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Listing extends Model
 {
@@ -62,6 +63,13 @@ class Listing extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ListingCategory::class, 'listing_category_id');
+    }
+
+    // صور الإعلان مرتبة، والأولى هي الغلاف
+    public function images(): HasMany
+    {
+        return $this->hasMany(ListingImage::class, 'listing_id')
+            ->orderBy('listing_image_sort_order');
     }
 
     /* ---------------- Scopes ---------------- */

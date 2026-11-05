@@ -6,6 +6,7 @@ use App\Models\Area;
 use App\Models\Listing;
 use App\Models\ListingCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ListingController extends Controller
@@ -39,8 +40,9 @@ class ListingController extends Controller
 
     public function show(string $id)
     {
-    $listing = Listing::with(['user', 'area.region', 'category'])->findOrFail($id);
-    return response()->view('cms.listing.show', compact('listing'));
+        $listing = Listing::with(['user', 'area.region', 'category', 'images'])->findOrFail($id);
+
+        return response()->view('cms.listing.show', compact('listing'));
     }
 
     public function approve(string $id)
@@ -97,7 +99,21 @@ class ListingController extends Controller
 
     public function destroy(string $id)
     {
-        Listing::findOrFail($id)->delete();
+        $listing = Listing::with('images')->findOrFail($id);
+
+        // الملفات المحلية بس (روابط https التجريبية ما إلها ملف على القرص)
+        $paths = $listing->images
+            ->filter(fn ($image) => $image->isLocalFile())
+            ->pluck('listing_image_path')
+            ->all();
+
+        // صفوف الصور بتنحذف تلقائياً من قاعدة البيانات (CASCADE)
+        $listing->delete();
+
+        // الملفات بتنحذف بعد نجاح حذف الإعلان
+        if ($paths) {
+            Storage::disk('public')->delete($paths);
+        }
 
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
