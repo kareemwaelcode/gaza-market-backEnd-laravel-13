@@ -133,4 +133,23 @@ class ListingImageTest extends TestCase
         $this->assertDatabaseMissing('listing_images', ['listing_id' => $listing->id]);
         Storage::disk('public')->assertMissing('listings/a.jpg');
     }
+
+    public function test_deleting_a_listing_removes_its_whole_image_folder(): void
+    {
+        Storage::fake('public');
+
+        $listing = $this->listing();
+        $dir = "listings/{$listing->id}";
+
+        Storage::disk('public')->put("{$dir}/a.jpg", 'fake');
+        // ملف متبقي بالمجلد ما إله صف بقاعدة البيانات
+        Storage::disk('public')->put("{$dir}/leftover.jpg", 'fake');
+        $listing->images()->create(['listing_image_path' => "{$dir}/a.jpg", 'listing_image_sort_order' => 1]);
+
+        $this->deleteJson("/cms/admins/listing/{$listing->id}")->assertOk();
+
+        Storage::disk('public')->assertMissing("{$dir}/a.jpg");
+        Storage::disk('public')->assertMissing("{$dir}/leftover.jpg");
+        $this->assertFalse(is_dir(Storage::disk('public')->path($dir)));
+    }
 }

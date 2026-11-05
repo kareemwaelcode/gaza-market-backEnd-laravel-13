@@ -115,6 +115,9 @@ class ListingController extends Controller
             Storage::disk('public')->delete($paths);
         }
 
+        // وبعدها مجلد الإعلان نفسه (listings/{id})، وبيمسح معه أي ملف متبقي فيه
+        Storage::disk('public')->deleteDirectory("listings/{$listing->id}");
+
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
     }
 }
