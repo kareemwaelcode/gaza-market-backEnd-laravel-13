@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\HeroSectionController;
 use App\Http\Controllers\ListingCategoryController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\MarketListingController;
 use App\Http\Controllers\NavigationItemController;
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
@@ -74,3 +75,5 @@ Route::post('listing_approve/{id}' , [ListingController::class, 'approve'])->nam
 Route::post('listing_reject/{id}' , [ListingController::class, 'reject'])->name('listing_reject');
 
 });
+
+Route::post('api/market', [MarketListingController::class, 'store'])->middleware('auth')->name('market.store');
