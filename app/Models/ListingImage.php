@@ -33,10 +33,10 @@ class ListingImage extends Model
         return $this->belongsTo(Listing::class, 'listing_id');
     }
 
-    // false = رابط https خارجي (بيانات تجريبية)، فما إله ملف على القرص
+    // false = رابط خارجي (http/https، بيانات تجريبية)، فما إله ملف على القرص
     public function isLocalFile(): bool
     {
-        return ! str_starts_with($this->listing_image_path, 'https://');
+        return ! preg_match('#^https?://#i', $this->listing_image_path);
     }
 
     // رابط الصورة الجاهز للعرض (نفس فكرة avatar_url بـ User)

@@ -20,6 +20,10 @@ class StoreListingRequest extends FormRequest
     // جوال فلسطيني: 10 أرقام، 059 أو 056 (مثال 0591234567)
     public const PHONE_REGEX = '/^05[69]\d{7}$/';
 
+    // واتساب بصيغة دولية: + ثم رمز الدولة (3 أرقام) ثم الرقم بدون صفر بادئ، مثال +970591234567.
+    // الرقم المحلي من 7 إلى 11 خانة، فالحد الأقصى 15 حرفاً وهو طول عمود listing_whatsapp.
+    public const WHATSAPP_REGEX = '/^\+\d{3}[1-9]\d{6,10}$/';
+
     public function authorize(): bool
     {
         // الصلاحية تُضبط عند ربط الطلب بمسار مصادق عليه
@@ -38,7 +42,7 @@ class StoreListingRequest extends FormRequest
             'listing_is_negotiable' => ['nullable', 'boolean'],
             'listing_phone' => ['required', 'string', 'regex:'.self::PHONE_REGEX],
             // اختياري
-            'listing_whatsapp' => ['nullable', 'string', 'regex:'.self::PHONE_REGEX],
+            'listing_whatsapp' => ['nullable', 'string', 'regex:'.self::WHATSAPP_REGEX],
             'listing_category_id' => [
                 'required',
                 'integer',

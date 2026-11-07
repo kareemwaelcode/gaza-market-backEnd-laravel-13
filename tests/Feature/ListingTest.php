@@ -71,6 +71,11 @@ class ListingTest extends TestCase
         $this->assertNull($listing->listing_whatsapp);
     }
 
+    public function test_whatsapp_link_is_null_without_a_whatsapp_number(): void
+    {
+        $this->assertNull($this->listing('pending')->whatsapp_link);
+    }
+
     public function test_status_user_and_published_at_are_not_mass_assignable(): void
     {
         $listing = (new Listing())->fill([
@@ -101,6 +106,39 @@ class ListingTest extends TestCase
     public function test_index_rejects_unknown_status_filter(): void
     {
         $this->getJson('/cms/admins/listing?status=hacked')->assertStatus(422);
+    }
+
+    public function test_index_ignores_an_invalid_filter_and_shows_a_message_in_the_browser(): void
+    {
+        $this->listing('approved', 'Approved item');
+        $this->listing('pending', 'Pending item');
+
+        $this->get('/cms/admins/listing?status=abc')
+            ->assertOk()
+            ->assertSee('Invalid filter value ignored')
+            ->assertSee('Approved item')
+            ->assertSee('Pending item');
+    }
+
+    public function test_index_keeps_valid_filters_when_another_one_is_invalid(): void
+    {
+        $this->listing('approved', 'Approved item');
+        $this->listing('pending', 'Pending item');
+
+        $this->get('/cms/admins/listing?status=approved&area=abc')
+            ->assertOk()
+            ->assertSee('Invalid filter value ignored (area)')
+            ->assertSee('Approved item')
+            ->assertDontSee('Pending item');
+    }
+
+    public function test_index_shows_no_warning_when_filters_are_valid(): void
+    {
+        $this->listing('approved', 'Approved item');
+
+        $this->get('/cms/admins/listing?status=approved')
+            ->assertOk()
+            ->assertDontSee('Invalid filter value ignored');
     }
 
     public function test_approve_publishes_a_pending_listing(): void

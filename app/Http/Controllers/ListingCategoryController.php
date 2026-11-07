@@ -58,7 +58,8 @@ class ListingCategoryController extends Controller
 
     /**
      * listing_category_slug is read-only: any value sent for it is ignored.
-     * Categories are never deleted, they are disabled via is_active.
+     * Categories are normally disabled via is_active. Deleting is allowed only while
+     * the category has no listings (see destroy: otherwise it answers 409).
      */
     public function update(Request $request, string $id)
     {

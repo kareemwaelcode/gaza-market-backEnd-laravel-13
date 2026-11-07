@@ -71,7 +71,7 @@ class StoreListingRequestTest extends TestCase
     public function test_optional_whatsapp_and_negotiable_are_accepted(): void
     {
         $this->assertFalse($this->fails($this->validData([
-            'listing_whatsapp' => '0561234567',
+            'listing_whatsapp' => '+970561234567',
             'listing_is_negotiable' => '1',
         ])));
     }
@@ -97,11 +97,35 @@ class StoreListingRequestTest extends TestCase
         }
     }
 
-    public function test_phone_and_whatsapp_must_match_the_format(): void
+    public function test_phone_must_match_the_local_format(): void
     {
         foreach (['591234567', '05912345678', '0521234567', '059123456a', '+970591234567', ' 0591234567x'] as $phone) {
             $this->assertTrue($this->fails($this->validData(['listing_phone' => $phone])), "phone {$phone}");
-            $this->assertTrue($this->fails($this->validData(['listing_whatsapp' => $phone])), "whatsapp {$phone}");
+        }
+    }
+
+    public function test_whatsapp_must_be_international_with_a_plus_and_three_digit_country_code(): void
+    {
+        $invalid = [
+            '0561234567',          // محلي بدون رمز دولة
+            '970561234567',        // بدون +
+            '00970561234567',      // 00 بدل +
+            '+9700561234567',      // صفر بادئ بعد رمز الدولة
+            '+97056123',           // قصير (رقم محلي أقل من 7 خانات)
+            '+970561234567890',    // طويل (رقم محلي 12 خانة، والمجموع 16 حرف)
+            '+970 561234567',      // فيه فراغ
+            '+97056123456a',       // حرف
+            '+97',                 // رمز ناقص
+        ];
+
+        foreach ($invalid as $whatsapp) {
+            $this->assertTrue($this->fails($this->validData(['listing_whatsapp' => $whatsapp])), "whatsapp {$whatsapp}");
+        }
+
+        // الحد الأقصى 15 حرفاً (يساوي طول العمود)، والأرقام الفلسطينية 970 و972 مقبولة
+        foreach (['+970561234567', '+970591234567', '+972501234567', '+97012345678901'] as $whatsapp) {
+            $this->assertLessThanOrEqual(15, strlen($whatsapp));
+            $this->assertFalse($this->fails($this->validData(['listing_whatsapp' => $whatsapp])), "whatsapp {$whatsapp}");
         }
     }
 

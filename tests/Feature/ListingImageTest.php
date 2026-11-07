@@ -96,6 +96,33 @@ class ListingImageTest extends TestCase
         $this->assertSame('https://example.com/x.jpg', $external->url);
     }
 
+    public function test_url_is_built_from_media_url_and_only_the_relative_path_is_stored(): void
+    {
+        config(['filesystems.disks.public.url' => 'https://cdn.example.com/storage']);
+        Storage::forgetDisk('public');
+
+        $image = $this->listing()->images()->create([
+            'listing_image_path' => 'listings/5/a.jpg',
+            'listing_image_sort_order' => 1,
+        ]);
+
+        $this->assertSame('https://cdn.example.com/storage/listings/5/a.jpg', $image->url);
+        // تغيير الدومين ما بيلمس البيانات: الداتا بيز بتحتفظ بالمسار النسبي فقط
+        $this->assertSame('listings/5/a.jpg', $image->fresh()->listing_image_path);
+    }
+
+    public function test_http_and_https_paths_are_external_files(): void
+    {
+        $listing = $this->listing();
+
+        foreach (['https://example.com/a.jpg', 'http://example.com/a.jpg', 'HTTP://example.com/a.jpg'] as $i => $path) {
+            $image = $listing->images()->create(['listing_image_path' => $path, 'listing_image_sort_order' => $i + 1]);
+
+            $this->assertFalse($image->isLocalFile(), $path);
+            $this->assertSame($path, $image->url);
+        }
+    }
+
     public function test_show_page_renders_the_slider_when_there_are_images(): void
     {
         $listing = $this->listing();

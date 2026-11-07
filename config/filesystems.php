@@ -41,7 +41,10 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // القاعدة (base) لروابط الصور. المسار فقط بيتخزّن بالداتا بيز، والرابط بينبني من هون.
+            // MEDIA_URL مستقل عن APP_URL: دومين ثابت أو CDN (https://cdn.example.com/storage)،
+            // أو '/storage' لو الواجهة على نفس الدومين. لو فاضي بيرجع لـ APP_URL/storage.
+            'url' => rtrim(env('MEDIA_URL') ?: (env('APP_URL', 'http://localhost').'/storage'), '/'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

@@ -8,16 +8,30 @@ use App\Models\ListingCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ListingController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = validator($request->query(), [
+        $validator = validator($request->query(), [
             'status' => ['nullable', Rule::in(Listing::STATUSES)],
             'category' => ['nullable', 'integer'],
             'area' => ['nullable', 'integer'],
-        ])->validate();
+        ]);
+
+        // عميل JSON بيضل ياخد 422 مثل ما كان
+        if ($validator->fails() && $request->expectsJson()) {
+            throw new ValidationException($validator);
+        }
+
+        // المتصفح: القيمة الغلط بتنتجاهل وبتظهر القائمة بدون هاد الفلتر مع تنبيه،
+        // بدل redirect للصفحة السابقة بدون رسالة
+        $ignoredFilters = $validator->errors()->keys();
+        $filters = collect($request->query())
+            ->only(['status', 'category', 'area'])
+            ->except($ignoredFilters)
+            ->all();
 
         $listings = Listing::query()
             ->with([
@@ -30,12 +44,12 @@ class ListingController extends Controller
             ->when($filters['area'] ?? null, fn ($q, $id) => $q->where('area_id', $id))
             ->orderByDesc('id')
             ->paginate(10)
-            ->withQueryString();
+            ->appends($filters);
 
         $categories = ListingCategory::ordered()->get(['id', 'listing_category_name_en', 'listing_category_name_ar']);
         $areas = Area::ordered()->get(['id', 'area_name_ar']);
 
-        return response()->view('cms.listing.index', compact('listings', 'categories', 'areas', 'filters'));
+        return response()->view('cms.listing.index', compact('listings', 'categories', 'areas', 'filters', 'ignoredFilters'));
     }
 
     public function show(string $id)

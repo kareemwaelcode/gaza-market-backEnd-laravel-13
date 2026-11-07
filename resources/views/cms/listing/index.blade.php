@@ -22,6 +22,12 @@
                 <p class="m-card__subtitle">Review user listings. Pending listings stay hidden until approved.</p>
             </header>
 
+            @if (! empty($ignoredFilters))
+                <div class="alert alert-warning" role="alert" style="margin: 0 16px 16px;">
+                    Invalid filter value ignored ({{ implode(', ', $ignoredFilters) }}). Showing results without it.
+                </div>
+            @endif
+
             <form method="GET" action="{{ route('listing.index') }}" class="row g-2 mb-3" style="padding: 0 16px;">
                 <div class="col-lg-3">
                     <select name="status" class="form-control">

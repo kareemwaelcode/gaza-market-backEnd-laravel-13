@@ -116,7 +116,7 @@ class ListingSeeder extends Seeder
                     'listing_price' => $data['price'],
                     'listing_is_negotiable' => $data['negotiable'],
                     'listing_phone' => '0590000000',
-                    'listing_whatsapp' => '970590000000',
+                    'listing_whatsapp' => '+970590000000',
                     'listing_category_id' => $data['category']->id,
                     'area_id' => $area->id,
                 ]);

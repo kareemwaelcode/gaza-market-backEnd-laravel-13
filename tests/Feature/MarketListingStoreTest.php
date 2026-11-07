@@ -160,6 +160,26 @@ class MarketListingStoreTest extends TestCase
         $this->assertNull($listing->listing_whatsapp);
     }
 
+    public function test_international_whatsapp_is_saved_and_builds_a_wa_me_link(): void
+    {
+        Storage::fake('public');
+
+        $this->submit($this->makeUser(), $this->validData(['listing_whatsapp' => '+970561234567']))->assertCreated();
+
+        $listing = Listing::firstOrFail();
+        $this->assertSame('+970561234567', $listing->listing_whatsapp);
+        $this->assertSame('https://wa.me/970561234567', $listing->whatsapp_link);
+    }
+
+    public function test_local_format_whatsapp_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $this->submit($this->makeUser(), $this->validData(['listing_whatsapp' => '0561234567']))->assertStatus(400);
+
+        $this->assertDatabaseCount('listings', 0);
+    }
+
     public function test_invalid_image_sets_are_rejected_without_touching_the_database_or_disk(): void
     {
         Storage::fake('public');
