@@ -34,7 +34,7 @@ class StorePlaceRequest extends FormRequest
             'region' => ['required', 'string', 'max:45', Rule::exists('areas', 'area_slug')],
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'regex:'.self::PHONE_REGEX],
-            'whatsapp' => ['string', 'regex:'.self::WHATSAPP_REGEX],
+            'whatsapp' => ['required', 'string', 'regex:'.self::WHATSAPP_REGEX],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }

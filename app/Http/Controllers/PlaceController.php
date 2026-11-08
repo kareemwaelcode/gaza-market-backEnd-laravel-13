@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendPlaceStatusMessage;
 use App\Models\Area;
 use App\Models\Place;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -59,13 +62,24 @@ public function approve(string $id)
 {
     $place = Place::findOrFail($id);
 
-    $updated = Place::whereKey($place->id)
-        ->whereIn('place_status', [Place::STATUS_PENDING, Place::STATUS_REJECTED])
-        ->update([
-            'place_status' => Place::STATUS_APPROVED,
-            'place_approved_at' => now(),
-            'updated_at' => now(),
-        ]);
+    $updated = DB::transaction(function () use ($place) {
+        $updated = Place::whereKey($place->id)
+            ->whereIn('place_status', [Place::STATUS_PENDING, Place::STATUS_REJECTED])
+            ->update([
+                'place_status' => Place::STATUS_APPROVED,
+                'place_approved_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        if ($updated) {
+            User::whereKey($place->user_id)->where('user_role', 'user')->update(['user_role' => 'store_owner']);
+
+            // يُرسل بعد الـ commit، وفشل الواتساب لا يلغي القبول.
+            SendPlaceStatusMessage::dispatch($place->id, Place::STATUS_APPROVED);
+        }
+
+        return $updated;
+    });
 
     if (! $updated) {
         return response()->json(['icon' => 'error', 'title' => 'Only pending or rejected places can be approved'], 409);
@@ -77,14 +91,28 @@ public function approve(string $id)
 public function reject(string $id)
 {
     $place = Place::findOrFail($id);
+    $wasApproved = $place->place_status === Place::STATUS_APPROVED;
 
-    $updated = Place::whereKey($place->id)
-        ->whereIn('place_status', [Place::STATUS_PENDING, Place::STATUS_APPROVED])
-        ->update([
-            'place_status' => Place::STATUS_REJECTED,
-            'place_approved_at' => null,
-            'updated_at' => now(),
-        ]);
+    $updated = DB::transaction(function () use ($place, $wasApproved) {
+        $updated = Place::whereKey($place->id)
+            ->whereIn('place_status', [Place::STATUS_PENDING, Place::STATUS_APPROVED])
+            ->update([
+                'place_status' => Place::STATUS_REJECTED,
+                'place_approved_at' => null,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated) {
+            // سحب صلاحية صاحب المحل لو كان المحل معتمداً قبل الرفض.
+            if ($wasApproved) {
+                User::whereKey($place->user_id)->where('user_role', 'store_owner')->update(['user_role' => 'user']);
+            }
+
+            SendPlaceStatusMessage::dispatch($place->id, Place::STATUS_REJECTED);
+        }
+
+        return $updated;
+    });
 
     if (! $updated) {
         return response()->json(['icon' => 'error', 'title' => 'Only pending or approved places can be rejected'], 409);
