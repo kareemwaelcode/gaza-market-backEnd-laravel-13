@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -73,5 +74,10 @@ class User extends Authenticatable
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class, 'area_id');
+    }
+    
+        public function savedListings(): HasMany
+    {
+        return $this->hasMany(SavedListing::class, 'user_id');
     }
 }

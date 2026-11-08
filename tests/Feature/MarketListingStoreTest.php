@@ -13,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class MarketListingStoreTest extends TestCase
@@ -222,5 +223,101 @@ class MarketListingStoreTest extends TestCase
         $this->assertDatabaseCount('listings', 0);
         $this->assertDatabaseCount('listing_images', 0);
         $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+        public function test_double_submit_creates_one_listing_and_stores_images_once(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $data = $this->validData();
+
+        $first = $this->submit($user, array_merge($data, ['images' => $this->images(2)]));
+        $second = $this->submit($user, array_merge($data, ['images' => $this->images(2)]));
+
+        $first->assertCreated();
+        $second->assertOk()
+            ->assertJsonPath('data.id', $first->json('data.id'))
+            ->assertJsonPath('data.images', $first->json('data.images'));
+
+        $this->assertDatabaseCount('listings', 1);
+        $this->assertDatabaseCount('listing_images', 2);
+        $this->assertCount(2, Storage::disk('public')->allFiles());
+    }
+
+    public function test_a_different_listing_from_the_same_user_is_created_normally(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $data = $this->validData();
+
+        $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+        $this->submit($user, array_merge($data, ['listing_title' => 'Another item', 'images' => $this->images(1)]))->assertCreated();
+
+        $this->assertDatabaseCount('listings', 2);
+    }
+
+    public function test_the_same_data_from_another_user_is_created_normally(): void
+    {
+        Storage::fake('public');
+        $data = $this->validData();
+
+        $this->submit($this->makeUser(), array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+        $this->submit($this->makeUser(), array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+
+        $this->assertDatabaseCount('listings', 2);
+    }
+
+    public function test_the_same_data_after_the_duplicate_window_is_created_normally(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $data = $this->validData();
+
+        $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+
+        $this->travel(61)->seconds();
+
+        $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+
+        $this->assertDatabaseCount('listings', 2);
+    }
+
+    public function test_a_request_is_rejected_while_the_users_lock_is_held(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+
+        $lock = Cache::lock("listing-store:{$user->id}", 15);
+        $this->assertTrue($lock->get());
+
+        $this->submit($user, $this->validData())
+            ->assertStatus(409)
+            ->assertJsonPath('icon', 'error');
+
+        $this->assertDatabaseCount('listings', 0);
+        $this->assertDatabaseCount('listing_images', 0);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+
+        $lock->release();
+    }
+
+    public function test_the_lock_is_released_after_a_failed_request_so_a_retry_succeeds(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $data = $this->validData();
+
+        $calls = 0;
+        ListingImage::creating(function () use (&$calls) {
+            if (++$calls === 1) {
+                throw new RuntimeException('boom');
+            }
+        });
+
+        $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertStatus(500);
+        $this->assertDatabaseCount('listings', 0);
+
+        $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertCreated();
+        $this->assertDatabaseCount('listings', 1);
     }
 }

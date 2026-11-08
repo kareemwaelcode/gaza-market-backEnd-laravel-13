@@ -80,7 +80,12 @@ class Listing extends Model
         return $this->hasMany(ListingImage::class, 'listing_id')
             ->orderBy('listing_image_sort_order');
     }
-
+    
+    // من حفظ هذا الإعلان (المحفوظات)
+    public function saves(): HasMany
+    {
+        return $this->hasMany(SavedListing::class, 'listing_id');
+    }
     /* ---------------- Scopes ---------------- */
 
     // صفحة السوق: المعتمد فقط، الأحدث نشراً أولاً
