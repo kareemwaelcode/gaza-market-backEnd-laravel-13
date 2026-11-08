@@ -8,7 +8,9 @@ use App\Http\Controllers\HeroSectionController;
 use App\Http\Controllers\ListingCategoryController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MarketListingController;
+use App\Http\Controllers\MarketPlaceController;
 use App\Http\Controllers\NavigationItemController;
+use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\PointTransactionController;
@@ -58,6 +60,9 @@ Route::prefix('cms/admins/')->group(function () {
     Route::resource('listing', ListingController::class)->only(['index', 'show', 'destroy']);
     Route::post('listing_approve/{id}', [ListingController::class, 'approve'])->name('listing_approve');
     Route::post('listing_reject/{id}', [ListingController::class, 'reject'])->name('listing_reject');
+    Route::resource('place', PlaceController::class)->only(['index', 'show', 'destroy']);
+    Route::post('place_approve/{id}', [PlaceController::class, 'approve'])->name('place_approve');
+    Route::post('place_reject/{id}', [PlaceController::class, 'reject'])->name('place_reject');
 });
 
 /*
@@ -75,3 +80,8 @@ Route::middleware(['auth', 'throttle:saved-listings'])->prefix('api/market')->na
         Route::post('{listing}/save', [SavedListingController::class, 'store'])->where('listing', '[0-9]{1,18}')->name('store');
         Route::delete('{listing}/save', [SavedListingController::class, 'destroy'])->where('listing', '[0-9]{1,18}')->name('destroy');
     });
+
+Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
+    Route::post('', [MarketPlaceController::class, 'store'])->name('store');
+    Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
+});

@@ -30,5 +30,8 @@ class AppServiceProvider extends ServiceProvider
                 // حفظ وإلغاء حفظ ومحفوظاتي: 60 طلب بالدقيقة لكل مستخدم
         RateLimiter::for('saved-listings', fn (Request $request) => Limit::perMinute(60)
             ->by('saved-listings:'.($request->user()?->id ?? $request->ip())));
+
+        RateLimiter::for('places', fn (Request $request) => Limit::perMinute(10)
+            ->by('places:'.($request->user()?->id ?? $request->ip())));
     }
 }
