@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
 use App\Http\Controllers\HeroSectionController;
@@ -84,4 +85,17 @@ Route::middleware(['auth', 'throttle:saved-listings'])->prefix('api/market')->na
 Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
     Route::post('', [MarketPlaceController::class, 'store'])->name('store');
     Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
+});
+
+/*
+|--------------------------------------------------------------------------
+| الدخول والتسجيل بالواتساب  —  /api/auth/...
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('api/auth')->name('auth.')->group(function () {
+    Route::get('me', [AuthController::class, 'me'])->name('me');
+    Route::post('otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:otp-request')->name('otp.request');
+    Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp-verify')->name('otp.verify');
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 });

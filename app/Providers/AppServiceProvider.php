@@ -2,36 +2,77 @@
 
 namespace App\Providers;
 
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\RateLimiter;
+use App\Services\WhatsApp\LogWhatsAppSender;
+use App\Services\WhatsApp\WhatsAppSendGuard;
+use App\Services\WhatsApp\WhatsAppSender;
+use App\Services\WhatsApp\WuapiWhatsAppSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+    $this->app->bind(WhatsAppSender::class, function () {
+    $driver = (string) config('whatsapp.driver');
+
+    return match ($driver) {
+        'log' => new LogWhatsAppSender(),
+
+        'wuapi' => new WuapiWhatsAppSender(
+            config('whatsapp.wuapi.base_url'),
+            config('whatsapp.wuapi.api_key'),
+            config('whatsapp.wuapi.account_id'),
+            (int) config('whatsapp.wuapi.timeout', 10),
+            WhatsAppSendGuard::fromConfig(),
+        ),
+
+        default => throw new InvalidArgumentException(
+            "Unsupported WhatsApp driver [{$driver}]."
+        ),
+    };
+});
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
-    {
-        Schema::defaultStringLength(191);
-        Paginator::useBootstrap();
+{
+    Schema::defaultStringLength(191);
+    Paginator::useBootstrap();
+    RateLimiter::for('saved-listings', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('saved-listings:' . ($request->user()?->id ?? $request->ip()))
+);
 
-                // حفظ وإلغاء حفظ ومحفوظاتي: 60 طلب بالدقيقة لكل مستخدم
-        RateLimiter::for('saved-listings', fn (Request $request) => Limit::perMinute(60)
-            ->by('saved-listings:'.($request->user()?->id ?? $request->ip())));
+    RateLimiter::for('places', fn (Request $request) =>
+    Limit::perMinute(10)
+        ->by('places:' . ($request->user()?->id ?? $request->ip()))
+);  
 
-        RateLimiter::for('places', fn (Request $request) => Limit::perMinute(10)
-            ->by('places:'.($request->user()?->id ?? $request->ip())));
+    RateLimiter::for('otp-request', fn (Request $request) => [
+    Limit::perMinute(10)
+        ->by('otp-request:ip:' . $request->ip()),
+
+    Limit::perHour(10)
+        ->by('otp-request:phone:' . hash(
+            'sha256',
+            (string) $request->input('phone')
+        )),
+]);
+
+    RateLimiter::for('otp-verify', fn (Request $request) => [
+    Limit::perMinute(20)
+        ->by('otp-verify:ip:' . $request->ip()),
+
+    Limit::perHour(20)
+        ->by('otp-verify:phone:' . hash(
+            'sha256',
+            (string) $request->input('phone')
+        )),
+]);
     }
 }
