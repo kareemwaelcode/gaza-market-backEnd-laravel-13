@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 class WuapiWhatsAppSender implements WhatsAppSender
 {
     public function __construct(
+        // Constructor Property Promotion
         private readonly ?string $baseUrl,
         private readonly ?string $apiKey,
         private readonly ?string $accountId,
