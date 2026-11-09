@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Http;
 class WuapiWhatsAppSender implements WhatsAppSender
 {
     public function __construct(
-        // Constructor Property Promotion
         private readonly ?string $baseUrl,
         private readonly ?string $apiKey,
         private readonly ?string $accountId,
         private readonly int $timeout = 10,
+        private readonly ?WhatsAppSendGuard $guard = null,
     ) {}
 
     public function send(string $to, string $text, ?string $idempotencyKey = null): void
@@ -20,6 +20,9 @@ class WuapiWhatsAppSender implements WhatsAppSender
         if (blank($this->baseUrl) || blank($this->apiKey) || blank($this->accountId)) {
             throw WhatsAppSendException::permanent('wuapi is not configured (base url, api key or account id missing).');
         }
+
+        // السقف اليومي وقائمة الأرقام المسموحة: قبل أي اتصال بالمزوّد.
+        $this->guard?->acquire($to);
 
         $request = Http::baseUrl($this->baseUrl)
             ->withToken($this->apiKey)
@@ -38,12 +41,17 @@ class WuapiWhatsAppSender implements WhatsAppSender
                 'text' => $text,
             ]);
         } catch (ConnectionException) {
+            $this->guard?->release();
+
             throw WhatsAppSendException::retryable('wuapi connection failed.');
         }
 
         if ($response->successful()) {
             return;
         }
+
+        // الإرسال الفاشل ما يُحتسب من السقف اليومي.
+        $this->guard?->release();
 
         $status = $response->status();
 

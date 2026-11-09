@@ -22,5 +22,11 @@ return [
         'account_id' => env('WUAPI_ACCOUNT_ID'),
         'timeout' => (int) env('WUAPI_TIMEOUT', 10),
     ],
+    
+    'daily_limit' => (int) env('WHATSAPP_DAILY_LIMIT', 0),
+    'allowed_to' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('WHATSAPP_ALLOWED_TO', ''))
+    ))),
 
 ];
