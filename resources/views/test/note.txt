@@ -127,3 +127,15 @@ listing_image_path مش محمي من الـ SSRF أو الروابط الخار
 
 
 نقطة مهمة لمستقبل غزة ماركت: بما أنك تستهدف أكثر من 100 ألف مستخدم، تأكد أن Cache الخاص بـ Rate Limiter يستخدم Redis مش file أو array، حتى تكون العدادات مشتركة بين جميع Workers وسيرفرات التطبيق. كذلك يجب أن تكون عمليات Redis والـ Queue مستقرة ومراقبة.
+
+
+
+
+
+
+
+
+
+
+php artisan config:clear
+php artisan queue:work

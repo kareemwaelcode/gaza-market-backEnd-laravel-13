@@ -60,16 +60,15 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
 private function message(): string
 {
     $minutes = max(1, intdiv((int) config('otp.ttl'), 60));
+    $minutes = strtr((string) $minutes, '0123456789', '٠١٢٣٤٥٦٧٨٩');
 
     $intro = $this->purpose === 'dashboard'
-        ? '🔐 كود دخول لوحة التحكم في غزة ماركت'
-        : '🎉 كود التفعيل الخاص بك في غزة ماركت';
+        ? '🔐 كود دخول لوحة التحكم في غزة ماركت:'
+        : '🔐 رمز التحقق الخاص بك في غزة ماركت:';
 
-    return "👋 مرحباً بك في غزة ماركت!\n\n"
-        ."{$intro}:\n"
-        ."🔑 {$this->code}\n\n"
-        ."⏳ صالح لمدة {$minutes} دقائق.\n"
-        ."⚠️ لا تشارك هذا الرمز مع أي شخص.";
+    return "{$intro}\n\n"
+        ."{$this->code}\n\n"
+        ."صالح لمدة {$minutes} دقائق. لا تشاركه مع أحد.";
 }
 
     private function idempotencyKey(): string
