@@ -110,6 +110,32 @@ class WhatsAppGuardTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_wuapi_request_has_the_expected_shape(): void
+    {
+        Http::fake(['api.wuapi.dev/*' => Http::response(['id' => 'm'], 202)]);
+
+        (new WuapiWhatsAppSender('https://api.wuapi.dev', 'test-key', 'acc-1', 5))
+            ->send('+970591234567', 'hello', 'idem-1');
+
+        Http::assertSent(function ($request) {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://api.wuapi.dev/v1/messages'
+                && $request->hasHeader('Authorization', 'Bearer test-key')
+                && $request->hasHeader('Idempotency-Key', 'idem-1')
+                && $request->data() === ['accountId' => 'acc-1', 'to' => '+970591234567', 'text' => 'hello'];
+        });
+    }
+
+    public function test_wuapi_refuses_to_send_when_not_configured(): void
+    {
+        Http::fake();
+
+        $e = $this->sendExpectingFailure(new WuapiWhatsAppSender('https://api.wuapi.dev', null, 'acc', 5), '+970591234567');
+
+        $this->assertStringContainsString('not configured', $e->getMessage());
+        Http::assertNothingSent();
+    }
+
     public function test_log_driver_is_the_default_so_nothing_is_sent_without_configuration(): void
     {
         $this->assertSame('log', config('whatsapp.driver'));
