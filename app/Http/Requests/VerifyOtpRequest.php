@@ -10,7 +10,7 @@ class VerifyOtpRequest extends AuthRequest
     {
         return [
             'purpose' => ['required', 'string', Rule::in(config('otp.purposes'))],
-            'phone' => ['required', 'string', 'regex:'.StorePlaceRequest::PHONE_REGEX],
+            'phone' => ['required', 'string', 'regex:'.self::PHONE_REGEX],
             'code' => ['required', 'string', 'regex:/^\d{'.(int) config('otp.length').'}$/'],
         ];
     }

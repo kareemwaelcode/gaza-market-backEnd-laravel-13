@@ -60,7 +60,11 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
 private function message(): string
 {
     $minutes = max(1, intdiv((int) config('otp.ttl'), 60));
-    $minutes = strtr((string) $minutes, '0123456789', '٠١٢٣٤٥٦٧٨٩');
+    // مصفوفة وليس نصّين: strtr بثلاثة معاملات يعمل على البايتات فيكسر أحرف UTF-8 متعددة البايتات.
+    $minutes = strtr((string) $minutes, [
+        '0' => '٠', '1' => '١', '2' => '٢', '3' => '٣', '4' => '٤',
+        '5' => '٥', '6' => '٦', '7' => '٧', '8' => '٨', '9' => '٩',
+    ]);
 
     $intro = $this->purpose === 'dashboard'
         ? '🔐 كود دخول لوحة التحكم في غزة ماركت:'

@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendOtpMessage;
+use App\Jobs\SendPlaceStatusMessage;
 use App\Models\Area;
 use App\Models\Place;
 use App\Models\Regions;
 use App\Models\User;
 use App\Services\OtpService;
 use App\Services\WhatsApp\WhatsAppSender;
+use App\Services\WhatsApp\WhatsAppSendException;
+use App\Services\WhatsApp\WhatsAppSendGuard;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -163,12 +166,95 @@ class OtpAuthTest extends TestCase
 
     public function test_phone_format_is_validated_and_arabic_digits_are_normalised(): void
     {
-        foreach (['0521234567', '+970591234567', '970591234567', '059123456', 'abc', ''] as $bad) {
+        foreach (['0521234567', '972521234567', '97259123456', '9725912345678', '9715912345678', '059123456', 'abc', ''] as $bad) {
             $this->requestOtp('login', $bad)->assertStatus(422)->assertJsonStructure(['errors' => ['phone']]);
         }
 
         $this->requestOtp('login', '٠٥٩ ١٢٣-٤٥٦٧')->assertStatus(202);
         $this->requestOtp('nope')->assertStatus(422)->assertJsonStructure(['errors' => ['purpose']]);
+    }
+
+    public function test_otp_message_is_valid_utf8_and_can_be_sent_as_json(): void
+    {
+        $this->makeUser();
+
+        foreach ([60, 120, 300, 600, 900] as $ttl) {
+            Cache::flush();
+            config(['otp.ttl' => $ttl]);
+            $this->sender->sent = [];
+
+            $this->requestOtp('login')->assertStatus(202);
+
+            $text = $this->sender->sent[0]['text'];
+            $this->assertTrue(mb_check_encoding($text, 'UTF-8'), "UTF-8 غير صالح عند ttl={$ttl}");
+            $this->assertNotFalse(json_encode(['text' => $text]), "json_encode فشل عند ttl={$ttl}");
+        }
+    }
+
+    // ---------------------------------------------------------------- صيغ الأرقام (056/059 + 970/972)
+
+    public function test_every_accepted_phone_format_registers_with_the_canonical_number_and_the_right_destination(): void
+    {
+        $cases = [
+            // المدخل => [المخزّن بقاعدة البيانات, رقم الإرسال E.164]
+            '0597379047' => ['0597379047', '+970597379047'],
+            '+970567883165' => ['0567883165', '+970567883165'],
+            '++972592194533' => ['972592194533', '+972592194533'],
+            '972567883164' => ['972567883164', '+972567883164'],
+            '00972599145431' => ['972599145431', '+972599145431'],
+            '00970592000111' => ['0592000111', '+970592000111'],
+        ];
+
+        foreach ($cases as $input => [$stored, $to]) {
+            $input = (string) $input;
+
+            $this->requestOtp('register', $input, ['full_name' => 'Test User'])->assertStatus(202);
+            $this->assertSame($to, end($this->sender->sent)['to'], "الوجهة لـ {$input}");
+
+            $this->verifyOtp('register', $this->sender->lastCode(), $input)
+                ->assertCreated()
+                ->assertJsonPath('data.phone', $stored);
+
+            $this->assertNotNull(User::where('user_phone', $stored)->first(), "المخزّن لـ {$input}");
+        }
+    }
+
+    public function test_970_international_format_is_the_same_account_as_the_local_number(): void
+    {
+        $user = $this->makeUser(['user_phone' => '0597379047']);
+
+        foreach (['970597379047', '+970597379047'] as $input) {
+            Cache::flush();
+            $this->requestOtp('login', $input)->assertStatus(202);
+            $this->verifyOtp('login', $this->sender->lastCode(), $input)
+                ->assertOk()
+                ->assertJsonPath('data.id', $user->id);
+        }
+
+        $this->assertSame(1, User::where('user_phone', 'like', '%597379047')->count());
+    }
+
+    public function test_972_number_is_a_separate_account_from_the_local_number(): void
+    {
+        $this->makeUser(['user_phone' => '0592194533']);
+
+        $this->requestOtp('login', '972592194533')->assertStatus(202);
+
+        $this->assertSame([], $this->sender->sent, 'رقم 972 مختلف عن المحلي، فما في حساب مؤهل');
+    }
+
+    public function test_allowed_list_accepts_the_test_numbers_in_any_format(): void
+    {
+        $guard = new WhatsAppSendGuard(0, ['+970597379047', '++972592194533', '972567883164']);
+
+        foreach (['0597379047', '972592194533', '972567883164'] as $stored) {
+            $to = SendPlaceStatusMessage::toE164($stored);
+            $this->assertNotNull($to);
+            $guard->acquire($to);
+        }
+
+        $this->expectException(WhatsAppSendException::class);
+        $guard->acquire((string) SendPlaceStatusMessage::toE164('0599145431'));
     }
 
     // ---------------------------------------------------------------- الدخول
