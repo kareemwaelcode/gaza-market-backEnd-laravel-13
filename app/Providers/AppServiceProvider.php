@@ -53,6 +53,16 @@ class AppServiceProvider extends ServiceProvider
         ->by('places:' . ($request->user()?->id ?? $request->ip()))
 );  
 
+    RateLimiter::for('dashboard', fn (Request $request) =>
+    Limit::perMinute(30)
+        ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))
+);
+
+    RateLimiter::for('dashboard-upload', fn (Request $request) =>
+    Limit::perMinute(10)
+        ->by('dashboard-upload:' . ($request->user()?->id ?? $request->ip()))
+);
+
     RateLimiter::for('otp-request', fn (Request $request) => [
     Limit::perMinute(10)
         ->by('otp-request:ip:' . $request->ip()),

@@ -5,6 +5,7 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategoryGroupController;
+use App\Http\Controllers\DashboardPlaceController;
 use App\Http\Controllers\HeroSectionController;
 use App\Http\Controllers\ListingCategoryController;
 use App\Http\Controllers\ListingController;
@@ -85,6 +86,19 @@ Route::middleware(['auth', 'throttle:saved-listings'])->prefix('api/market')->na
 Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
     Route::post('', [MarketPlaceController::class, 'store'])->name('store');
     Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
+});
+
+/*
+|--------------------------------------------------------------------------
+| لوحة صاحب المحل  —  /api/dashboard/...
+|--------------------------------------------------------------------------
+*/
+
+// store.owner بيرجع 401 (UNAUTHENTICATED) للزائر و403 (FORBIDDEN) لغير مالك محل معتمد.
+Route::middleware(['store.owner', 'throttle:dashboard'])->prefix('api/dashboard')->name('owner.')->group(function () {
+    Route::get('place', [DashboardPlaceController::class, 'show'])->name('place.show');
+    Route::patch('place', [DashboardPlaceController::class, 'update'])->name('place.update');
+    Route::post('place/logo', [DashboardPlaceController::class, 'logo'])->middleware('throttle:dashboard-upload')->name('place.logo');
 });
 
 /*

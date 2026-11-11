@@ -79,6 +79,8 @@ git add .
 git commit -m "Update project"
 git push
 
+php artisan config:clear
+php artisan queue:work
 
 
 استخدم موضوع ال Debouncingبعد مرور  500ms يتم إرسال Request واحد فقط عن كلمة
@@ -137,5 +139,35 @@ listing_image_path مش محمي من الـ SSRF أو الروابط الخار
 
 
 
-php artisan config:clear
-php artisan queue:work
+
+
+
+
+
+
+
+
+تعديلات الفرونت (gaza-market)
+#	التعديل	الملفات
+ف١	تسجيل ودخول المنصة بالـ OTP الحقيقي بدل DEMO_OTP: طلب الكود والتحقق (register وlogin)، والتعامل مع الأخطاء INVALID_CODE وTHROTTLED (مع retry_after) وACCOUNT_EXISTS	js/main.js
+ف٢	الـ logout يستدعي /api/auth/logout فعلياً	js/auth.js
+ف٣	دخول اللوحة من باسورد إلى OTP (purpose: dashboard)، وتغيير whatsapp إلى phone، وتعامل مع FORBIDDEN	dashboard-users/auth/auth-api.js، dashboard-auth.js، login.html
+ف٤	إزالة أو إخفاء صفحتي نسيت كلمة السر وإعادة التعيين (ما إلهم لزوم بالـ OTP)	forgot-password.html، reset-password.html
+ف٥	حارس اللوحة يقرأ شكل رد /me الجديد	dashboard-users/auth/auth-guard.js
+ف٦	رابط الـ CSRF من /sanctum/csrf-cookie إلى /api/auth/me	GM_CONFIG أو الملفات الأربعة: add-store-api.js، places-api.js، market-api.js، auth-api.js
+ف٧	إيقاف الـ mock للتست الحقيقي (USE_MOCK: false)، وتعديل الـ flag الثابت بـ auth-api.js	GM_CONFIG، auth-api.js
+ف٨	تسجيل المحل: التعامل مع 401 (يطلب تسجيل دخول) وALREADY_HAS_PLACE	js/add-store-api.js، js/add-store.js (لازم أتأكد من الحالتين)
+ف٩	صفحات اللوحة (حجوزات، منيو، طاولات، إعلانات) تفضل على الـ mock لحد ما ب٦ يخلص	js/dashboard/*
+ف١٠	إذا اخترنا /places/login كرابط، نعمل له مسار أو redirect	حسب الاستضافة
+
+
+
+
+
+
+
+
+
+سيناريو المحلات
+
+السيناريو هيكون كتالي المستخدم هيسجل محل جديد الكطلب هيوصلني ع لوحة التحكم اذا انا قبلت الطلب هيوصل رسالة ع رقم الوتس اب تاع المحل انو تم قبول محلك وهي رابط لوحة التحكم تاعتك الحين لازم يعرضلو محتوى لوحة التحكم الخاص في محلو يعني مطعم هيعطيه بيانات لوحة التحكم والمحتوى مطعم وهيك فهمت علي وفي شغلة مش عارف اذا انت ذاكرها الحين في لوحة التحكم في عندي باقي مجانية وباقة مدفوعة اول ما ابعتلو رابط الوحة ويفوت هيكون ع المجانية اكيد ولو بدو يشترك في الباقة المدفوعة هيحول المبلغ ع حسابي ويبعتلي صورة اشعار التحويل ونا هدخل ع محلو في لوحة التحكم وفعلو اللباقة من عندي فهمت علي ؟ 

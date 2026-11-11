@@ -304,7 +304,7 @@ class OtpAuthTest extends TestCase
         $user->save();
 
         $this->verifyOtp('login', $code)->assertStatus(422)->assertJsonPath('code', 'INVALID_CODE');
-        $this->getJson('/api/auth/me')->assertJsonPath('data', null);
+        $this->getJson('/api/auth/me')->assertUnauthorized()->assertJsonPath('code', 'UNAUTHENTICATED');
     }
 
     // ---------------------------------------------------------------- قواعد الكود
@@ -502,14 +502,14 @@ class OtpAuthTest extends TestCase
         $place->save();
 
         $this->verifyOtp('dashboard', $code)->assertStatus(403)->assertJsonPath('code', 'FORBIDDEN');
-        $this->getJson('/api/auth/me')->assertJsonPath('data', null);
+        $this->getJson('/api/auth/me')->assertUnauthorized()->assertJsonPath('code', 'UNAUTHENTICATED');
     }
 
     // ---------------------------------------------------------------- الجلسة
 
-    public function test_me_is_null_for_guests_and_logout_ends_the_session(): void
+    public function test_me_is_unauthorized_for_guests_and_logout_ends_the_session(): void
     {
-        $this->getJson('/api/auth/me')->assertOk()->assertJsonPath('data', null);
+        $this->getJson('/api/auth/me')->assertUnauthorized()->assertJsonPath('code', 'UNAUTHENTICATED');
 
         $user = $this->makeUser();
         $this->actingAs($user)->getJson('/api/auth/me')->assertJsonPath('data.id', $user->id);
@@ -517,6 +517,14 @@ class OtpAuthTest extends TestCase
         $this->postJson('/api/auth/logout')->assertNoContent();
         $this->assertGuest();
         $this->postJson('/api/auth/logout')->assertNoContent();
+    }
+
+    public function test_me_unauthorized_response_still_sets_the_xsrf_cookie(): void
+    {
+        // الفرونت يستدعي /me كأول طلب ليأخذ XSRF cookie قبل أي POST، ويجب أن تنزل مع رد الـ 401 أيضاً.
+        $response = $this->getJson('/api/auth/me')->assertUnauthorized();
+
+        $this->assertNotNull($response->getCookie('XSRF-TOKEN', false));
     }
 
     public function test_me_never_exposes_password_or_internal_fields(): void

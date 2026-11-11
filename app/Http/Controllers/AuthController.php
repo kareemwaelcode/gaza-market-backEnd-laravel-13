@@ -26,12 +26,19 @@ class AuthController extends Controller
         private readonly UserAccountService $accounts,
     ) {}
 
-    /** المستخدم الحالي أو null. يُستخدم أيضاً لجلب XSRF cookie قبل أول POST من الفرونت. */
+    /**
+     * المستخدم الحالي، أو 401 للزائر.
+     * يُستخدم أيضاً لجلب XSRF cookie قبل أول POST من الفرونت (الـ cookie تُرسل مع الرد حتى لو كان 401).
+     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        return response()->json(['data' => $user ? $this->payload($user) : null]);
+        if ($user === null) {
+            return $this->failure('UNAUTHENTICATED', 401);
+        }
+
+        return response()->json(['data' => $this->payload($user)]);
     }
 
     public function requestOtp(RequestOtpRequest $request): JsonResponse
