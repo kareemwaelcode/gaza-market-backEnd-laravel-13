@@ -16,9 +16,9 @@ use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-    $this->app->bind(WhatsAppSender::class, function () {
+public function register(): void
+{
+$this->app->bind(WhatsAppSender::class, function () {
     $driver = (string) config('whatsapp.driver');
 
     return match ($driver) {
@@ -37,33 +37,40 @@ class AppServiceProvider extends ServiceProvider
         ),
     };
 });
-    }
+}
 
-    public function boot(): void
+public function boot(): void
 {
-    Schema::defaultStringLength(191);
-    Paginator::useBootstrap();
-    RateLimiter::for('saved-listings', fn (Request $request) =>
+Schema::defaultStringLength(191);
+Paginator::useBootstrap();
+
+RateLimiter::for('saved-listings', fn (Request $request) =>
     Limit::perMinute(60)
         ->by('saved-listings:' . ($request->user()?->id ?? $request->ip()))
 );
 
-    RateLimiter::for('places', fn (Request $request) =>
+RateLimiter::for('places', fn (Request $request) =>
     Limit::perMinute(10)
         ->by('places:' . ($request->user()?->id ?? $request->ip()))
-);  
+);
 
-    RateLimiter::for('dashboard', fn (Request $request) =>
+// تسجيل زيارة محل (جديد)
+RateLimiter::for('place-visit', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('place-visit:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('dashboard', fn (Request $request) =>
     Limit::perMinute(30)
         ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))
 );
 
-    RateLimiter::for('dashboard-upload', fn (Request $request) =>
+RateLimiter::for('dashboard-upload', fn (Request $request) =>
     Limit::perMinute(10)
         ->by('dashboard-upload:' . ($request->user()?->id ?? $request->ip()))
 );
 
-    RateLimiter::for('otp-request', fn (Request $request) => [
+RateLimiter::for('otp-request', fn (Request $request) => [
     Limit::perMinute(10)
         ->by('otp-request:ip:' . $request->ip()),
 
@@ -74,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
         )),
 ]);
 
-    RateLimiter::for('otp-verify', fn (Request $request) => [
+RateLimiter::for('otp-verify', fn (Request $request) => [
     Limit::perMinute(20)
         ->by('otp-verify:ip:' . $request->ip()),
 
@@ -84,5 +91,5 @@ class AppServiceProvider extends ServiceProvider
             (string) $request->input('phone')
         )),
 ]);
-    }
+}
 }

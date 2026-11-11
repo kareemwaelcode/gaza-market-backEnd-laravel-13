@@ -11,8 +11,10 @@ use App\Http\Controllers\ListingCategoryController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MarketListingController;
 use App\Http\Controllers\MarketPlaceController;
+use App\Http\Controllers\MarketPlaceVisitController; // جديد
 use App\Http\Controllers\NavigationItemController;
 use App\Http\Controllers\PlaceController;
+use App\Http\Controllers\PlaceVisitController; // جديد
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\PointTransactionController;
@@ -65,6 +67,7 @@ Route::prefix('cms/admins/')->group(function () {
     Route::resource('place', PlaceController::class)->only(['index', 'show', 'destroy']);
     Route::post('place_approve/{id}', [PlaceController::class, 'approve'])->name('place_approve');
     Route::post('place_reject/{id}', [PlaceController::class, 'reject'])->name('place_reject');
+    Route::resource('place_visit', PlaceVisitController::class)->only(['index']); // جديد
 });
 
 /*
@@ -83,6 +86,12 @@ Route::middleware(['auth', 'throttle:saved-listings'])->prefix('api/market')->na
         Route::delete('{listing}/save', [SavedListingController::class, 'destroy'])->where('listing', '[0-9]{1,18}')->name('destroy');
     });
 
+// تسجيل زيارة محل (عام، بدون تسجيل دخول)  // جديد
+Route::post('api/places/{place}/visit', [MarketPlaceVisitController::class, 'store'])
+    ->where('place', '[0-9]{1,18}')
+    ->middleware('throttle:place-visit')
+    ->name('places.visit');
+
 Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
     Route::post('', [MarketPlaceController::class, 'store'])->name('store');
     Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
@@ -98,6 +107,7 @@ Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('plac
 Route::middleware(['store.owner', 'throttle:dashboard'])->prefix('api/dashboard')->name('owner.')->group(function () {
     Route::get('place', [DashboardPlaceController::class, 'show'])->name('place.show');
     Route::patch('place', [DashboardPlaceController::class, 'update'])->name('place.update');
+    Route::get('visits', [MarketPlaceVisitController::class, 'summary'])->name('visits.summary'); // جديد
     Route::post('place/logo', [DashboardPlaceController::class, 'logo'])->middleware('throttle:dashboard-upload')->name('place.logo');
 });
 
