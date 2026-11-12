@@ -91,9 +91,7 @@
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('product.show', $product->id) }}" class="btn btn-info btn-sm">View</a>
-                                    @if ($product->product_status === 'pending')
-                                        <button type="button" onclick="performDestroy({{ $product->id }}, this)" class="btn btn-danger btn-sm">Delete</button>
-                                    @endif
+                                    <button type="button" onclick="performDestroy({{ $product->id }}, this)" class="btn btn-danger btn-sm">Delete</button>
                                 </div>
                             </td>
                         </tr>

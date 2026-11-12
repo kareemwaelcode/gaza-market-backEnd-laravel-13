@@ -80,17 +80,16 @@ class ProductController extends Controller
         return $this->changeStatus($id, Product::STATUS_HIDDEN, Product::STATUS_ACTIVE, 'Only hidden products can be shown');
     }
 
-    // حذف هاد السعر بس (باقي أسعار المستخدم بتضل). للأسعار قيد المراجعة فقط
+    // حذف نهائي لهاد السعر بس (باقي أسعار المستخدم بتضل) وبأي حالة: pending / active / hidden
     public function destroy(string $id)
     {
         $product = Product::findOrFail($id);
 
-        $deleted = Product::whereKey($product->id)
-            ->where('product_status', Product::STATUS_PENDING)
-            ->delete();
+        // الحذف بالمفتاح: لو أدمن ثاني حذفه بنفس اللحظة بيرجع 404 بدل خطأ
+        $deleted = Product::whereKey($product->id)->delete();
 
         if (! $deleted) {
-            return response()->json(['icon' => 'error', 'title' => 'Only pending products can be deleted'], 409);
+            return response()->json(['icon' => 'error', 'title' => 'Product not found'], 404);
         }
 
         if ($product->product_receipt_image) {

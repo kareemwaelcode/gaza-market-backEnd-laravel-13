@@ -224,19 +224,28 @@ class ProductTest extends TestCase
         Storage::disk('local')->assertExists('receipts/keep.jpg');
     }
 
-    public function test_destroy_is_refused_for_non_pending_products(): void
+    public function test_destroy_works_for_every_status_and_removes_the_receipt(): void
     {
         Storage::fake('local');
-        Storage::disk('local')->put('receipts/a.jpg', 'x');
 
-        $product = $this->product('active', ['product_receipt_image' => 'receipts/a.jpg']);
+        foreach (Product::STATUSES as $status) {
+            $path = "receipts/{$status}.jpg";
+            Storage::disk('local')->put($path, 'x');
 
-        $this->deleteJson(route('product.destroy', $product->id))
-            ->assertStatus(409)
-            ->assertJson(['icon' => 'error']);
+            $product = $this->product($status, ['product_receipt_image' => $path]);
 
-        $this->assertNotNull(Product::find($product->id));
-        Storage::disk('local')->assertExists('receipts/a.jpg');
+            $this->deleteJson(route('product.destroy', $product->id))
+                ->assertOk()
+                ->assertJson(['icon' => 'success']);
+
+            $this->assertNull(Product::find($product->id));
+            Storage::disk('local')->assertMissing($path);
+        }
+    }
+
+    public function test_destroy_returns_404_for_an_unknown_product(): void
+    {
+        $this->deleteJson(route('product.destroy', 999999))->assertNotFound();
     }
 
     public function test_receipt_is_served_from_the_private_disk(): void

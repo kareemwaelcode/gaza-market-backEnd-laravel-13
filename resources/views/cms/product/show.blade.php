@@ -60,7 +60,6 @@
 <div class="card-footer">
 @if ($status === 'pending')
 <button type="button" onclick="approveProduct({{ $product->id }})" class="btn btn-success btn-sm">Approve</button>
-<button type="button" onclick="deleteProduct({{ $product->id }})" class="btn btn-danger btn-sm">Delete</button>
 @endif
 @if ($status === 'active')
 <button type="button" onclick="hideProduct({{ $product->id }})" class="btn btn-warning btn-sm">Hide</button>
@@ -68,6 +67,7 @@
 @if ($status === 'hidden')
 <button type="button" onclick="unhideProduct({{ $product->id }})" class="btn btn-success btn-sm">Show</button>
 @endif
+<button type="button" onclick="deleteProduct({{ $product->id }})" class="btn btn-danger btn-sm">Delete</button>
 <a href="{{ route('product.index') }}" class="btn btn-secondary btn-sm">Index</a>
 </div>
 </div>
