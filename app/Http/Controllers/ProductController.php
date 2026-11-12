@@ -32,13 +32,7 @@ class ProductController extends Controller
             ->except($ignoredFilters)
             ->all();
 
-        $products = Product::query()
-            ->with([
-                'user:id,user_full_name,user_phone',
-                'category:id,category_name_ar,category_name_en',
-                'unit:id,unit_name_ar,unit_name_en',
-                'area:id,area_name_ar',
-            ])
+        $products = Product::query()->with(['user:id,user_full_name,user_phone','category:id,category_name_ar,category_name_en','unit:id,unit_name_ar,unit_name_en','area:id,area_name_ar',])
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('product_status', $status))
             ->when($filters['category'] ?? null, fn ($q, $id) => $q->where('category_id', $id))
             ->when($filters['area'] ?? null, fn ($q, $id) => $q->where('area_id', $id))

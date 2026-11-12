@@ -227,8 +227,12 @@ class ProductApiTest extends TestCase
         $user = $this->makeUser();
         $lookups = $this->lookups();
 
+        // ملف حقيقي: UploadedFile::fake() بيحدد الـ mime من اسم الملف، فما بيصلح لفحص المحتوى
+        $textPath = tempnam(sys_get_temp_dir(), 'rcp');
+        file_put_contents($textPath, 'this is not an image');
+
         $files = [
-            UploadedFile::fake()->createWithContent('receipt.jpg', 'this is not an image'),
+            new UploadedFile($textPath, 'receipt.jpg', null, null, true),
             UploadedFile::fake()->create('receipt.pdf', 10, 'application/pdf'),
         ];
 
@@ -238,10 +242,12 @@ class ProductApiTest extends TestCase
                 ->assertStatus(400);
         }
 
+        @unlink($textPath);
+
         $this->assertSame(0, Product::count());
         $this->assertSame([], Storage::disk('local')->allFiles());
     }
-
+    
     public function test_search_returns_only_active_products_matching_either_name(): void
     {
         $user = $this->makeUser();

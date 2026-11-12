@@ -61,16 +61,16 @@ RateLimiter::for('place-visit', fn (Request $request) =>
 );
 
 // تسجيل سعر منتج جديد
-RateLimiter::for('product-store', fn (Request $request) =>
-    Limit::perHour(10)
-        ->by('product-store:' . ($request->user()?->id ?? $request->ip()))
-);
+// RateLimiter::for('product-store', fn (Request $request) =>
+//     Limit::perHour(10)
+//         ->by('product-store:' . ($request->user()?->id ?? $request->ip()))
+// );
 
 // البحث عن منتج
-RateLimiter::for('product-search', fn (Request $request) =>
-    Limit::perMinute(30)
-        ->by('product-search:' . ($request->user()?->id ?? $request->ip()))
-);
+// RateLimiter::for('product-search', fn (Request $request) =>
+//     Limit::perMinute(30)
+//         ->by('product-search:' . ($request->user()?->id ?? $request->ip()))
+// );
 
 RateLimiter::for('dashboard', fn (Request $request) =>
     Limit::perMinute(30)

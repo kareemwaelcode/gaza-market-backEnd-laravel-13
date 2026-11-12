@@ -112,12 +112,11 @@ Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('plac
 
 // تسجيل سعر جديد: لازم مستخدم مسجّل، وبيبدأ pending لحد موافقة الأدمن
 Route::post('api/products', [ApiProductController::class, 'store'])
-    ->middleware(['auth', 'throttle:product-store'])
+    ->middleware('auth')
     ->name('products.store');
 
 // البحث بالاسم (عام، بدون تسجيل دخول): المعتمد فقط
 Route::get('api/products/search', [ApiProductController::class, 'search'])
-    ->middleware('throttle:product-search')
     ->name('products.search');
 
 /*
