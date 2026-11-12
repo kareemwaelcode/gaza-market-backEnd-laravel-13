@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\ProductController as ApiProductController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\PlaceVisitController; // جديد
 use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\PointTransactionController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\SavedListingController;
 use App\Http\Controllers\StoreCategoryController;
@@ -68,6 +70,11 @@ Route::prefix('cms/admins/')->group(function () {
     Route::post('place_approve/{id}', [PlaceController::class, 'approve'])->name('place_approve');
     Route::post('place_reject/{id}', [PlaceController::class, 'reject'])->name('place_reject');
     Route::resource('place_visit', PlaceVisitController::class)->only(['index']); // جديد
+    Route::resource('product', ProductController::class)->only(['index', 'show', 'destroy']);
+    Route::get('product_receipt/{id}', [ProductController::class, 'receipt'])->name('product_receipt');
+    Route::post('product_approve/{id}', [ProductController::class, 'approve'])->name('product_approve');
+    Route::post('product_hide/{id}', [ProductController::class, 'hide'])->name('product_hide');
+    Route::post('product_unhide/{id}', [ProductController::class, 'unhide'])->name('product_unhide');
 });
 
 /*
@@ -96,6 +103,22 @@ Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('plac
     Route::post('', [MarketPlaceController::class, 'store'])->name('store');
     Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
 });
+
+/*
+|--------------------------------------------------------------------------
+| أسعار المنتجات  —  /api/products/...
+|--------------------------------------------------------------------------
+*/
+
+// تسجيل سعر جديد: لازم مستخدم مسجّل، وبيبدأ pending لحد موافقة الأدمن
+Route::post('api/products', [ApiProductController::class, 'store'])
+    ->middleware(['auth', 'throttle:product-store'])
+    ->name('products.store');
+
+// البحث بالاسم (عام، بدون تسجيل دخول): المعتمد فقط
+Route::get('api/products/search', [ApiProductController::class, 'search'])
+    ->middleware('throttle:product-search')
+    ->name('products.search');
 
 /*
 |--------------------------------------------------------------------------

@@ -1,63 +1,116 @@
 @extends('cms.parent')
 
-@section('title', 'index point rule')
+@section('title', 'index product')
 
 @section('styles')
 @endsection
 
-
 @section('content')
-    <!-- Point rules table -->
-    <div class="row row-tight" style="margin-top: 16px;">
+@php
+    $badge = [
+        'pending' => 'bg-warning text-dark',
+        'active' => 'bg-success',
+        'hidden' => 'bg-secondary',
+    ];
+@endphp
+<div class="row row-tight" style="margin-top: 16px;">
     <div class="col-md-12">
-        <section class="m-card" aria-labelledby="point-rules-title">
-    <header class="m-card__header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div>
-            <h2 class="m-card__title" id="point-rules-title">Point Rules</h2>
-            <p class="m-card__subtitle">Rules that decide how many points each action gives</p>
-        </div>
-    </header>
-        <div class="table-responsive">
-            <table class="table table-borderless table-data3">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Key</th>
-                        <th>Name (EN)</th>
-                        <th>Name (AR)</th>
-                        <th>Points</th>
-                        <th>Daily Limit</th>
-                        <th>Is Active</th>
-                        <th>Sort Order</th>
-                        <th>Setting</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ( $pointRules as $pointRule )
-                    <tr>
-                        <td>{{ $pointRules->firstItem() + $loop->index }}</td>
-                        <td>{{ $pointRule->point_rule_key }}</td>
-                        <td>{{ $pointRule->point_rule_name_en }}</td>
-                        <td>{{ $pointRule->point_rule_name_ar }}</td>
-                        <td>{{ $pointRule->point_rule_points }}</td>
-                        <td>{{ $pointRule->point_rule_daily_limit ?? 'Unlimited' }}</td>
-                        <td>{{ $pointRule->point_rule_is_active ? 'Active' : 'Inactive' }}</td>
-                        <td>{{ $pointRule->point_rule_sort_order }}</td>
-                        <td>
-                            <div class="btn-group" role="group" aria-label="Toolbar group">
-                            <a href="{{ route('point_rule.edit', $pointRule->id) }}">
-                                <button type="button" class="btn btn-info"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-pen preview-icon"><path d="M2 21a8 8 0 0 1 10.821-7.487"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="8" r="5"/></svg></button>
-                            </a>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </section>
-    {{ $pointRules->links() }}
-</div>
-</div>
+        <section class="m-card" aria-labelledby="products-title">
+            <header class="m-card__header" style="width: 100%;">
+                <h2 class="m-card__title" id="products-title">Products</h2>
+                <p class="m-card__subtitle">Review prices submitted by users. Pending prices stay hidden until approved.</p>
+            </header>
 
+            @if (! empty($ignoredFilters))
+                <div class="alert alert-warning" role="alert" style="margin: 0 16px 16px;">
+                    Invalid filter value ignored ({{ implode(', ', $ignoredFilters) }}). Showing results without it.
+                </div>
+            @endif
+
+            <form method="GET" action="{{ route('product.index') }}" class="row g-2 mb-3" style="padding: 0 16px;">
+                <div class="col-lg-3">
+                    <select name="status" class="form-control">
+                        <option value="">All statuses</option>
+                        @foreach (\App\Models\Product::STATUSES as $status)
+                            <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-lg-4">
+                    <select name="category" class="form-control">
+                        <option value="">All categories</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected((int) ($filters['category'] ?? 0) === $category->id)>{{ $category->category_name_ar }} / {{ $category->category_name_en }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <select name="area" class="form-control">
+                        <option value="">All areas</option>
+                        @foreach ($areas as $area)
+                            <option value="{{ $area->id }}" @selected((int) ($filters['area'] ?? 0) === $area->id)>{{ $area->area_name_ar }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                    <a href="{{ route('product.index') }}" class="btn btn-secondary btn-sm">Reset</a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-borderless table-data3">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Store</th>
+                            <th>Area</th>
+                            <th>Added by</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Setting</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($products as $product)
+                        <tr>
+                            <td>{{ $product->id }}</td>
+                            <td>{{ $product->product_name_ar ?: $product->product_name_en }}</td>
+                            <td>{{ $product->category?->category_name_ar }}</td>
+                            <td>{{ $product->product_quantity }} {{ $product->unit?->unit_name_ar }}</td>
+                            <td>{{ number_format((float) $product->product_price, 2) }} ₪</td>
+                            <td>{{ $product->product_store_name }}</td>
+                            <td>{{ $product->area?->area_name_ar }}</td>
+                            <td>{{ $product->user?->user_full_name }}<br><small>{{ $product->user?->user_phone }}</small></td>
+                            <td><span class="badge {{ $badge[$product->product_status] ?? 'bg-secondary' }}">{{ ucfirst($product->product_status) }}</span></td>
+                            <td>{{ $product->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>
+                                <div class="btn-group" role="group" aria-label="Toolbar group">
+                                    <a href="{{ route('product.show', $product->id) }}" class="btn btn-info btn-sm">View</a>
+                                    @if ($product->product_status === 'pending')
+                                        <button type="button" onclick="performDestroy({{ $product->id }}, this)" class="btn btn-danger btn-sm">Delete</button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="11" class="text-center">No products found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {{ $products->links() }}
+    </div>
+</div>
+<script>
+function performDestroy(id, reference){
+    let url = '/cms/admins/product/'+id;
+    confirmDestroy(url, reference);
+}
+</script>
 @endsection
