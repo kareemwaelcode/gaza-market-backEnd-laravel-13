@@ -18,12 +18,10 @@ class ProductPriceCmsTest extends TestCase
     {
         $lookups = $this->lookups();
         $user = $this->makeUser('Reporter');
-
         return $this->makePrice($this->makeProduct($lookups, $user), $lookups, $user, $status, $overrides);
     }
 
     // ---------- القائمة ----------
-
     public function test_index_lists_prices_with_pending_and_flagged_first(): void
     {
         $approved = $this->priceWithStatus('approved', ['product_price_store_name' => 'متجر-معتمد']);
