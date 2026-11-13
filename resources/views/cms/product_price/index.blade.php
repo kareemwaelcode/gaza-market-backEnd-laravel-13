@@ -13,13 +13,14 @@
         'rejected' => 'bg-danger',
         'flagged' => 'bg-dark',
     ];
+    $statusLabel = ['rejected' => 'Hidden', 'flagged' => 'Hidden (reports)'];
 @endphp
 <div class="row row-tight" style="margin-top: 16px;">
     <div class="col-md-12">
         <section class="m-card" aria-labelledby="product-prices-title">
             <header class="m-card__header" style="width: 100%;">
                 <h2 class="m-card__title" id="product-prices-title">Product prices</h2>
-                <p class="m-card__subtitle">Review prices reported by users. Pending and flagged prices stay hidden until approved.</p>
+                <p class="m-card__subtitle">Review prices reported by users. Hidden prices stay out of the public feed until shown.</p>
             </header>
 
             @if (! empty($ignoredFilters))
@@ -33,7 +34,7 @@
                     <select name="status" class="form-control">
                         <option value="">All statuses</option>
                         @foreach (\App\Models\ProductPrice::STATUSES as $status)
-                            <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
+                            <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ $statusLabel[$status] ?? ucfirst($status) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -89,11 +90,16 @@
                             <td>{{ $price->area?->area_name_ar }}</td>
                             <td>{{ $price->user?->user_full_name }}<br><small>{{ $price->user?->user_phone }}</small></td>
                             <td>👍 {{ $price->confirm_count }} / 🚩 {{ $price->report_count }}</td>
-                            <td><span class="badge {{ $badge[$price->product_price_status] ?? 'bg-secondary' }}">{{ ucfirst($price->product_price_status) }}</span></td>
+                            <td><span class="badge {{ $badge[$price->product_price_status] ?? 'bg-secondary' }}">{{ $statusLabel[$price->product_price_status] ?? ucfirst($price->product_price_status) }}</span></td>
                             <td>{{ $price->created_at?->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('product_price.show', $price->id) }}" class="btn btn-info btn-sm">View</a>
+                                    @if ($price->product_price_status !== 'approved')
+                                        <button type="button" onclick="changeVisibility('product_price_approve', {{ $price->id }})" class="btn btn-success btn-sm">Show</button>
+                                    @else
+                                        <button type="button" onclick="changeVisibility('product_price_reject', {{ $price->id }})" class="btn btn-warning btn-sm">Hide</button>
+                                    @endif
                                     <button type="button" onclick="performDestroy({{ $price->id }}, this)" class="btn btn-danger btn-sm">Delete</button>
                                 </div>
                             </td>
@@ -109,6 +115,10 @@
     </div>
 </div>
 <script>
+function changeVisibility(route, id){
+    storeRoute('/cms/admins/' + route + '/' + id, new FormData());
+}
+
 function performDestroy(id, reference){
     let url = '/cms/admins/product_price/'+id;
     confirmDestroy(url, reference);

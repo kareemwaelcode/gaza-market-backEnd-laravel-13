@@ -35,7 +35,7 @@ class ProductPriceApiTest extends TestCase
         foreach ([
             'product_price_value', 'product_price_store_name', 'product_price_store_address',
             'product_price_store_phone', 'product_price_receipt_image', 'product_price_status',
-            'rejection_reason', 'reviewed_at', 'confirm_count', 'report_count',
+            'reviewed_at', 'confirm_count', 'report_count',
             'product_id', 'area_id', 'user_id', 'created_at', 'updated_at',
         ] as $column) {
             $this->assertTrue(Schema::hasColumn('product_prices', $column), "missing product_prices.$column");
@@ -195,7 +195,7 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame(0, ProductPrice::count());
     }
 
-    public function test_store_creates_a_pending_price_owned_by_the_logged_in_user(): void
+    public function test_store_creates_an_approved_price_owned_by_the_logged_in_user(): void
     {
         $lookups = $this->lookups();
         $user = $this->makeUser();
@@ -207,19 +207,19 @@ class ProductPriceApiTest extends TestCase
             'store_phone' => '0591234567',
             // محاولات تجاوز: لازم تنتجاهل
             'user_id' => $other->id,
-            'product_price_status' => 'approved',
+            'product_price_status' => 'rejected',
             'confirm_count' => 99,
             'report_count' => 99,
         ]);
 
         $this->actingAs($user)->postJson('/api/prices', $data)
             ->assertStatus(201)
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'approved');
 
         $price = ProductPrice::firstOrFail();
 
         $this->assertSame($user->id, (int) $price->user_id);
-        $this->assertSame('pending', $price->product_price_status);
+        $this->assertSame('approved', $price->product_price_status);
         $this->assertSame($product->id, (int) $price->product_id);
         $this->assertSame($lookups['area']->id, (int) $price->area_id);
         $this->assertSame('7.50', $price->product_price_value);
@@ -477,11 +477,11 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame(0, PriceVote::count());
     }
 
-    public function test_price_is_flagged_and_removed_from_the_feed_after_more_than_three_reports(): void
+    public function test_price_is_flagged_and_removed_from_the_feed_after_more_than_five_reports(): void
     {
         [$price] = $this->votable();
 
-        // 3 بلاغات: لسه ظاهر
+        // 5 بلاغات: لسه ظاهر
         foreach (range(1, ProductPrice::MAX_REPORTS) as $i) {
             $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
                 ->assertOk()
@@ -491,13 +491,53 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame('approved', $price->refresh()->product_price_status);
         $this->getJson('/api/prices')->assertJsonCount(1, 'data');
 
-        // البلاغ الرابع: بينسحب
+        // البلاغ السادس: بينسحب
         $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
             ->assertOk()
             ->assertJsonPath('data.removed', true)
-            ->assertJsonPath('data.report_count', 4);
+            ->assertJsonPath('data.report_count', 6);
 
         $this->assertSame('flagged', $price->refresh()->product_price_status);
         $this->getJson('/api/prices')->assertJsonCount(0, 'data');
+    }
+
+    public function test_more_than_three_confirmations_protect_the_price_from_report_hiding(): void
+    {
+        [$price] = $this->votable();
+
+        // 4 تأكيدات (> 3) = محمي
+        foreach (range(1, ProductPrice::PROTECTED_CONFIRMS + 1) as $i) {
+            $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'confirm'])->assertOk();
+        }
+
+        foreach (range(1, ProductPrice::MAX_REPORTS + 3) as $i) {
+            $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
+                ->assertOk()
+                ->assertJsonPath('data.removed', false);
+        }
+
+        $price->refresh();
+        $this->assertSame('approved', $price->product_price_status);
+        $this->assertSame(8, $price->report_count);
+        $this->getJson('/api/prices')->assertJsonCount(1, 'data');
+    }
+
+    public function test_exactly_three_confirmations_do_not_protect_the_price(): void
+    {
+        [$price] = $this->votable();
+
+        foreach (range(1, ProductPrice::PROTECTED_CONFIRMS) as $i) {
+            $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'confirm'])->assertOk();
+        }
+
+        foreach (range(1, ProductPrice::MAX_REPORTS) as $i) {
+            $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])->assertOk();
+        }
+
+        $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
+            ->assertOk()
+            ->assertJsonPath('data.removed', true);
+
+        $this->assertSame('flagged', $price->refresh()->product_price_status);
     }
 }

@@ -99,7 +99,7 @@ class ProductPriceController extends Controller
         ]);
     }
 
-    // تسجيل سعر جديد لمنتج موجود: صاحب السعر من المستخدم المسجّل، والحالة pending لحد موافقة الأدمن
+    // تسجيل سعر جديد لمنتج موجود: صاحب السعر من المستخدم المسجّل، ومعتمد مباشرة (الأدمن بيخفيه لاحقاً لو لزم)
     public function store(StoreProductPriceRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -122,7 +122,7 @@ class ProductPriceController extends Controller
                 'product_price_store_phone' => $data['store_phone'] ?? null,
             ]);
             $price->user_id = $request->user()->id;
-            $price->product_price_status = ProductPrice::STATUS_PENDING;
+            $price->product_price_status = ProductPrice::STATUS_APPROVED;
 
             // الفاتورة على القرص الخاص (local) مش public: الأدمن بس بشوفها من لوحة التحكم
             if ($request->hasFile('receipt_image')) {
@@ -203,7 +203,8 @@ class ProductPriceController extends Controller
             $row->confirm_count = (int) ($counts[PriceVote::TYPE_CONFIRM] ?? 0);
             $row->report_count = (int) ($counts[PriceVote::TYPE_REPORT] ?? 0);
 
-            $removed = $row->report_count > ProductPrice::MAX_REPORTS;
+            // أكثر من 5 بلاغات بتخفيه، إلا لو أكثر من 3 تأكيدات بتحميه
+            $removed = $row->shouldBeHiddenByReports();
 
             if ($removed) {
                 $row->product_price_status = ProductPrice::STATUS_FLAGGED;

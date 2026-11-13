@@ -59,9 +59,20 @@ class ProductPriceController extends Controller
 
     public function show(string $id)
     {
-        $price = ProductPrice::with(['user', 'product.category', 'product.unit', 'area.region'])->findOrFail($id);
+        $price = ProductPrice::with([
+            'user',
+            'product.category',
+            'product.unit',
+            'area.region',
+            // من أكّد ومن بلّغ: استعلام واحد للأصوات + واحد للمستخدمين (مش N+1)
+            'votes' => fn ($q) => $q->orderBy('id'),
+            'votes.user:id,user_full_name,user_phone',
+        ])->findOrFail($id);
 
-        return response()->view('cms.product_price.show', compact('price'));
+        $confirmedBy = $price->votes->where('price_vote_type', PriceVote::TYPE_CONFIRM)->values();
+        $reportedBy = $price->votes->where('price_vote_type', PriceVote::TYPE_REPORT)->values();
+
+        return response()->view('cms.product_price.show', compact('price', 'confirmedBy', 'reportedBy'));
     }
 
     // صورة الفاتورة من القرص الخاص: ما إلها رابط عام
@@ -75,8 +86,9 @@ class ProductPriceController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    // pending أو flagged -> approved. من flagged: الأدمن رفض البلاغات، فبنمسحها وبنصفّر العدّاد
-    // (غير هيك أول بلاغ جديد بيرجّع السعر flagged على طول)
+    // إظهار: pending أو flagged أو rejected (مخفي) -> approved.
+    // لو كان مخفي بالبلاغات: الأدمن رفض البلاغات، فبنمسحها وبنصفّر العدّاد
+    // (غير هيك أول بلاغ جديد بيرجّع السعر مخفي على طول)
     public function approve(string $id)
     {
         $price = ProductPrice::findOrFail($id);
@@ -84,11 +96,11 @@ class ProductPriceController extends Controller
         $approved = DB::transaction(function () use ($price) {
             $row = ProductPrice::query()->whereKey($price->id)->lockForUpdate()->first();
 
-            if (! $row || ! in_array($row->product_price_status, [ProductPrice::STATUS_PENDING, ProductPrice::STATUS_FLAGGED], true)) {
+            if (! $row || $row->product_price_status === ProductPrice::STATUS_APPROVED) {
                 return false;
             }
 
-            if ($row->product_price_status === ProductPrice::STATUS_FLAGGED) {
+            if ($row->product_price_status === ProductPrice::STATUS_FLAGGED || $row->report_count > ProductPrice::MAX_REPORTS) {
                 PriceVote::query()
                     ->where('product_price_id', $row->id)
                     ->where('price_vote_type', PriceVote::TYPE_REPORT)
@@ -98,7 +110,6 @@ class ProductPriceController extends Controller
             }
 
             $row->product_price_status = ProductPrice::STATUS_APPROVED;
-            $row->rejection_reason = null;
             $row->reviewed_at = now();
             $row->save();
 
@@ -106,23 +117,15 @@ class ProductPriceController extends Controller
         });
 
         if (! $approved) {
-            return response()->json(['icon' => 'error', 'title' => 'Only pending or flagged prices can be approved'], 409);
+            return response()->json(['icon' => 'error', 'title' => 'This price is already visible'], 409);
         }
 
         return response()->json(['redirect' => route('product_price.show', $price->id)], 200);
     }
 
-    // pending أو approved أو flagged -> rejected مع سبب إلزامي
-    public function reject(Request $request, string $id)
+    // إخفاء (رفض بدون سبب): pending أو approved أو flagged -> rejected
+    public function reject(string $id)
     {
-        $validator = validator($request->all(), [
-            'reason' => ['required', 'string', 'max:255'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
-        }
-
         $price = ProductPrice::findOrFail($id);
 
         // تحديث مشروط: لو أدمنين ضغطوا بنفس اللحظة بينجح واحد بس والثاني 409
@@ -135,13 +138,12 @@ class ProductPriceController extends Controller
             ])
             ->update([
                 'product_price_status' => ProductPrice::STATUS_REJECTED,
-                'rejection_reason' => $validator->validated()['reason'],
                 'reviewed_at' => now(),
                 'updated_at' => now(),
             ]);
 
         if (! $updated) {
-            return response()->json(['icon' => 'error', 'title' => 'This price is already rejected'], 409);
+            return response()->json(['icon' => 'error', 'title' => 'This price is already hidden'], 409);
         }
 
         return response()->json(['redirect' => route('product_price.show', $price->id)], 200);

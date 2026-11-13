@@ -15,7 +15,7 @@ class ProductPrice extends Model
 
     public const STATUS_REJECTED = 'rejected';
 
-    // وصل لأكثر من MAX_REPORTS بلاغ: بيختفي من الـ feed لحد مراجعة الأدمن
+    // اختفى تلقائياً بسبب البلاغات (report_count > MAX_REPORTS): بيرجع بزر "إظهار" من الأدمن
     public const STATUS_FLAGGED = 'flagged';
 
     public const STATUSES = [
@@ -25,8 +25,11 @@ class ProductPrice extends Model
         self::STATUS_FLAGGED,
     ];
 
-    // نفس ثابت الفرونت (GMPrices.maxReports): السعر بينسحب لما report_count > 3
-    public const MAX_REPORTS = 3;
+    // السعر بيختفي لما report_count > MAX_REPORTS
+    public const MAX_REPORTS = 5;
+
+    // ...إلا لو confirm_count > PROTECTED_CONFIRMS: التأكيدات الكافية بتحميه من الإخفاء بالبلاغات
+    public const PROTECTED_CONFIRMS = 3;
 
     // الحالة والمستخدم والعدّادات والفاتورة والمراجعة ما بتتعبّى بالـ mass assignment
     protected $fillable = [
@@ -38,6 +41,7 @@ class ProductPrice extends Model
         'product_price_store_phone',
     ];
 
+    // rejection_reason عمود قديم ما عاد مستخدم (ما في تغيير مخطط)، بس بنخفيه احتياطاً من أي JSON
     protected $hidden = [
         'user_id',
         'product_price_store_phone',
@@ -79,6 +83,18 @@ class ProductPrice extends Model
     public function votes(): HasMany
     {
         return $this->hasMany(PriceVote::class, 'product_price_id');
+    }
+
+    // محمي من الإخفاء بالبلاغات: أكثر من PROTECTED_CONFIRMS تأكيد
+    public function isProtectedByConfirmations(): bool
+    {
+        return $this->confirm_count > self::PROTECTED_CONFIRMS;
+    }
+
+    // لازم يختفي تلقائياً: بلاغات أكثر من الحد وما هو محمي بالتأكيدات
+    public function shouldBeHiddenByReports(): bool
+    {
+        return $this->report_count > self::MAX_REPORTS && ! $this->isProtectedByConfirmations();
     }
 
     public function scopeApproved(Builder $query): Builder

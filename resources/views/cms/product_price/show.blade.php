@@ -14,29 +14,49 @@
         'flagged' => 'bg-dark',
     ];
     $status = $price->product_price_status;
-    $canApprove = in_array($status, ['pending', 'flagged'], true);
-    $canReject = in_array($status, ['pending', 'approved', 'flagged'], true);
+    $statusLabel = ['rejected' => 'Hidden', 'flagged' => 'Hidden (reports)'][$status] ?? ucfirst($status);
+    $canShow = $status !== 'approved';
+    $canHide = in_array($status, ['pending', 'approved', 'flagged'], true);
     $product = $price->product;
 @endphp
 <div class="card" style="margin-top: 16px;">
 <div class="card-header">
 <strong>Price #{{ $price->id }}</strong>
-<span class="badge {{ $badge[$status] ?? 'bg-secondary' }}">{{ ucfirst($status) }}</span>
+<span class="badge {{ $badge[$status] ?? 'bg-secondary' }}">{{ $statusLabel }}</span>
 </div>
 <div class="card-body">
 <div class="row">
 <div class="col-lg-8">
     <h4>{{ $product?->product_name_ar ?: $product?->product_name_en }}</h4>
 
-    @if ($status === 'rejected' && $price->rejection_reason)
-        <div class="alert alert-danger" role="alert">Rejection reason: {{ $price->rejection_reason }}</div>
-    @endif
-
     @if ($status === 'flagged')
         <div class="alert alert-warning" role="alert">
-            Hidden automatically after {{ $price->report_count }} reports. Approve to dismiss the reports, or reject.
+            Hidden automatically after {{ $price->report_count }} reports. Show it to dismiss the reports.
         </div>
     @endif
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <h6>👍 Confirmed by ({{ $confirmedBy->count() }})</h6>
+            <ul class="list-unstyled small">
+                @forelse ($confirmedBy as $vote)
+                    <li>{{ $vote->user?->user_full_name ?: '-' }} <small class="text-muted">({{ $vote->user?->user_phone }})</small></li>
+                @empty
+                    <li class="text-muted">No confirmations.</li>
+                @endforelse
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h6>🚩 Reported by ({{ $reportedBy->count() }})</h6>
+            <ul class="list-unstyled small">
+                @forelse ($reportedBy as $vote)
+                    <li>{{ $vote->user?->user_full_name ?: '-' }} <small class="text-muted">({{ $vote->user?->user_phone }})</small></li>
+                @empty
+                    <li class="text-muted">No reports.</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
 
     <h6 class="mt-3">Receipt</h6>
     <div class="mb-3" style="max-width: 520px;">
@@ -73,11 +93,11 @@
 </div>
 </div>
 <div class="card-footer">
-@if ($canApprove)
-<button type="button" onclick="approvePrice({{ $price->id }})" class="btn btn-success btn-sm">Approve</button>
+@if ($canShow)
+<button type="button" onclick="showPrice({{ $price->id }})" class="btn btn-success btn-sm">Show</button>
 @endif
-@if ($canReject)
-<button type="button" onclick="rejectPrice({{ $price->id }})" class="btn btn-warning btn-sm">Reject</button>
+@if ($canHide)
+<button type="button" onclick="hidePrice({{ $price->id }})" class="btn btn-warning btn-sm">Hide</button>
 @endif
 <button type="button" onclick="deletePrice({{ $price->id }})" class="btn btn-danger btn-sm">Delete</button>
 <a href="{{ route('product_price.index') }}" class="btn btn-secondary btn-sm">Index</a>
@@ -87,25 +107,20 @@
 
 @section('scripts')
 <script>
-function approvePrice(id){
+function showPrice(id){
 storeRoute('/cms/admins/product_price_approve/' + id, new FormData());
 }
 
-function rejectPrice(id){
+function hidePrice(id){
 Swal.fire({
-title: 'سبب رفض السعر',
-input: 'text',
-inputAttributes: { maxlength: 255 },
+title: 'إخفاء هذا السعر؟',
 icon: 'warning',
 showCancelButton: true,
-confirmButtonText: 'رفض',
+confirmButtonText: 'إخفاء',
 cancelButtonText: 'إلغاء',
-inputValidator: (value) => (value && value.trim() ? null : 'السبب مطلوب'),
 }).then((result) => {
 if (result.isConfirmed) {
-    const data = new FormData();
-    data.append('reason', result.value.trim());
-    storeRoute('/cms/admins/product_price_reject/' + id, data);
+    storeRoute('/cms/admins/product_price_reject/' + id, new FormData());
 }
 });
 }
