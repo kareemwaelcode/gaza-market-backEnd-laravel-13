@@ -60,6 +60,22 @@ RateLimiter::for('place-visit', fn (Request $request) =>
         ->by('place-visit:' . ($request->user()?->id ?? $request->ip()))
 );
 
+// أسعار المنتجات: القراءة العامة حسب الـ IP، والإرسال والتصويت حسب المستخدم
+RateLimiter::for('prices-feed', fn (Request $request) =>
+    Limit::perMinute(120)
+        ->by('prices-feed:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('product-prices', fn (Request $request) =>
+    Limit::perMinute(10)
+        ->by('product-prices:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('price-votes', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('price-votes:' . ($request->user()?->id ?? $request->ip()))
+);
+
 RateLimiter::for('dashboard', fn (Request $request) =>
     Limit::perMinute(30)
         ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))

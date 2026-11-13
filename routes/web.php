@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\ProductController as ApiProductController;
+use App\Http\Controllers\Api\ProductPriceController as ApiProductPriceController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\PointLevelController;
 use App\Http\Controllers\PointRuleController;
 use App\Http\Controllers\PointTransactionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductPriceController;
 use App\Http\Controllers\RegionsController;
 use App\Http\Controllers\SavedListingController;
 use App\Http\Controllers\StoreCategoryController;
@@ -75,6 +77,10 @@ Route::prefix('cms/admins/')->group(function () {
     Route::post('product_approve/{id}', [ProductController::class, 'approve'])->name('product_approve');
     Route::post('product_hide/{id}', [ProductController::class, 'hide'])->name('product_hide');
     Route::post('product_unhide/{id}', [ProductController::class, 'unhide'])->name('product_unhide');
+    Route::resource('product_price', ProductPriceController::class)->only(['index', 'show', 'destroy']);
+    Route::get('product_price_receipt/{id}', [ProductPriceController::class, 'receipt'])->name('product_price_receipt');
+    Route::post('product_price_approve/{id}', [ProductPriceController::class, 'approve'])->name('product_price_approve');
+    Route::post('product_price_reject/{id}', [ProductPriceController::class, 'reject'])->name('product_price_reject');
 });
 
 /*
@@ -118,6 +124,28 @@ Route::post('api/products', [ApiProductController::class, 'store'])
 // البحث بالاسم (عام، بدون تسجيل دخول): المعتمد فقط
 Route::get('api/products/search', [ApiProductController::class, 'search'])
     ->name('products.search');
+
+/*
+|--------------------------------------------------------------------------
+| سعر منتج موجود + تصويت  —  /api/prices/...
+|--------------------------------------------------------------------------
+*/
+
+// الـ feed العام (المعتمد فقط): بدون تسجيل دخول، و my_vote بتنعبّى لو المستخدم مسجّل
+Route::get('api/prices', [ApiProductPriceController::class, 'index'])
+    ->middleware('throttle:prices-feed')
+    ->name('prices.index');
+
+// تسجيل سعر جديد لمنتج موجود: pending لحد موافقة الأدمن
+Route::post('api/prices', [ApiProductPriceController::class, 'store'])
+    ->middleware(['auth', 'throttle:product-prices'])
+    ->name('prices.store');
+
+// تأكيد/إبلاغ/إلغاء صوت (vote: confirm | report | null)
+Route::post('api/prices/{price}/vote', [ApiProductPriceController::class, 'vote'])
+    ->where('price', '[0-9]{1,18}')
+    ->middleware(['auth', 'throttle:price-votes'])
+    ->name('prices.vote');
 
 /*
 |--------------------------------------------------------------------------
