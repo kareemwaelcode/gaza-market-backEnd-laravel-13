@@ -58,6 +58,12 @@ return response()->json([
 }
 
 // البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، الأحدث أولاً
+// البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، والمنتج بحجمه (الكمية + الوحدة) مرة وحدة بدون تكرار.
+// كل إرسال بينعمل صف بجدول products، فنجمّع الصفوف الفعّالة المتطابقة ونرجّع أقدمها كممثّل (id هاد اللي بينبعت لـ api/prices).
+// ما في أسعار ولا متاجر ولا مناطق هون: الأسعار من api/prices.
+// البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، والمنتج بحجمه (الكمية + الوحدة) مرة وحدة بدون تكرار.
+// كل إرسال بينعمل صف بجدول products، فنجمّع الصفوف الفعّالة المتطابقة ونرجّع أقدمها كممثّل (id هاد اللي بينبعت لـ api/prices).
+// ما في أسعار ولا متاجر ولا مناطق هون: الأسعار من api/prices.
 public function search(Request $request): JsonResponse
 {
 $validator = validator($request->query(), [
@@ -73,40 +79,28 @@ if ($validator->fails()) {
 
 $term = (string) $request->query('q');
 
-$page = Product::query()
+$representatives = Product::query()
     ->active()
     ->search($term)
-    ->with([
-        'category:id,category_name_ar,category_name_en',
-        'unit:id,unit_name_ar,unit_name_en',
-        'area:id,area_name_ar,area_name_en',
-    ])
+    ->selectRaw('min(id)')
+    ->groupBy('product_name_ar', 'product_name_en', 'product_quantity', 'unit_id');
+
+$page = Product::query()
+    ->whereIn('id', $representatives)
+    ->with('unit:id,unit_name_ar,unit_name_en')
     ->orderByDesc('id')
     ->paginate(self::PER_PAGE)
     ->appends(['q' => $term]);
 
-// حقول البطاقة فقط: ما في رقم هاتف المتجر ولا الفاتورة ولا بيانات صاحب السعر
 $items = $page->getCollection()->map(fn (Product $product) => [
     'id' => $product->id,
     'name_ar' => $product->product_name_ar,
     'name_en' => $product->product_name_en,
     'quantity' => $product->product_quantity,
-    'price' => $product->product_price,
-    'store_name' => $product->product_store_name,
-    'store_address' => $product->product_store_address,
-    'category' => $product->category ? [
-        'name_ar' => $product->category->category_name_ar,
-        'name_en' => $product->category->category_name_en,
-    ] : null,
     'unit' => $product->unit ? [
         'name_ar' => $product->unit->unit_name_ar,
         'name_en' => $product->unit->unit_name_en,
     ] : null,
-    'area' => $product->area ? [
-        'name_ar' => $product->area->area_name_ar,
-        'name_en' => $product->area->area_name_en,
-    ] : null,
-    'created_at' => $product->created_at?->toJSON(),
 ])->values();
 
 return response()->json([

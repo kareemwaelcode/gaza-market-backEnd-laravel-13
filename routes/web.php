@@ -130,6 +130,10 @@ Route::get('api/products/search', [ApiProductController::class, 'search'])
 | سعر منتج موجود + تصويت  —  /api/prices/...
 |--------------------------------------------------------------------------
 */
+// شريط الأسعار في الهيرو: عام، كاش قصير (config/prices.php)
+Route::get('api/prices/ticker', [ApiProductPriceController::class, 'ticker'])
+    ->middleware('throttle:prices-feed')
+    ->name('prices.ticker');
 
 // الـ feed العام (المعتمد فقط): بدون تسجيل دخول، و my_vote بتنعبّى لو المستخدم مسجّل
 Route::get('api/prices', [ApiProductPriceController::class, 'index'])

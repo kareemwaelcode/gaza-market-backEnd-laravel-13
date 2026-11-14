@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Throwable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model
@@ -69,6 +73,55 @@ public function area(): BelongsTo
 public function user(): BelongsTo
 {
     return $this->belongsTo(User::class)->withTrashed();
+}
+
+public function prices(): HasMany
+{
+    return $this->hasMany(ProductPrice::class);
+}
+
+// السعر الأول للمنتج: بيتنسخ من صف المنتج نفسه (السعر والمتجر والمنطقة وصاحب السعر) بحالة approved.
+// الفاتورة بتتنسخ لملف جديد: حذف أي من السعرين أو المنتج ما بيكسر فاتورة الثاني.
+public function createFirstPrice(): ProductPrice
+{
+    $copiedReceipt = null;
+
+    try {
+        $price = new ProductPrice;
+        $price->fill([
+            'product_id' => $this->id,
+            'area_id' => $this->area_id,
+            'product_price_value' => $this->product_price,
+            'product_price_store_name' => $this->product_store_name,
+            'product_price_store_address' => $this->product_store_address,
+            'product_price_store_phone' => $this->product_store_phone,
+        ]);
+        $price->user_id = $this->user_id;
+        $price->product_price_status = ProductPrice::STATUS_APPROVED;
+        $price->reviewed_at = now();
+
+        $source = $this->product_receipt_image;
+
+        if ($source && Storage::disk('local')->exists($source)) {
+            $extension = pathinfo($source, PATHINFO_EXTENSION);
+            $target = 'receipts/'.Str::random(40).($extension !== '' ? '.'.$extension : '');
+
+            if (Storage::disk('local')->copy($source, $target)) {
+                $copiedReceipt = $target;
+                $price->product_price_receipt_image = $target;
+            }
+        }
+
+        $price->save();
+
+        return $price;
+    } catch (Throwable $e) {
+        if ($copiedReceipt !== null) {
+            Storage::disk('local')->delete($copiedReceipt);
+        }
+
+        throw $e;
+    }
 }
 
 public function scopeActive(Builder $query): Builder

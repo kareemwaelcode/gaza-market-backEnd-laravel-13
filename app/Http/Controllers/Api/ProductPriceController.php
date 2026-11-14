@@ -8,6 +8,7 @@ use App\Http\Requests\VotePriceRequest;
 use App\Models\Area;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
+use App\Support\PriceTicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -100,6 +101,13 @@ class ProductPriceController extends Controller
     }
 
     // تسجيل سعر جديد لمنتج موجود: صاحب السعر من المستخدم المسجّل، ومعتمد مباشرة (الأدمن بيخفيه لاحقاً لو لزم)
+
+
+    // شريط الأسعار في الهيرو: عام ومشترك بين الزوار (كاش قصير، بيتبطّل عند أي تغيير بيأثر عليه)
+public function ticker(): JsonResponse
+{
+    return response()->json(['data' => PriceTicker::items()]);
+}
     public function store(StoreProductPriceRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -152,7 +160,9 @@ class ProductPriceController extends Controller
                 'id' => $price->id,
                 'status' => $price->product_price_status,
             ],
+                    PriceTicker::forget();
         ], 201);
+        
     }
 
     // تأكيد/إبلاغ/إلغاء صوت: صوت واحد لكل مستخدم على السعر، والعدّادات بتتحدّث بنفس الـ transaction
@@ -227,7 +237,10 @@ class ProductPriceController extends Controller
         if ($outcome['code'] !== 200) {
             return response()->json(['icon' => 'error', 'title' => $outcome['title']], $outcome['code']);
         }
-
+        // بس لما السعر اختفى بالبلاغات: عدّادات التصويت مش جزء من الشريط
+        if ($outcome['data']['removed']) {
+            PriceTicker::forget();
+        }
         return response()->json(['data' => $outcome['data']]);
     }
 }

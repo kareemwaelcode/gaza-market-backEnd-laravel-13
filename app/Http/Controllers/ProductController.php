@@ -65,20 +65,37 @@ class ProductController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    public function approve(string $id)
-    {
-        return $this->changeStatus($id, Product::STATUS_PENDING, Product::STATUS_ACTIVE, 'Only pending products can be approved');
+// الموافقة: pending -> active، وبنفس الـ transaction بينعمل السعر الأول للمنتج (approved).
+// التحديث المشروط هو الحماية من التكرار: لو أدمنين ضغطوا بنفس اللحظة بينجح واحد بس (والثاني 409) فبينعمل سعر واحد
+public function approve(string $id)
+{
+    $product = Product::findOrFail($id);
+
+    $approved = DB::transaction(function () use ($product) {
+        $updated = Product::whereKey($product->id)
+            ->where('product_status', Product::STATUS_PENDING)
+            ->update([
+                'product_status' => Product::STATUS_ACTIVE,
+                'updated_at' => now(),
+            ]);
+
+        if (! $updated) {
+            return false;
+        }
+
+        $product->refresh()->createFirstPrice();
+
+        return true;
+    });
+
+    if (! $approved) {
+        return response()->json(['icon' => 'error', 'title' => 'Only pending products can be approved'], 409);
     }
 
-    public function hide(string $id)
-    {
-        return $this->changeStatus($id, Product::STATUS_ACTIVE, Product::STATUS_HIDDEN, 'Only active products can be hidden');
-    }
+    PriceTicker::forget();
 
-    public function unhide(string $id)
-    {
-        return $this->changeStatus($id, Product::STATUS_HIDDEN, Product::STATUS_ACTIVE, 'Only hidden products can be shown');
-    }
+    return response()->json(['redirect' => route('product.show', $product->id)], 200);
+}
 
     // حذف نهائي لهاد السعر بس (باقي أسعار المستخدم بتضل) وبأي حالة: pending / active / hidden
     public function destroy(string $id)
@@ -86,7 +103,16 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
 
         // الحذف بالمفتاح: لو أدمن ثاني حذفه بنفس اللحظة بيرجع 404 بدل خطأ
-        $deleted = Product::whereKey($product->id)->delete();
+        try {
+    $deleted = Product::whereKey($product->id)->delete();
+} catch (QueryException $e) {
+    // الأسعار ما بتنحذف مع المنتج (restrictOnDelete): المنتج اللي إله أسعار بيتخفى بدل ما ينحذف
+    if ($e->getCode() === '23000') {
+        return response()->json(['icon' => 'error', 'title' => 'This product has prices and cannot be deleted; hide it instead'], 409);
+    }
+
+    throw $e;
+}
 
         if (! $deleted) {
             return response()->json(['icon' => 'error', 'title' => 'Product not found'], 404);
@@ -110,6 +136,8 @@ class ProductController extends Controller
                 'product_status' => $to,
                 'updated_at' => now(),
             ]);
+            // ظهور سعر بالشريط مربوط بحالة المنتج: الإخفاء/الإظهار بيغيّره
+PriceTicker::forget();
 
         if (! $updated) {
             return response()->json(['icon' => 'error', 'title' => $error], 409);

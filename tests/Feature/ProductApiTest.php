@@ -262,9 +262,9 @@ class ProductApiTest extends TestCase
         $this->getJson('/api/products/search?'.http_build_query(['q' => 'زيت']))
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.category.name_ar', 'حبوب')
+            // ->assertJsonPath('data.0.category.name_ar', 'حبوب')
             ->assertJsonPath('data.0.unit.name_ar', 'كيلو')
-            ->assertJsonPath('data.0.area.name_ar', 'الرمال');
+            // ->assertJsonPath('data.0.area.name_ar', 'الرمال');
 
         $this->getJson('/api/products/search?'.http_build_query(['q' => 'olive']))
             ->assertOk()
@@ -309,8 +309,98 @@ class ProductApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data');
 
-        foreach (['user_id', 'product_status', 'product_store_phone', 'product_receipt_image'] as $field) {
-            $response->assertJsonMissingPath('data.0.'.$field);
+foreach (['user_id', 'product_status', 'product_store_phone', 'product_receipt_image', 'price', 'store_name', 'store_address', 'area', 'category', 'created_at'] as $field) {            $response->assertJsonMissingPath('data.0.'.$field);
         }
+    }
+
+
+        public function test_search_returns_the_product_and_its_size_only(): void
+    {
+        $user = $this->makeUser();
+        $lookups = $this->lookups();
+
+        $product = $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'رز', 'product_quantity' => 2.5]);
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'رز']))
+            ->assertOk()
+            ->assertExactJsonStructure([
+                'data' => [['id', 'name_ar', 'name_en', 'quantity', 'unit' => ['name_ar', 'name_en']]],
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+            ])
+            ->assertJsonPath('data.0.id', $product->id)
+            ->assertJsonPath('data.0.quantity', '2.50');
+    }
+
+    public function test_search_returns_one_row_for_the_same_product_and_size(): void
+    {
+        $lookups = $this->lookups();
+        $first = $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => 'رز', 'product_name_en' => 'Rice']);
+        $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => 'رز', 'product_name_en' => 'Rice', 'product_price' => 5]);
+        $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => 'رز', 'product_name_en' => 'Rice', 'product_store_name' => 'متجر آخر']);
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'رز']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $first->id)
+            ->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_search_keeps_different_sizes_and_units_apart(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+
+        $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'رز', 'product_quantity' => 1]);
+        $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'رز', 'product_quantity' => 5]);
+
+        $other = $this->lookups();
+        $this->makeProduct($other, $user, 'active', ['product_name_ar' => 'رز', 'product_quantity' => 1]);
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'رز']))
+            ->assertOk()
+            ->assertJsonCount(3, 'data');
+    }
+
+    public function test_search_deduplicates_products_that_have_no_arabic_or_no_english_name(): void
+    {
+        $lookups = $this->lookups();
+
+        $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => null, 'product_name_en' => 'Lentils']);
+        $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => null, 'product_name_en' => 'Lentils']);
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'Lentils']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_search_ignores_hidden_and_pending_rows_when_picking_the_representative(): void
+    {
+        $lookups = $this->lookups();
+
+        $this->makeProduct($lookups, $this->makeUser(), 'hidden', ['product_name_ar' => 'عدس']);
+        $this->makeProduct($lookups, $this->makeUser(), 'pending', ['product_name_ar' => 'عدس']);
+        $active = $this->makeProduct($lookups, $this->makeUser(), 'active', ['product_name_ar' => 'عدس']);
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'عدس']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $active->id);
+    }
+
+    public function test_search_paginates_deduplicated_results(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+
+        foreach (range(1, 25) as $i) {
+            $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'صنف '.$i]);
+            $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'صنف '.$i]);
+        }
+
+        $this->getJson('/api/products/search?'.http_build_query(['q' => 'صنف']))
+            ->assertOk()
+            ->assertJsonCount(20, 'data')
+            ->assertJsonPath('meta.total', 25)
+            ->assertJsonPath('meta.last_page', 2);
     }
 }
