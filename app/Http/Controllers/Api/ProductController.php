@@ -15,7 +15,6 @@ class ProductController extends Controller
 {
 private const PER_PAGE = 20;
 
-// تسجيل سعر جديد: صاحب السعر من المستخدم المسجّل، والحالة pending لحد موافقة الأدمن
 public function store(StoreProductRequest $request): JsonResponse
 {
 $storedPath = null;
@@ -26,7 +25,6 @@ try {
     $product->product_status = Product::STATUS_PENDING;
     $product->user_id = $request->user()->id;
 
-    // الفاتورة على القرص الخاص (local) مش public: الأدمن بس بشوفها من لوحة التحكم
     if ($request->hasFile('product_receipt_image')) {
         $path = $request->file('product_receipt_image')->store('receipts', 'local');
 
@@ -57,13 +55,6 @@ return response()->json([
 ], 201);
 }
 
-// البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، الأحدث أولاً
-// البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، والمنتج بحجمه (الكمية + الوحدة) مرة وحدة بدون تكرار.
-// كل إرسال بينعمل صف بجدول products، فنجمّع الصفوف الفعّالة المتطابقة ونرجّع أقدمها كممثّل (id هاد اللي بينبعت لـ api/prices).
-// ما في أسعار ولا متاجر ولا مناطق هون: الأسعار من api/prices.
-// البحث بالاسم فقط (عربي أو إنجليزي): المعتمد فقط، والمنتج بحجمه (الكمية + الوحدة) مرة وحدة بدون تكرار.
-// كل إرسال بينعمل صف بجدول products، فنجمّع الصفوف الفعّالة المتطابقة ونرجّع أقدمها كممثّل (id هاد اللي بينبعت لـ api/prices).
-// ما في أسعار ولا متاجر ولا مناطق هون: الأسعار من api/prices.
 public function search(Request $request): JsonResponse
 {
 $validator = validator($request->query(), [

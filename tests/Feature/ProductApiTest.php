@@ -262,9 +262,7 @@ class ProductApiTest extends TestCase
         $this->getJson('/api/products/search?'.http_build_query(['q' => 'زيت']))
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            // ->assertJsonPath('data.0.category.name_ar', 'حبوب')
-            ->assertJsonPath('data.0.unit.name_ar', 'كيلو')
-            // ->assertJsonPath('data.0.area.name_ar', 'الرمال');
+            ->assertJsonPath('data.0.unit.name_ar', 'كيلو');
 
         $this->getJson('/api/products/search?'.http_build_query(['q' => 'olive']))
             ->assertOk()
@@ -309,7 +307,8 @@ class ProductApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data');
 
-foreach (['user_id', 'product_status', 'product_store_phone', 'product_receipt_image', 'price', 'store_name', 'store_address', 'area', 'category', 'created_at'] as $field) {            $response->assertJsonMissingPath('data.0.'.$field);
+        foreach (['user_id', 'product_status', 'product_store_phone', 'product_receipt_image', 'price', 'store_name', 'store_address', 'area', 'category', 'created_at'] as $field) {
+            $response->assertJsonMissingPath('data.0.'.$field);
         }
     }
 

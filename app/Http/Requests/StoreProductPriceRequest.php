@@ -17,21 +17,20 @@ class StoreProductPriceRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            // السعر لمنتج موجود ومعتمد بالكتالوج: ما بننشئ منتج جديد من هون
-            'product_id' => [
-                'required',
-                'integer',
-                Rule::exists('products', 'id')->where('product_status', Product::STATUS_ACTIVE),
-            ],
-            // كود المنطقة (area_slug) زي ما بيبعته الفرونت: Nuseirat, KhanYunis...
-            'region' => ['required', 'string', 'max:45', Rule::exists('areas', 'area_slug')],
-            'price' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:99999999.99'],
-            'store_name' => ['required', 'string', 'max:120'],
-            'store_address' => ['nullable', 'string', 'max:255'],
-            'store_phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{6,20}$/'],
-            'receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-        ];
+    return [
+        // السعر لمنتج موجود ومعتمد بالكتالوج: ما بننشئ منتج جديد من هون
+        'product_id' => [
+            'required',
+            'integer',
+            Rule::exists('products', 'id')->where('product_status', Product::STATUS_ACTIVE),
+        ],
+        'region' => ['required', 'string', 'max:45', Rule::exists('areas', 'area_slug')],
+        'price' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:99999999.99'],
+        'store_name' => ['required', 'string', 'max:120'],
+        'store_address' => ['nullable', 'string', 'max:255'],
+        'store_phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{6,20}$/'],
+        'receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+    ];
     }
 
     // نفس شكل أخطاء API الأسعار الحالي: {icon, title} مع 400

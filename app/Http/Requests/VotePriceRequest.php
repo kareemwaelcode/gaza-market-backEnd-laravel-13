@@ -10,24 +10,23 @@ use Illuminate\Validation\Rule;
 
 class VotePriceRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return $this->user() !== null;
-    }
+public function authorize(): bool
+{
+    return $this->user() !== null;
+}
 
-    public function rules(): array
-    {
-        // null = إلغاء الصوت (الفرونت بيبعت null لما المستخدم يضغط نفس الزر مرة ثانية)
-        return [
-            'vote' => ['present', 'nullable', Rule::in(PriceVote::TYPES)],
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'vote' => ['present', 'nullable', Rule::in(PriceVote::TYPES)],
+    ];
+}
 
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json([
-            'icon' => 'error',
-            'title' => $validator->getMessageBag()->first(),
-        ], 400));
-    }
+protected function failedValidation(Validator $validator): void
+{
+    throw new HttpResponseException(response()->json([
+        'icon' => 'error',
+        'title' => $validator->getMessageBag()->first(),
+    ], 400));
+}
 }
