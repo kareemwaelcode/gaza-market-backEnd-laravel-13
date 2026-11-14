@@ -2,15 +2,16 @@
 
 namespace App\Support;
 
+use App\Models\Product;
 use App\Models\ProductPrice;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 
 class PriceTicker
 {
 private const KEY = 'prices:ticker:v1';
 
-public static function items(): array {
+public static function items(): array
+{
 $ttl = (int) config('prices.ticker.ttl');
 
 if ($ttl <= 0) {
@@ -20,20 +21,27 @@ if ($ttl <= 0) {
 return Cache::remember(self::KEY, $ttl, fn () => self::query());
 }
 
-public static function forget(): void {
+public static function forget(): void
+{
 Cache::forget(self::KEY);
 }
 
-private static function query(): array {
-return ProductPrice::query()
+private static function query(): array
+{
+// آخر سعر معتمد لكل منتج فعّال؛ إذا انحذف/انخفى الأحدث بيرجع السابق تلقائياً
+$latestIds = ProductPrice::query()
     ->approved()
-    ->whereHas('product', fn (Builder $q) => $q->active())
+    ->whereIn('product_id', Product::query()->active()->select('id'))
+    ->selectRaw('max(id)')
+    ->groupBy('product_id');
+
+return ProductPrice::query()
+    ->whereIn('id', $latestIds)
     ->with([
         'product:id,product_name_ar,product_name_en,product_quantity,unit_id',
         'product.unit:id,unit_slug',
         'area:id,area_slug',
     ])
-    ->orderByDesc('created_at')
     ->orderByDesc('id')
     ->limit(max(1, (int) config('prices.ticker.limit')))
     ->get()

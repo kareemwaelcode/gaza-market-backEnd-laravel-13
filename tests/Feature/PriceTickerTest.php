@@ -54,21 +54,42 @@ class PriceTickerTest extends TestCase
         }
     }
 
-    public function test_ticker_shows_only_approved_prices_of_active_products_newest_first(): void
+    public function test_ticker_shows_only_the_latest_approved_price_of_each_active_product(): void
     {
         $lookups = $this->lookups();
         $user = $this->makeUser();
         $active = $this->makeProduct($lookups, $user, 'active');
+        $other = $this->makeProduct($lookups, $user, 'active', ['product_name_ar' => 'عدس']);
         $hidden = $this->makeProduct($lookups, $user, 'hidden');
 
-        $old = $this->makePrice($active, $lookups, $user, 'approved', ['created_at' => now()->subDay()]);
-        $new = $this->makePrice($active, $lookups, $user, 'approved');
+        $this->makePrice($active, $lookups, $user, 'approved');
+        $latest = $this->makePrice($active, $lookups, $user, 'approved');
         $this->makePrice($active, $lookups, $user, 'pending');
         $this->makePrice($active, $lookups, $user, 'rejected');
         $this->makePrice($active, $lookups, $user, 'flagged');
         $this->makePrice($hidden, $lookups, $user, 'approved');
+        $otherPrice = $this->makePrice($other, $lookups, $user, 'approved');
 
-        $this->assertSame([$new->id, $old->id], $this->ids());
+        // منتج واحد = سعر واحد، الأحدث بالأول
+        $this->assertSame([$otherPrice->id, $latest->id], $this->ids());
+    }
+
+    public function test_ticker_falls_back_to_the_previous_price_when_the_latest_is_hidden(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $product = $this->makeProduct($lookups, $user);
+
+        $previous = $this->makePrice($product, $lookups, $user);
+        $latest = $this->makePrice($product, $lookups, $user);
+
+        $this->assertSame([$latest->id], $this->ids());
+
+        $this->postJson(route('product_price_reject', $latest->id))->assertOk();
+        $this->assertSame([$previous->id], $this->ids());
+
+        $this->deleteJson(route('product_price.destroy', $previous->id))->assertOk();
+        $this->assertSame([], $this->ids());
     }
 
     public function test_ticker_is_limited_by_config(): void
@@ -77,10 +98,9 @@ class PriceTickerTest extends TestCase
 
         $lookups = $this->lookups();
         $user = $this->makeUser();
-        $product = $this->makeProduct($lookups, $user);
 
         foreach (range(1, 5) as $i) {
-            $this->makePrice($product, $lookups, $user);
+            $this->makePrice($this->makeProduct($lookups, $user), $lookups, $user);
         }
 
         $this->ticker()->assertOk()->assertJsonCount(3, 'data');
@@ -121,7 +141,8 @@ class PriceTickerTest extends TestCase
 
         $second = $this->makePrice($product, $lookups, $user);
 
-        $this->assertSame([$second->id, $first->id], $this->ids());
+        // نفس المنتج: السعر الأحدث بيحل مكان القديم
+        $this->assertSame([$second->id], $this->ids());
     }
 
     public function test_forget_clears_only_the_ticker_key(): void
@@ -180,7 +201,8 @@ class PriceTickerTest extends TestCase
             'store_name' => 'متجر جديد',
         ])->assertCreated();
 
-        $this->assertSame([$response->json('data.id'), $price->id], $this->ids());
+        // نفس المنتج: السعر الجديد بيحل مكان القديم بالشريط
+        $this->assertSame([$response->json('data.id')], $this->ids());
     }
 
     public function test_a_price_flagged_by_reports_leaves_the_ticker_immediately(): void
@@ -245,6 +267,15 @@ class PriceTickerTest extends TestCase
         $this->assertSame([$price->id], $this->ids());
     }
 
+    public function test_deleting_a_product_from_the_cms_updates_the_ticker(): void
+    {
+        [, , $product] = $this->warm();
+
+        $this->deleteJson(route('product.destroy', $product->id))->assertOk();
+
+        $this->assertSame([], $this->ids());
+    }
+
     public function test_approving_a_new_product_puts_its_first_price_in_the_ticker(): void
     {
         [$lookups, $owner, , $price] = $this->warm();
@@ -267,9 +298,10 @@ class PriceTickerTest extends TestCase
 
         $this->artisan('prices:backfill-first')->assertSuccessful();
 
-        // السعر المسخَّن + السعر الأول للمنتج القديم + السعر الأول للمنتج المسخَّن (سعره المسجّل بقيم غير قيم صفّه)
+        // الـ backfill بينشئ سعر أول للمنتج القديم وللمنتج المسخَّن (سعره المسجّل بقيم غير قيم صفّه)،
+        // والشريط بيعرض آخر سعر لكل منتج: يعني سعرين بس، والسعر المسخَّن القديم ما عاد ظاهر
         $ids = $this->ids();
-        $this->assertCount(3, $ids);
-        $this->assertContains($price->id, $ids);
+        $this->assertCount(2, $ids);
+        $this->assertNotContains($price->id, $ids);
     }
 }

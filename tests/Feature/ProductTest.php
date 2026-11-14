@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Area;
 use App\Models\Category;
 use App\Models\CategoryGroup;
+use App\Models\PriceVote;
 use App\Models\Product;
+use App\Models\ProductPrice;
 use App\Models\Regions;
 use App\Models\Unit;
 use App\Models\User;
@@ -85,6 +87,23 @@ class ProductTest extends TestCase
         $product->save();
 
         return $product->refresh();
+    }
+
+    private function price(Product $product, array $lookups, User $user, ?string $receipt = null): ProductPrice
+    {
+        $price = new ProductPrice;
+        $price->forceFill([
+            'product_id' => $product->id,
+            'area_id' => $lookups['area']->id,
+            'user_id' => $user->id,
+            'product_price_value' => 7.5,
+            'product_price_store_name' => 'متجر',
+            'product_price_receipt_image' => $receipt,
+            'product_price_status' => ProductPrice::STATUS_APPROVED,
+        ]);
+        $price->save();
+
+        return $price;
     }
 
     public function test_new_product_defaults_to_pending_and_status_is_not_mass_assignable(): void
@@ -241,6 +260,46 @@ class ProductTest extends TestCase
             $this->assertNull(Product::find($product->id));
             Storage::disk('local')->assertMissing($path);
         }
+    }
+
+    public function test_destroy_removes_a_product_with_its_prices_votes_and_receipts(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('receipts/product.jpg', 'x');
+        Storage::disk('local')->put('receipts/price-1.jpg', 'x');
+        Storage::disk('local')->put('receipts/other-price.jpg', 'x');
+
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $voter = $this->makeUser();
+
+        $product = $this->product('active', ['product_receipt_image' => 'receipts/product.jpg'], $lookups, $user);
+        $other = $this->product('active', [], $lookups, $user);
+
+        $price = $this->price($product, $lookups, $user, 'receipts/price-1.jpg');
+        $this->price($product, $lookups, $user);
+        $otherPrice = $this->price($other, $lookups, $user, 'receipts/other-price.jpg');
+
+        $vote = new PriceVote;
+        $vote->product_price_id = $price->id;
+        $vote->user_id = $voter->id;
+        $vote->price_vote_type = PriceVote::TYPE_CONFIRM;
+        $vote->save();
+
+        $this->deleteJson(route('product.destroy', $product->id))
+            ->assertOk()
+            ->assertJson(['icon' => 'success']);
+
+        $this->assertNull(Product::find($product->id));
+        $this->assertSame(0, ProductPrice::where('product_id', $product->id)->count());
+        $this->assertSame(0, PriceVote::where('product_price_id', $price->id)->count());
+        Storage::disk('local')->assertMissing('receipts/product.jpg');
+        Storage::disk('local')->assertMissing('receipts/price-1.jpg');
+
+        // منتج وسعر غيره ما بينلمسوا
+        $this->assertNotNull(Product::find($other->id));
+        $this->assertNotNull(ProductPrice::find($otherPrice->id));
+        Storage::disk('local')->assertExists('receipts/other-price.jpg');
     }
 
     public function test_destroy_returns_404_for_an_unknown_product(): void

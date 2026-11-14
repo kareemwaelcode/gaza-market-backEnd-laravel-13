@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductPrice;
 use App\Support\PriceTicker;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -98,22 +99,38 @@ PriceTicker::forget();
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }
 
-public function hide(string $id) {
+public function hide(string $id)
+{
 return $this->changeStatus($id, Product::STATUS_ACTIVE, Product::STATUS_HIDDEN, 'Only active products can be hidden');
 }
 
-public function unhide(string $id) {
+public function unhide(string $id)
+{
 return $this->changeStatus($id, Product::STATUS_HIDDEN, Product::STATUS_ACTIVE, 'Only hidden products can be shown');
 }
 
-public function destroy(string $id) {
+public function destroy(string $id)
+{
 $product = Product::findOrFail($id);
 
+$priceReceipts = [];
+
 try {
-    $deleted = Product::whereKey($product->id)->delete();
+    // الأسعار (وأصواتها بالـ cascade) بتنحذف مع المنتج كوحدة وحدة
+    $deleted = DB::transaction(function () use ($product, &$priceReceipts) {
+        $priceReceipts = ProductPrice::query()
+            ->where('product_id', $product->id)
+            ->whereNotNull('product_price_receipt_image')
+            ->pluck('product_price_receipt_image')
+            ->all();
+
+        ProductPrice::query()->where('product_id', $product->id)->delete();
+
+        return Product::whereKey($product->id)->delete();
+    });
 } catch (QueryException $e) {
     if ($e->getCode() === '23000') {
-        return response()->json(['icon' => 'error', 'title' => 'This product has prices and cannot be deleted; hide it instead'], 409);
+        return response()->json(['icon' => 'error', 'title' => 'This product is still referenced and cannot be deleted'], 409);
     }
 
     throw $e;
@@ -123,13 +140,20 @@ if (! $deleted) {
     return response()->json(['icon' => 'error', 'title' => 'Product not found'], 404);
 }
 
-if ($product->product_receipt_image) {
-    Storage::disk('local')->delete($product->product_receipt_image);
+// الملفات بعد الـ commit: لو فشلت المعاملة ما منخسر أي وصل
+$paths = array_filter(array_merge([$product->product_receipt_image], $priceReceipts));
+
+foreach ($paths as $path) {
+    Storage::disk('local')->delete($path);
 }
+
+PriceTicker::forget();
 
 return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
 }
-private function changeStatus(string $id, string $from, string $to, string $error) {
+
+private function changeStatus(string $id, string $from, string $to, string $error)
+{
 $product = Product::findOrFail($id);
 
 $updated = Product::whereKey($product->id)
@@ -144,6 +168,7 @@ if (! $updated) {
 }
 
 PriceTicker::forget();
+
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }
 }
