@@ -160,17 +160,7 @@ class AuthController extends Controller
     /** @return array<string, mixed> */
     private function payload(User $user): array
     {
-        return [
-            'id' => $user->id,
-            'full_name' => $user->user_full_name,
-            'phone' => $user->user_phone,
-            'role' => $user->user_role,
-            'preferred_lang' => $user->user_preferred_lang,
-            'theme' => $user->user_theme,
-            'area_id' => $user->area_id,
-            'avatar_url' => $user->avatar_url,
-            'points_total' => $user->user_points_total,
-        ];
+        return $user->apiPayload();
     }
 
     private function failure(string $code, int $status, array $extra = []): JsonResponse

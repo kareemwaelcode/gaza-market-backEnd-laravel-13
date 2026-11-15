@@ -106,6 +106,31 @@ RateLimiter::for('price-votes', fn (Request $request) =>
         ->by('price-votes:' . ($request->user()?->id ?? $request->ip()))
 );
 
+RateLimiter::for('my-prices', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('my-prices:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('price-history', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('price-history:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('points', fn (Request $request) =>
+    Limit::perMinute(60)
+        ->by('points:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('profile', fn (Request $request) =>
+    Limit::perMinute(20)
+        ->by('profile:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('profile-avatar', fn (Request $request) =>
+    Limit::perMinute(10)
+        ->by('profile-avatar:' . ($request->user()?->id ?? $request->ip()))
+);
+
 RateLimiter::for('dashboard', fn (Request $request) =>
     Limit::perMinute(30)
         ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))

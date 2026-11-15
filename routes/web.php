@@ -3,9 +3,13 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\LookupController as ApiLookupController;
 use App\Http\Controllers\Api\MarketController as ApiMarketController;
+use App\Http\Controllers\Api\MyPriceController as ApiMyPriceController;
 use App\Http\Controllers\Api\PlaceController as ApiPlaceController;
+use App\Http\Controllers\Api\PointController as ApiPointController;
 use App\Http\Controllers\Api\ProductController as ApiProductController;
 use App\Http\Controllers\Api\ProductPriceController as ApiProductPriceController;
+use App\Http\Controllers\Api\ProductPriceHistoryController as ApiProductPriceHistoryController;
+use App\Http\Controllers\Api\ProfileController as ApiProfileController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -143,6 +147,11 @@ Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, Pr
         Route::get('api/products/search', [ApiProductController::class, 'search'])
             ->name('products.search');
 
+        Route::get('api/products/{product}/prices', [ApiProductPriceHistoryController::class, 'index'])
+            ->where('product', '[0-9]{1,18}')
+            ->middleware('throttle:price-history')
+            ->name('products.prices');
+
         Route::get('api/prices/ticker', [ApiProductPriceController::class, 'ticker'])
             ->middleware('throttle:prices-feed')
             ->name('prices.ticker');
@@ -165,6 +174,11 @@ Route::post('api/prices/{price}/vote', [ApiProductPriceController::class, 'vote'
     ->middleware(['auth', 'active.user', 'throttle:price-votes'])
     ->name('prices.vote');
 
+Route::middleware(['auth', 'active.user'])->prefix('api/me')->name('me.')->group(function () {
+    Route::get('prices', [ApiMyPriceController::class, 'index'])->middleware('throttle:my-prices')->name('prices');
+    Route::get('points', [ApiPointController::class, 'show'])->middleware('throttle:points')->name('points');
+});
+
 Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])->prefix('api/dashboard')->name('owner.')->group(function () {
     Route::get('place', [DashboardPlaceController::class, 'show'])->name('place.show');
     Route::patch('place', [DashboardPlaceController::class, 'update'])->name('place.update');
@@ -177,4 +191,8 @@ Route::prefix('api/auth')->name('auth.')->group(function () {
     Route::post('otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:otp-request')->name('otp.request');
     Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp-verify')->name('otp.verify');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+    Route::patch('me', [ApiProfileController::class, 'update'])
+        ->middleware(['auth', 'active.user', 'throttle:profile'])->name('me.update');
+    Route::post('me/avatar', [ApiProfileController::class, 'avatar'])
+        ->middleware(['auth', 'active.user', 'throttle:profile-avatar'])->name('me.avatar');
 });

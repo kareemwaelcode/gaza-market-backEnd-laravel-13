@@ -8,6 +8,7 @@ use App\Http\Requests\VotePriceRequest;
 use App\Models\Area;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
+use App\Services\PointService;
 use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Database\Eloquent\Builder;
@@ -153,6 +154,7 @@ return response()->json(['icon' => 'error', 'title' => 'Region not found'], 404)
 }
 
 $storedPath = null;
+$pointsAwarded = 0;
 
 try {
 $price = new ProductPrice;
@@ -178,7 +180,19 @@ if ($request->hasFile('receipt_image')) {
     $price->product_price_receipt_image = $path;
 }
 
-$price->save();
+// حفظ السعر ومنح النقاط وحدة واحدة: لو فشل المنح بيتراجع السعر كمان
+$pointsAwarded = DB::transaction(function () use ($price) {
+    $price->save();
+
+    $transaction = app(PointService::class)->award(
+        (int) $price->user_id,
+        'add_price',
+        'product_price',
+        (int) $price->id,
+    );
+
+    return $transaction?->point_transaction_points ?? 0;
+});
 } catch (Throwable $e) {
 if ($storedPath !== null) {
     Storage::disk('local')->delete($storedPath);
@@ -198,6 +212,7 @@ return response()->json([
 'data' => [
     'id' => $price->id,
     'status' => $price->product_price_status,
+    'points_awarded' => $pointsAwarded,
 ],
 ], 201);
 }

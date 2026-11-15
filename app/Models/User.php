@@ -87,6 +87,22 @@ class User extends Authenticatable
         return $this->hasOne(Place::class, 'user_id');
     }
 
+    /** @return array<string, mixed> شكل المستخدم الموحّد بردود الـ API (auth/me وتعديل البروفايل). */
+    public function apiPayload(): array
+    {
+        return [
+            'id' => $this->id,
+            'full_name' => $this->user_full_name,
+            'phone' => $this->user_phone,
+            'role' => $this->user_role,
+            'preferred_lang' => $this->user_preferred_lang,
+            'theme' => $this->user_theme,
+            'area_id' => $this->area_id,
+            'avatar_url' => $this->avatar_url,
+            'points_total' => $this->user_points_total,
+        ];
+    }
+
     public function canUseOwnerDashboard(): bool
     {
         return $this->user_role === 'store_owner'
