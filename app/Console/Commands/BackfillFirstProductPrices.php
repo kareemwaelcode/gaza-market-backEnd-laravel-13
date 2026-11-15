@@ -37,7 +37,7 @@ $query->chunkById(200, function ($products) use (&$created) {
 });
 
 if ($created > 0) {
-    PriceTicker::forget();
+    PriceTicker::refresh();
 }
 
 $this->info("First prices created: {$created}");

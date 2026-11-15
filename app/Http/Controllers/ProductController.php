@@ -94,7 +94,7 @@ if (! $approved) {
     return response()->json(['icon' => 'error', 'title' => 'Only pending products can be approved'], 409);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }
@@ -147,7 +147,7 @@ foreach ($paths as $path) {
     Storage::disk('local')->delete($path);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
 }
@@ -167,7 +167,7 @@ if (! $updated) {
     return response()->json(['icon' => 'error', 'title' => $error], 409);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }

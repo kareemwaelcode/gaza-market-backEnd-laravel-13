@@ -109,7 +109,7 @@ if (! $approved) {
     return response()->json(['icon' => 'error', 'title' => 'This price is already visible'], 409);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['redirect' => route('product_price.show', $price->id)], 200);
 }
@@ -134,7 +134,7 @@ if (! $updated) {
     return response()->json(['icon' => 'error', 'title' => 'This price is already hidden'], 409);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['redirect' => route('product_price.show', $price->id)], 200);
 }
@@ -153,7 +153,7 @@ if ($price->product_price_receipt_image) {
     Storage::disk('local')->delete($price->product_price_receipt_image);
 }
 
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 
 return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
 }

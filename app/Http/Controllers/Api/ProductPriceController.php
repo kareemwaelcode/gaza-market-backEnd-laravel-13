@@ -146,7 +146,7 @@ report($e);
 return response()->json(['icon' => 'error', 'title' => 'Could not save the price'], 500);
 }
 
-PriceTicker::forget();
+// ما بنمسح كاش الشريط هون: السعر الجديد بيظهر مع التحديث المجدول الجاي (بدل ما كل إضافة تضرب الداتابيز)
 
 return response()->json([
 'data' => [
@@ -227,7 +227,7 @@ return response()->json(['icon' => 'error', 'title' => $outcome['title']], $outc
 
 // بس لما السعر اختفى بالبلاغات: عدّادات التصويت مش جزء من الشريط
 if ($outcome['data']['removed']) {
-PriceTicker::forget();
+PriceTicker::refreshAfterChange();
 }
 
 return response()->json(['data' => $outcome['data']]);
