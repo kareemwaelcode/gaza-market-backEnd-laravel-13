@@ -66,6 +66,12 @@ RateLimiter::for('prices-feed', fn (Request $request) =>
         ->by('prices-feed:' . ($request->user()?->id ?? $request->ip()))
 );
 
+// أصوات المستخدم على صفحة الـ feed: حسب المستخدم (الراوت للمسجّل فقط)
+RateLimiter::for('prices-my-votes', fn (Request $request) =>
+    Limit::perMinute(120)
+        ->by('prices-my-votes:' . ($request->user()?->id ?? $request->ip()))
+);
+
 RateLimiter::for('product-prices', fn (Request $request) =>
     Limit::perMinute(10)
         ->by('product-prices:' . ($request->user()?->id ?? $request->ip()))

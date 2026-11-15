@@ -8,10 +8,12 @@ use App\Http\Requests\VotePriceRequest;
 use App\Models\Area;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
+use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -42,6 +44,27 @@ $region = $request->query('region') ?: null;
 $category = $request->query('category') ?: null;
 $limit = (int) ($request->query('limit') ?: self::PER_PAGE);
 
+$build = fn () => $this->feedPayload($region, $category, $limit);
+
+$pageNumber = Paginator::resolveCurrentPage();
+
+// الاستجابة نفسها لكل الناس (بدون my_vote)، فبتنكاش؛ الصفحات البعيدة والمفاتيح العشوائية ما بتنكاش
+$payload = $pageNumber > (int) config('prices.cache.max_page')
+? $build()
+: ApiCache::remember(
+    [ApiCache::PRICES, ApiCache::PRODUCTS],
+    'feed:'.md5(json_encode([$region, $category, $limit, $pageNumber])),
+    (int) config('prices.cache.feed_ttl'),
+    $build,
+    fn (array $value) => $value['data'] === [],
+);
+
+return response()->json($payload);
+}
+
+/** @return array{data: array, next_cursor: null, has_more: bool, total: int} */
+private function feedPayload(?string $region, ?string $category, int $limit): array
+{
 $page = ProductPrice::query()
 ->approved()
 ->whereHas('product', function (Builder $q) use ($category) {
@@ -62,14 +85,6 @@ $page = ProductPrice::query()
 ->orderByDesc('id')
 ->paginate($limit);
 
-$userId = $request->user()?->id;
-$myVotes = $userId === null || $page->isEmpty()
-? collect()
-: PriceVote::query()
-    ->where('user_id', $userId)
-    ->whereIn('product_price_id', $page->getCollection()->pluck('id'))
-    ->pluck('price_vote_type', 'product_price_id');
-
 $items = $page->getCollection()->map(fn (ProductPrice $price) => [
 'price_id' => $price->id,
 'product_id' => $price->product_id,
@@ -84,15 +99,43 @@ $items = $page->getCollection()->map(fn (ProductPrice $price) => [
 'created_at' => $price->created_at?->toJSON(),
 'confirm_count' => $price->confirm_count,
 'report_count' => $price->report_count,
-'my_vote' => $myVotes->get($price->id),
 ])->values();
 
-return response()->json([
-'data' => $items,
+return [
+'data' => $items->all(),
 'next_cursor' => null,
 'has_more' => $page->hasMorePages(),
 'total' => $page->total(),
+];
+}
+
+public function myVotes(Request $request): JsonResponse
+{
+$validator = validator($request->query(), [
+'price_ids' => ['required', 'array', 'min:1', 'max:'.self::MAX_PER_PAGE],
+'price_ids.*' => ['integer', 'min:1', 'distinct'],
 ]);
+
+if ($validator->fails()) {
+return response()->json([
+    'icon' => 'error',
+    'title' => $validator->getMessageBag()->first(),
+], 400);
+}
+
+// المستخدم من الجلسة فقط (مش من الطلب): ما حدا بيشوف أصوات غيره
+$votes = PriceVote::query()
+->where('user_id', $request->user()->id)
+->whereIn('product_price_id', $validator->validated()['price_ids'])
+->orderBy('product_price_id')
+->get(['product_price_id', 'price_vote_type'])
+->map(fn (PriceVote $vote) => [
+    'price_id' => $vote->product_price_id,
+    'my_vote' => $vote->price_vote_type,
+])
+->values();
+
+return response()->json(['data' => $votes]);
 }
 
 public function ticker(): JsonResponse
@@ -145,6 +188,9 @@ report($e);
 
 return response()->json(['icon' => 'error', 'title' => 'Could not save the price'], 500);
 }
+
+// السعر معتمد فوراً فبيظهر بالـ feed: بنبطّل كاش الـ feed (بدون ما نلمس كاش الشريط)
+ApiCache::pricesChanged();
 
 // ما بنمسح كاش الشريط هون: السعر الجديد بيظهر مع التحديث المجدول الجاي (بدل ما كل إضافة تضرب الداتابيز)
 
@@ -228,6 +274,7 @@ return response()->json(['icon' => 'error', 'title' => $outcome['title']], $outc
 // بس لما السعر اختفى بالبلاغات: عدّادات التصويت مش جزء من الشريط
 if ($outcome['data']['removed']) {
 PriceTicker::refreshAfterChange();
+ApiCache::pricesChanged();
 }
 
 return response()->json(['data' => $outcome['data']]);

@@ -28,7 +28,10 @@ use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\StoreCategoryGroupController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 // جذر الدومين محجوز للفرونت (ملفات ثابتة يخدمها الـ web server). لوحة الـ CMS تحت /cms/admins فقط.
 Route::prefix('cms/admins/')->group(function () {
@@ -88,10 +91,10 @@ Route::view('', 'cms.parent')->name('dashboard');
 */
 
 // نشر إعلان جديد
-Route::post('api/market', [MarketListingController::class, 'store'])->middleware('auth')->name('market.store');
+Route::post('api/market', [MarketListingController::class, 'store'])->middleware(['auth', 'active.user'])->name('market.store');
 
 // محفوظاتي: لازم مستخدم مسجّل، وحدّ طلبات لكل مستخدم
-Route::middleware(['auth', 'throttle:saved-listings'])->prefix('api/market')->name('market.saved.')->group(function () {
+Route::middleware(['auth', 'active.user', 'throttle:saved-listings'])->prefix('api/market')->name('market.saved.')->group(function () {
         Route::get('saved', [SavedListingController::class, 'index'])->name('index');
         Route::post('{listing}/save', [SavedListingController::class, 'store'])->where('listing', '[0-9]{1,18}')->name('store');
         Route::delete('{listing}/save', [SavedListingController::class, 'destroy'])->where('listing', '[0-9]{1,18}')->name('destroy');
@@ -103,7 +106,7 @@ Route::post('api/places/{place}/visit', [MarketPlaceVisitController::class, 'sto
     ->middleware('throttle:place-visit')
     ->name('places.visit');
 
-Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
+Route::middleware(['auth', 'active.user', 'throttle:places'])->prefix('api/places')->name('places.')->group(function () {
     Route::post('', [MarketPlaceController::class, 'store'])->name('store');
     Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
 });
@@ -116,37 +119,53 @@ Route::middleware(['auth', 'throttle:places'])->prefix('api/places')->name('plac
 
 // تسجيل سعر جديد: لازم مستخدم مسجّل، وبيبدأ pending لحد موافقة الأدمن
 Route::post('api/products', [ApiProductController::class, 'store'])
-    ->middleware('auth')
+    ->middleware(['auth', 'active.user'])
     ->name('products.store');
-
-// البحث بالاسم (عام، بدون تسجيل دخول): المعتمد فقط
-Route::get('api/products/search', [ApiProductController::class, 'search'])
-    ->name('products.search');
 
 /*
 |--------------------------------------------------------------------------
 | سعر منتج موجود + تصويت  —  /api/prices/...
 |--------------------------------------------------------------------------
 */
-// شريط الأسعار في الهيرو: عام، كاش قصير (config/prices.php)
-Route::get('api/prices/ticker', [ApiProductPriceController::class, 'ticker'])
-    ->middleware('throttle:prices-feed')
-    ->name('prices.ticker');
+/*
+|--------------------------------------------------------------------------
+| الراوتات العامة بدون جلسة (قراءة فقط)
+|--------------------------------------------------------------------------
+| الزائر ما بيفتح جلسة ولا بيكتب صف بجدول sessions ولا بيستلم كوكي، فالاستجابة نفسها لكل الناس.
+| (PreventRequestForgery مستثنى لأنه على GET بيضيف كوكي XSRF من الجلسة.) POST/DELETE ما بتتغير.
+| حالة المستخدم (my_vote) بتنجاب من GET api/prices/my-votes للمسجّل فقط.
+*/
+Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])
+    ->group(function () {
+        // البحث بالاسم: المعتمد فقط
+        Route::get('api/products/search', [ApiProductController::class, 'search'])
+            ->name('products.search');
 
-// الـ feed العام (المعتمد فقط): بدون تسجيل دخول، و my_vote بتنعبّى لو المستخدم مسجّل
-Route::get('api/prices', [ApiProductPriceController::class, 'index'])
-    ->middleware('throttle:prices-feed')
-    ->name('prices.index');
+        // شريط الأسعار في الهيرو: كاش قصير (config/prices.php)
+        Route::get('api/prices/ticker', [ApiProductPriceController::class, 'ticker'])
+            ->middleware('throttle:prices-feed')
+            ->name('prices.ticker');
+
+        // الـ feed العام (المعتمد فقط)
+        Route::get('api/prices', [ApiProductPriceController::class, 'index'])
+            ->middleware('throttle:prices-feed')
+            ->name('prices.index');
+    });
+
+// أصوات المستخدم الحالي على أسعار صفحة الـ feed: للمسجّل فقط (price_ids[]، حد أقصى 50)
+Route::get('api/prices/my-votes', [ApiProductPriceController::class, 'myVotes'])
+    ->middleware(['auth', 'active.user', 'throttle:prices-my-votes'])
+    ->name('prices.my-votes');
 
 // تسجيل سعر جديد لمنتج موجود: pending لحد موافقة الأدمن
 Route::post('api/prices', [ApiProductPriceController::class, 'store'])
-    ->middleware(['auth', 'throttle:product-prices'])
+    ->middleware(['auth', 'active.user', 'throttle:product-prices'])
     ->name('prices.store');
 
 // تأكيد/إبلاغ/إلغاء صوت (vote: confirm | report | null)
 Route::post('api/prices/{price}/vote', [ApiProductPriceController::class, 'vote'])
     ->where('price', '[0-9]{1,18}')
-    ->middleware(['auth', 'throttle:price-votes'])
+    ->middleware(['auth', 'active.user', 'throttle:price-votes'])
     ->name('prices.vote');
 
 /*
@@ -156,7 +175,7 @@ Route::post('api/prices/{price}/vote', [ApiProductPriceController::class, 'vote'
 */
 
 // store.owner بيرجع 401 (UNAUTHENTICATED) للزائر و403 (FORBIDDEN) لغير مالك محل معتمد.
-Route::middleware(['store.owner', 'throttle:dashboard'])->prefix('api/dashboard')->name('owner.')->group(function () {
+Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])->prefix('api/dashboard')->name('owner.')->group(function () {
     Route::get('place', [DashboardPlaceController::class, 'show'])->name('place.show');
     Route::patch('place', [DashboardPlaceController::class, 'update'])->name('place.update');
     Route::get('visits', [MarketPlaceVisitController::class, 'summary'])->name('visits.summary'); // جديد
@@ -170,7 +189,7 @@ Route::middleware(['store.owner', 'throttle:dashboard'])->prefix('api/dashboard'
 */
 
 Route::prefix('api/auth')->name('auth.')->group(function () {
-    Route::get('me', [AuthController::class, 'me'])->name('me');
+    Route::get('me', [AuthController::class, 'me'])->middleware('active.user')->name('me');
     Route::post('otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:otp-request')->name('otp.request');
     Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp-verify')->name('otp.verify');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');

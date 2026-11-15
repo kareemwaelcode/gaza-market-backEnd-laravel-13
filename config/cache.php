@@ -112,6 +112,16 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limiter Cache Store
+    |--------------------------------------------------------------------------
+    | الـ store اللي بتخزّن فيه حدود الطلبات (throttle). فاضي = الـ store الافتراضي.
+    | تنبيه: لو حطيته redis وRedis وقع، راوتات throttle (ومنها OTP) بترمي 500؛ فعّله بعد ما تتأكد من Redis.
+    */
+
+    'limiter' => env('CACHE_LIMITER_STORE'),
+
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
 
     /*

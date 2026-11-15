@@ -5,7 +5,6 @@ namespace App\Support;
 use App\Models\Product;
 use App\Models\ProductPrice;
 use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
@@ -35,7 +34,7 @@ class PriceTicker
             return self::query();
         }
 
-        $cached = Cache::get(self::KEY);
+        $cached = ApiCache::store()->get(self::KEY);
 
         if (is_array($cached)) {
             return $cached;
@@ -52,7 +51,7 @@ class PriceTicker
         $items = self::query();
 
         if (self::ttl() > 0) {
-            Cache::put(self::KEY, $items, self::ttl());
+            ApiCache::store()->put(self::KEY, $items, self::ttl());
         }
 
         return $items;
@@ -79,7 +78,7 @@ class PriceTicker
 
     public static function forget(): void
     {
-        Cache::forget(self::KEY);
+        ApiCache::store()->forget(self::KEY);
     }
 
     private static function ttl(): int
@@ -91,9 +90,9 @@ class PriceTicker
     private static function rebuildOnce(): array
     {
         try {
-            return Cache::lock(self::LOCK_KEY, self::LOCK_SECONDS)
+            return ApiCache::store()->lock(self::LOCK_KEY, self::LOCK_SECONDS)
                 ->block(self::LOCK_WAIT_SECONDS, function () {
-                    $cached = Cache::get(self::KEY);
+                    $cached = ApiCache::store()->get(self::KEY);
 
                     return is_array($cached) ? $cached : self::refresh();
                 });

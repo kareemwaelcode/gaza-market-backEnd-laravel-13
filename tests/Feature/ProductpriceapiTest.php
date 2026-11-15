@@ -89,13 +89,12 @@ class ProductPriceApiTest extends TestCase
             ->assertJsonPath('data.0.category', $lookups['category']->category_slug)
             ->assertJsonPath('data.0.price', '8.00')
             ->assertJsonPath('data.0.confirm_count', 5)
-            ->assertJsonPath('data.0.report_count', 0)
-            ->assertJsonPath('data.0.my_vote', null);
+            ->assertJsonPath('data.0.report_count', 0);
 
         $item = $response->json('data.0');
         $this->assertArrayHasKey('created_at', $item);
         // ما في بيانات حساسة بالبطاقة
-        foreach (['user_id', 'product_price_store_phone', 'store_phone', 'product_price_receipt_image', 'receipt'] as $key) {
+        foreach (['my_vote', 'user_id', 'product_price_store_phone', 'store_phone', 'product_price_receipt_image', 'receipt'] as $key) {
             $this->assertArrayNotHasKey($key, $item);
         }
         $this->assertStringNotContainsString('0591234567', $response->getContent());
@@ -161,19 +160,85 @@ class ProductPriceApiTest extends TestCase
         $this->getJson('/api/prices?region=Unknown')->assertOk()->assertJsonCount(0, 'data');
     }
 
-    public function test_feed_fills_my_vote_for_the_logged_in_user_only(): void
+    public function test_feed_never_contains_my_vote_even_for_a_logged_in_user(): void
+    {
+        $lookups = $this->lookups();
+        $owner = $this->makeUser();
+        $me = $this->makeUser();
+        $price = $this->makePrice($this->makeProduct($lookups, $owner), $lookups, $owner);
+        $this->makeVote($price, $me, 'confirm');
+
+        $item = $this->actingAs($me)->getJson('/api/prices')->assertOk()->json('data.0');
+
+        $this->assertArrayNotHasKey('my_vote', $item);
+    }
+
+    // ---------- my-votes ----------
+
+    public function test_my_votes_requires_login(): void
+    {
+        $this->getJson('/api/prices/my-votes?price_ids[]=1')
+            ->assertStatus(401);
+    }
+
+    public function test_my_votes_returns_only_the_current_users_votes_for_the_requested_prices(): void
     {
         $lookups = $this->lookups();
         $owner = $this->makeUser();
         $me = $this->makeUser();
         $other = $this->makeUser();
+        $product = $this->makeProduct($lookups, $owner);
+        $voted = $this->makePrice($product, $lookups, $owner);
+        $reported = $this->makePrice($product, $lookups, $owner);
+        $untouched = $this->makePrice($product, $lookups, $owner);
+        $onlyOther = $this->makePrice($product, $lookups, $owner);
+
+        $this->makeVote($voted, $me, 'confirm');
+        $this->makeVote($reported, $me, 'report');
+        $this->makeVote($onlyOther, $other, 'confirm');
+
+        $ids = [$voted->id, $reported->id, $untouched->id, $onlyOther->id];
+
+        $response = $this->actingAs($me)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => $ids]))
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $this->assertEqualsCanonicalizing(
+            [['price_id' => $voted->id, 'my_vote' => 'confirm'], ['price_id' => $reported->id, 'my_vote' => 'report']],
+            $response->json('data'),
+        );
+
+        // ما في تسريب: المستخدم التاني بيشوف صوته بس
+        $this->actingAs($other)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => $ids]))
+            ->assertOk()
+            ->assertExactJson(['data' => [['price_id' => $onlyOther->id, 'my_vote' => 'confirm']]]);
+    }
+
+    public function test_my_votes_ignores_a_user_id_sent_in_the_request(): void
+    {
+        $lookups = $this->lookups();
+        $owner = $this->makeUser();
+        $me = $this->makeUser();
+        $victim = $this->makeUser();
         $price = $this->makePrice($this->makeProduct($lookups, $owner), $lookups, $owner);
+        $this->makeVote($price, $victim, 'report');
 
-        $this->makeVote($price, $me, 'confirm');
-        $this->makeVote($price, $other, 'report');
+        $this->actingAs($me)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => [$price->id], 'user_id' => $victim->id]))
+            ->assertOk()
+            ->assertExactJson(['data' => []]);
+    }
 
-        $this->actingAs($me)->getJson('/api/prices')->assertOk()->assertJsonPath('data.0.my_vote', 'confirm');
-        $this->actingAs($other)->getJson('/api/prices')->assertOk()->assertJsonPath('data.0.my_vote', 'report');
+    public function test_my_votes_validates_price_ids(): void
+    {
+        $me = $this->makeUser();
+
+        $this->actingAs($me)->getJson('/api/prices/my-votes')->assertStatus(400)->assertJson(['icon' => 'error']);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?price_ids=5')->assertStatus(400);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?price_ids[]=abc')->assertStatus(400);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?price_ids[]=0')->assertStatus(400);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?price_ids[]=3&price_ids[]=3')->assertStatus(400);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => range(1, 51)]))->assertStatus(400);
+        $this->actingAs($me)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => range(1, 50)]))->assertOk();
     }
 
     public function test_feed_rejects_invalid_query_values(): void

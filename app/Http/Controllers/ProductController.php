@@ -6,6 +6,7 @@ use App\Models\Area;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductPrice;
+use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -95,6 +96,7 @@ if (! $approved) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::productsChanged();
 
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }
@@ -148,6 +150,7 @@ foreach ($paths as $path) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::productsChanged();
 
 return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
 }
@@ -168,6 +171,7 @@ if (! $updated) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::productsChanged();
 
 return response()->json(['redirect' => route('product.show', $product->id)], 200);
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Product;
+use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,6 +39,7 @@ $query->chunkById(200, function ($products) use (&$created) {
 
 if ($created > 0) {
     PriceTicker::refresh();
+    ApiCache::productsChanged();
 }
 
 $this->info("First prices created: {$created}");

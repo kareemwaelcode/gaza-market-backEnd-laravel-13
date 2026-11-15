@@ -6,6 +6,7 @@ use App\Models\Area;
 use App\Models\Category;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
+use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,7 @@ if (! $approved) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::pricesChanged();
 
 return response()->json(['redirect' => route('product_price.show', $price->id)], 200);
 }
@@ -135,6 +137,7 @@ if (! $updated) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::pricesChanged();
 
 return response()->json(['redirect' => route('product_price.show', $price->id)], 200);
 }
@@ -154,6 +157,7 @@ if ($price->product_price_receipt_image) {
 }
 
 PriceTicker::refreshAfterChange();
+ApiCache::pricesChanged();
 
 return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
 }

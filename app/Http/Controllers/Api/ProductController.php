@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
+use App\Support\ApiCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
@@ -68,8 +70,28 @@ if ($validator->fails()) {
     ], 400);
 }
 
-$term = (string) $request->query('q');
+// توحيد الكلمة: نفس النتيجة لـ " Sugar" و"sugar" (الـ collation بالداتابيز utf8mb4_unicode_ci)
+$term = mb_strtolower(trim((string) $request->query('q')));
 
+$pageNumber = Paginator::resolveCurrentPage();
+$build = fn () => $this->searchPayload($term);
+
+$payload = $pageNumber > (int) config('prices.cache.max_page')
+    ? $build()
+    : ApiCache::remember(
+        [ApiCache::PRODUCTS],
+        'search:'.md5(json_encode([$term, $pageNumber])),
+        (int) config('prices.cache.search_ttl'),
+        $build,
+        fn (array $value) => $value['meta']['total'] === 0,
+    );
+
+return response()->json($payload);
+}
+
+/** @return array{data: array, meta: array} */
+private function searchPayload(string $term): array
+{
 $representatives = Product::query()
     ->active()
     ->search($term)
@@ -94,14 +116,14 @@ $items = $page->getCollection()->map(fn (Product $product) => [
     ] : null,
 ])->values();
 
-return response()->json([
-    'data' => $items,
+return [
+    'data' => $items->all(),
     'meta' => [
         'current_page' => $page->currentPage(),
         'last_page' => $page->lastPage(),
         'per_page' => $page->perPage(),
         'total' => $page->total(),
     ],
-]);
+];
 }
 }
