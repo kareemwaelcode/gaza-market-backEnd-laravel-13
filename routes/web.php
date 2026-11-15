@@ -30,11 +30,9 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'cms.parent')->name('dashboard');
-Route::view('/temp', 'cms.temp');
-
+// جذر الدومين محجوز للفرونت (ملفات ثابتة يخدمها الـ web server). لوحة الـ CMS تحت /cms/admins فقط.
 Route::prefix('cms/admins/')->group(function () {
-Route::view('', 'cms.parent');
+Route::view('', 'cms.parent')->name('dashboard');
 
     Route::resource('admin', AdminController::class);
     Route::post('admins_update/{id}', [AdminController::class, 'update'])->name('admins_update');
