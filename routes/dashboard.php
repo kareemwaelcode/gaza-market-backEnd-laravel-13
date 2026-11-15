@@ -3,6 +3,8 @@
 use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
 use App\Http\Controllers\Dashboard\StoreProductController;
+use App\Http\Controllers\Dashboard\StoreServiceController;
+use App\Http\Controllers\Dashboard\TableController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,4 +51,20 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
             ->where('product', '[0-9]{1,18}')->middleware('throttle:dashboard-upload')->name('store-products.image');
         Route::delete('store-products/{product}/image', [StoreProductController::class, 'destroyImage'])
             ->where('product', '[0-9]{1,18}')->name('store-products.image.destroy');
+
+        Route::get('store-services', [StoreServiceController::class, 'index'])->name('store-services.index');
+        Route::post('store-services', [StoreServiceController::class, 'store'])->name('store-services.store');
+        Route::get('store-services/{service}', [StoreServiceController::class, 'show'])
+            ->where('service', '[0-9]{1,18}')->name('store-services.show');
+        Route::patch('store-services/{service}', [StoreServiceController::class, 'update'])
+            ->where('service', '[0-9]{1,18}')->name('store-services.update');
+        Route::delete('store-services/{service}', [StoreServiceController::class, 'destroy'])
+            ->where('service', '[0-9]{1,18}')->name('store-services.destroy');
+
+        Route::get('tables', [TableController::class, 'index'])->name('tables.index');
+        Route::post('tables', [TableController::class, 'store'])->name('tables.store');
+        Route::patch('tables/{table}', [TableController::class, 'update'])
+            ->where('table', '[0-9]{1,18}')->name('tables.update');
+        Route::delete('tables/{table}', [TableController::class, 'destroy'])
+            ->where('table', '[0-9]{1,18}')->name('tables.destroy');
     });
