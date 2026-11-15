@@ -12,6 +12,9 @@ class ApiCache
 {
 public const PRICES = 'prices';
 public const PRODUCTS = 'products';
+public const MARKET = 'market';
+public const PLACES = 'places';
+public const LOOKUPS = 'lookups';
 private const LOCK_SECONDS = 15;
 private const LOCK_WAIT_SECONDS = 5;
 private const VERSION_TTL_DAYS = 30;
@@ -84,6 +87,21 @@ self::bump(self::PRICES);
 public static function productsChanged(): void
 {
 self::bump(self::PRICES, self::PRODUCTS);
+}
+
+public static function marketChanged(): void
+{
+self::bump(self::MARKET);
+}
+
+public static function placesChanged(): void
+{
+self::bump(self::PLACES);
+}
+
+public static function lookupsChanged(): void
+{
+self::bump(self::LOOKUPS, self::MARKET, self::PLACES);
 }
 
 public static function store(): Repository

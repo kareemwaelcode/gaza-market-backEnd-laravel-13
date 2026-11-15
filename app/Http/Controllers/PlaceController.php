@@ -6,6 +6,7 @@ use App\Jobs\SendPlaceStatusMessage;
 use App\Models\Area;
 use App\Models\Place;
 use App\Models\User;
+use App\Support\ApiCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -74,7 +75,6 @@ public function approve(string $id)
         if ($updated) {
             User::whereKey($place->user_id)->where('user_role', 'user')->update(['user_role' => 'store_owner']);
 
-            // يُرسل بعد الـ commit، وفشل الواتساب لا يلغي القبول.
             SendPlaceStatusMessage::dispatch($place->id, Place::STATUS_APPROVED);
         }
 
@@ -84,6 +84,8 @@ public function approve(string $id)
     if (! $updated) {
         return response()->json(['icon' => 'error', 'title' => 'Only pending or rejected places can be approved'], 409);
     }
+
+    ApiCache::placesChanged();
 
     return response()->json(['redirect' => route('place.show', $place->id)], 200);
 }
@@ -103,7 +105,7 @@ public function reject(string $id)
             ]);
 
         if ($updated) {
-            // سحب صلاحية صاحب المحل لو كان المحل معتمداً قبل الرفض.
+
             if ($wasApproved) {
                 User::whereKey($place->user_id)->where('user_role', 'store_owner')->update(['user_role' => 'user']);
             }
@@ -117,6 +119,8 @@ public function reject(string $id)
     if (! $updated) {
         return response()->json(['icon' => 'error', 'title' => 'Only pending or approved places can be rejected'], 409);
     }
+
+    ApiCache::placesChanged();
 
     return response()->json(['redirect' => route('place.show', $place->id)], 200);
 }

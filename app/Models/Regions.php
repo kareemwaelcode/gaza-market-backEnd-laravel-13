@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Psy\Readline\Interactive\Renderer\Area;
 
 class Regions extends Model
 {
     protected $table = "regions";
-    // الجدول بدون created_at / updated_at
+
     public $timestamps = false;
     protected $fillable = [
     "region_slug",
@@ -26,7 +25,6 @@ class Regions extends Model
     ];
     }
 
-    // المحافظة الواحدة فيها مدن كثيرة (areas.region_id)
     public function areas(): HasMany
     {
         return $this->hasMany(Area::class, "region_id")->orderBy("area_sort_order");

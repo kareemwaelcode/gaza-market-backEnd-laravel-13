@@ -6,6 +6,7 @@ use App\Services\WhatsApp\LogWhatsAppSender;
 use App\Services\WhatsApp\WhatsAppSendGuard;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Services\WhatsApp\WuapiWhatsAppSender;
+use App\Support\CacheInvalidation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -44,6 +45,32 @@ public function boot(): void
 Schema::defaultStringLength(191);
 Paginator::useBootstrap();
 
+CacheInvalidation::register();
+
+RateLimiter::for('lookups', fn (Request $request) =>
+    Limit::perMinute(60)->by('lookups:' . $request->ip())
+);
+
+RateLimiter::for('market-feed', fn (Request $request) =>
+    Limit::perMinute(120)->by('market-feed:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('market-detail', fn (Request $request) =>
+    Limit::perMinute(60)->by('market-detail:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('places-feed', fn (Request $request) =>
+    Limit::perMinute(120)->by('places-feed:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('place-detail', fn (Request $request) =>
+    Limit::perMinute(60)->by('place-detail:' . ($request->user()?->id ?? $request->ip()))
+);
+
+RateLimiter::for('market-owner', fn (Request $request) =>
+    Limit::perMinute(30)->by('market-owner:' . ($request->user()?->id ?? $request->ip()))
+);
+
 RateLimiter::for('saved-listings', fn (Request $request) =>
     Limit::perMinute(60)
         ->by('saved-listings:' . ($request->user()?->id ?? $request->ip()))
@@ -54,19 +81,16 @@ RateLimiter::for('places', fn (Request $request) =>
         ->by('places:' . ($request->user()?->id ?? $request->ip()))
 );
 
-// تسجيل زيارة محل (جديد)
 RateLimiter::for('place-visit', fn (Request $request) =>
     Limit::perMinute(60)
         ->by('place-visit:' . ($request->user()?->id ?? $request->ip()))
 );
 
-// أسعار المنتجات: القراءة العامة حسب الـ IP، والإرسال والتصويت حسب المستخدم
 RateLimiter::for('prices-feed', fn (Request $request) =>
     Limit::perMinute(120)
         ->by('prices-feed:' . ($request->user()?->id ?? $request->ip()))
 );
 
-// أصوات المستخدم على صفحة الـ feed: حسب المستخدم (الراوت للمسجّل فقط)
 RateLimiter::for('prices-my-votes', fn (Request $request) =>
     Limit::perMinute(120)
         ->by('prices-my-votes:' . ($request->user()?->id ?? $request->ip()))

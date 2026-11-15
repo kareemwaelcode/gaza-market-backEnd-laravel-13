@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use App\Models\Listing;
 use App\Models\ListingCategory;
+use App\Support\ApiCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -20,13 +21,10 @@ class ListingController extends Controller
             'area' => ['nullable', 'integer'],
         ]);
 
-        // عميل JSON بيضل ياخد 422 مثل ما كان
         if ($validator->fails() && $request->expectsJson()) {
             throw new ValidationException($validator);
         }
 
-        // المتصفح: القيمة الغلط بتنتجاهل وبتظهر القائمة بدون هاد الفلتر مع تنبيه،
-        // بدل redirect للصفحة السابقة بدون رسالة
         $ignoredFilters = $validator->errors()->keys();
         $filters = collect($request->query())
             ->only(['status', 'category', 'area'])
@@ -76,13 +74,11 @@ class ListingController extends Controller
             return response()->json(['icon' => 'error', 'title' => 'Only pending or rejected listings can be approved'], 409);
         }
 
+        ApiCache::marketChanged();
+
         return response()->json(['redirect' => route('listing.show', $listing->id)], 200);
     }
 
-    /**
-     * رفض: من pending أو approved فقط، والسبب إجباري ويظهر لصاحب الإعلان.
-     * الإعلان المباع لا يُرفض.
-     */
     public function reject(Request $request, string $id)
     {
         $validator = validator($request->all(), [
@@ -108,6 +104,8 @@ class ListingController extends Controller
             return response()->json(['icon' => 'error', 'title' => 'Only pending or approved listings can be rejected'], 409);
         }
 
+        ApiCache::marketChanged();
+
         return response()->json(['redirect' => route('listing.show', $listing->id)], 200);
     }
 
@@ -115,21 +113,17 @@ class ListingController extends Controller
     {
         $listing = Listing::with('images')->findOrFail($id);
 
-        // الملفات المحلية بس (روابط https التجريبية ما إلها ملف على القرص)
         $paths = $listing->images
             ->filter(fn ($image) => $image->isLocalFile())
             ->pluck('listing_image_path')
             ->all();
 
-        // صفوف الصور بتنحذف تلقائياً من قاعدة البيانات (CASCADE)
         $listing->delete();
 
-        // الملفات بتنحذف بعد نجاح حذف الإعلان
         if ($paths) {
             Storage::disk('public')->delete($paths);
         }
 
-        // وبعدها مجلد الإعلان نفسه (listings/{id})، وبيمسح معه أي ملف متبقي فيه
         Storage::disk('public')->deleteDirectory("listings/{$listing->id}");
 
         return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
