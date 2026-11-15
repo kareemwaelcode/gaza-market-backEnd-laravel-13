@@ -5,7 +5,6 @@ namespace App\Http\Requests\Dashboard;
 use App\Models\DashboardItemCategory;
 use Illuminate\Validation\Rule;
 
-/** الحقول المسموحة: kind و name فقط. أي حقل آخر (place_id, id ...) يُتجاهل. */
 class StoreItemCategoryRequest extends DashboardRequest
 {
     protected function prepareForValidation(): void

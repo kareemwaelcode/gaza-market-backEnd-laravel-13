@@ -196,3 +196,5 @@ Route::prefix('api/auth')->name('auth.')->group(function () {
     Route::post('me/avatar', [ApiProfileController::class, 'avatar'])
         ->middleware(['auth', 'active.user', 'throttle:profile-avatar'])->name('me.avatar');
 });
+
+require __DIR__.'/dashboard.php';
