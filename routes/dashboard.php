@@ -7,8 +7,10 @@ use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
 use App\Http\Controllers\Dashboard\ReservationController;
 use App\Http\Controllers\Dashboard\AdController;
+use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\StoreProductController;
 use App\Http\Controllers\Dashboard\StoreServiceController;
+use App\Http\Controllers\Dashboard\PlaceSubscriptionController;
 use App\Http\Controllers\Dashboard\SubscriberController;
 use App\Http\Controllers\Dashboard\SubscriptionRequestController;
 use App\Http\Controllers\Dashboard\TableController;
@@ -88,4 +90,12 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
         Route::get('ads/{ad}', [AdController::class, 'show'])->where('ad', '[0-9]{1,18}')->name('ads.show');
         Route::patch('ads/{ad}', [AdController::class, 'update'])->where('ad', '[0-9]{1,18}')->name('ads.update');
         Route::delete('ads/{ad}', [AdController::class, 'destroy'])->where('ad', '[0-9]{1,18}')->name('ads.destroy');
+
+        
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
+        Route::delete('notifications', [NotificationController::class, 'clear'])->name('notifications.clear');
+
+        
+        Route::get('subscription', [PlaceSubscriptionController::class, 'show'])->name('subscription.show');
     });

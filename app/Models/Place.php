@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Place extends Model
@@ -45,7 +46,22 @@ class Place extends Model
             'store_category_id' => 'integer',
             'area_id' => 'integer',
             'user_id' => 'integer',
+            'place_plan_expires_at' => 'datetime',
         ];
+    }
+    /**
+     * الباقة الفعلية الآن: paid مع تاريخ انتهاء مضى تُقرأ free فوراً، فتنتهي الحدود كلها بلحظة الانتهاء
+     * دون انتظار مهمة مجدولة. paid بلا تاريخ انتهاء تبقى paid (ضبط يدوي قديم).
+     */
+    protected function placePlan(): Attribute
+    {
+        return Attribute::get(function (?string $value) {
+            if ($value === 'paid' && $this->place_plan_expires_at !== null && $this->place_plan_expires_at->isPast()) {
+                return 'free';
+            }
+
+            return $value;
+        });
     }
 
     protected function logoUrl(): Attribute
@@ -67,6 +83,10 @@ class Place extends Model
         return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
+        public function subscriptions(): HasMany
+    {
+        return $this->hasMany(PlaceSubscription::class, 'place_id');
+    }
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class, 'area_id');
