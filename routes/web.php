@@ -114,6 +114,8 @@ Route::prefix('cms/admins')->group(function () {
     Route::resource('place', PlaceController::class)->only(['index', 'show', 'destroy']);
     Route::post('place_approve/{id}', [PlaceController::class, 'approve'])->name('place_approve');
     Route::post('place_reject/{id}', [PlaceController::class, 'reject'])->name('place_reject');
+    Route::post('place_subscribe/{id}', [PlaceController::class, 'subscribe'])->name('place_subscribe');
+    Route::post('place_cancel_subscription/{id}', [PlaceController::class, 'cancelSubscription'])->name('place_cancel_subscription');
 
     Route::resource('place_visit', PlaceVisitController::class)->only(['index']);
 

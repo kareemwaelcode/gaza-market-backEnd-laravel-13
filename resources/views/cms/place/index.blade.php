@@ -12,6 +12,11 @@
         'approved' => 'bg-success',
         'rejected' => 'bg-danger',
     ];
+    $planLabels = [
+        'paid' => 'Subscribed',
+        'free' => 'Free / expired',
+        'expiring' => 'Expiring in 7 days',
+    ];
 @endphp
 <div class="row row-tight" style="margin-top: 16px;">
     <div class="col-md-12">
@@ -28,7 +33,7 @@
             @endif
 
             <form method="GET" action="{{ route('place.index') }}" class="row g-2 mb-3" style="padding: 0 16px;">
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <select name="status" class="form-control">
                         <option value="">All statuses</option>
                         @foreach (\App\Models\Place::STATUSES as $status)
@@ -36,7 +41,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <select name="type" class="form-control">
                         <option value="">All types</option>
                         @foreach (\App\Models\Place::TYPES as $type)
@@ -44,7 +49,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-lg-4">
+                <div class="col-lg-3">
+                    <select name="plan" class="form-control">
+                        <option value="">All plans</option>
+                        @foreach ($planFilters as $plan)
+                            <option value="{{ $plan }}" @selected(($filters['plan'] ?? null) === $plan)>{{ $planLabels[$plan] ?? $plan }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-lg-3">
                     <select name="area" class="form-control">
                         <option value="">All areas</option>
                         @foreach ($areas as $area)
@@ -68,6 +81,7 @@
                             <th>Area</th>
                             <th>Owner</th>
                             <th>Status</th>
+                            <th>Plan</th>
                             <th>Created</th>
                             <th>Setting</th>
                         </tr>
@@ -81,7 +95,18 @@
                             <td>{{ $place->area?->area_name_ar }}</td>
                             <td>{{ $place->user?->user_full_name }}<br><small>{{ $place->user?->user_phone }}</small></td>
                             <td><span class="badge {{ $badge[$place->place_status] ?? 'bg-secondary' }}">{{ ucfirst($place->place_status) }}</span></td>
-                            <td>{{ $place->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>
+                                @if ($place->place_plan === 'paid')
+                                    <span class="badge bg-success">Paid</span>
+                                    <br><small>{{ $place->place_plan_expires_at ? 'until '.$place->place_plan_expires_at->timezone(config('app.display_timezone'))->format('Y-m-d') : 'no expiry' }}</small>
+                                @else
+                                    <span class="badge bg-secondary">Free</span>
+                                    @if ($place->place_plan_expires_at)
+                                        <br><small class="text-muted">expired {{ $place->place_plan_expires_at->timezone(config('app.display_timezone'))->format('Y-m-d') }}</small>
+                                    @endif
+                                @endif
+                            </td>
+                            <td>{{ $place->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('place.show', $place->id) }}" class="btn btn-info btn-sm">View</a>
@@ -90,7 +115,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="8" class="text-center">No places found.</td></tr>
+                        <tr><td colspan="9" class="text-center">No places found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

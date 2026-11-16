@@ -83,10 +83,11 @@ class Place extends Model
         return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
-        public function subscriptions(): HasMany
+    public function subscriptions(): HasMany
     {
         return $this->hasMany(PlaceSubscription::class, 'place_id');
     }
+    
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class, 'area_id');

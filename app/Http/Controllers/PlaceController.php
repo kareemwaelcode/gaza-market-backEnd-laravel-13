@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Jobs\SendPlaceStatusMessage;
 use App\Models\Area;
 use App\Models\Place;
+use App\Models\PlaceSubscription;
 use App\Models\User;
 use App\Support\ApiCache;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,12 +17,17 @@ use Illuminate\Validation\ValidationException;
 
 class PlaceController extends Controller
 {
+    private const PLAN_FILTERS = ['paid', 'free', 'expiring'];
+
+    private const EXPIRING_WITHIN_DAYS = 7;
+
 public function index(Request $request)
 {
     $validator = validator($request->query(), [
         'status' => ['nullable', Rule::in(Place::STATUSES)],
         'type' => ['nullable', Rule::in(Place::TYPES)],
         'area' => ['nullable', 'integer'],
+        'plan' => ['nullable', Rule::in(self::PLAN_FILTERS)],
     ]);
 
     if ($validator->fails() && $request->expectsJson()) {
@@ -29,7 +36,7 @@ public function index(Request $request)
 
     $ignoredFilters = $validator->errors()->keys();
     $filters = collect($request->query())
-        ->only(['status', 'type', 'area'])
+        ->only(['status', 'type', 'area', 'plan'])
         ->except($ignoredFilters)
         ->all();
 
@@ -42,6 +49,8 @@ public function index(Request $request)
         ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('place_status', $status))
         ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('place_type', $type))
         ->when($filters['area'] ?? null, fn ($q, $id) => $q->where('area_id', $id))
+        ->when($filters['plan'] ?? null, fn ($q, $plan) => $this->applyPlanFilter($q, $plan))
+        ->when(($filters['plan'] ?? null) === 'expiring', fn ($q) => $q->orderBy('place_plan_expires_at'))
         ->orderByRaw("case when place_status = 'pending' then 0 else 1 end")
         ->orderByDesc('id')
         ->paginate(15)
@@ -49,12 +58,19 @@ public function index(Request $request)
 
     $areas = Area::ordered()->get(['id', 'area_name_ar']);
 
-    return response()->view('cms.place.index', compact('places', 'areas', 'filters', 'ignoredFilters'));
+    $planFilters = self::PLAN_FILTERS;
+
+    return response()->view('cms.place.index', compact('places', 'areas', 'filters', 'ignoredFilters', 'planFilters'));
 }
 
 public function show(string $id)
 {
-    $place = Place::with(['user', 'area.region', 'storeCategory'])->findOrFail($id);
+    $place = Place::with([
+        'user',
+        'area.region',
+        'storeCategory',
+        'subscriptions' => fn ($q) => $q->orderByDesc('id')->limit(10),
+    ])->findOrFail($id);
 
     return response()->view('cms.place.show', compact('place'));
 }
@@ -125,14 +141,81 @@ public function reject(string $id)
     return response()->json(['redirect' => route('place.show', $place->id)], 200);
 }
 
+public function subscribe(Request $request, string $id)
+{
+    $data = $request->validate([
+        'notes' => ['nullable', 'string', 'max:255'],
+    ]);
+
+    $place = Place::findOrFail($id);
+
+    if ($place->place_status !== Place::STATUS_APPROVED) {
+        return response()->json(['icon' => 'error', 'title' => 'Only approved places can be subscribed'], 409);
+    }
+
+    // لا يوجد تسجيل دخول للأدمن بعد، فيُسجَّل activated_by = null إلى أن يُربط.
+    PlaceSubscription::grantTo($place, null, $data['notes'] ?? null);
+
+    ApiCache::placesChanged();
+
+    return response()->json(['redirect' => route('place.show', $place->id)], 200);
+}
+
+public function cancelSubscription(string $id)
+{
+    $place = Place::findOrFail($id);
+
+    if ($place->place_plan !== 'paid') {
+        return response()->json(['icon' => 'error', 'title' => 'This place has no active subscription'], 409);
+    }
+
+    PlaceSubscription::cancelFor($place);
+
+    ApiCache::placesChanged();
+
+    return response()->json(['redirect' => route('place.show', $place->id)], 200);
+}
+
 public function destroy(string $id)
 {
     $place = Place::findOrFail($id);
 
-    $place->delete();
+    try {
+        $place->delete();
+    } catch (QueryException $e) {
+        // place_subscriptions.place_id هو restrictOnDelete: سجل الدفعات يمنع الحذف.
+        if ((string) $e->getCode() !== '23000') {
+            throw $e;
+        }
+
+        return response()->json(['icon' => 'error', 'title' => 'Cannot delete a place that has subscription records'], 409);
+    }
 
     Storage::disk('public')->deleteDirectory("places/{$place->id}");
 
     return response()->json(['icon' => 'success', 'title' => 'Deleted Successfully'], 200);
+}
+
+/**
+ * place_plan accessor لا يعمل داخل الاستعلام، فنقرأ الأعمدة مباشرة بنفس منطقه:
+ * paid بلا تاريخ انتهاء تبقى paid، وpaid منتهية تُحسب free.
+ */
+private function applyPlanFilter($query, string $plan)
+{
+    $now = now();
+
+    $activePaid = fn ($q) => $q->where('place_plan', 'paid')
+        ->where(fn ($w) => $w->whereNull('place_plan_expires_at')->orWhere('place_plan_expires_at', '>', $now));
+
+    return match ($plan) {
+        'paid' => $query->where($activePaid),
+        'free' => $query->where(fn ($q) => $q->where('place_plan', 'free')
+            ->orWhere(fn ($w) => $w->where('place_plan', 'paid')
+                ->whereNotNull('place_plan_expires_at')
+                ->where('place_plan_expires_at', '<=', $now))),
+        'expiring' => $query->where('place_plan', 'paid')
+            ->where('place_plan_expires_at', '>', $now)
+            ->where('place_plan_expires_at', '<=', $now->copy()->addDays(self::EXPIRING_WITHIN_DAYS)),
+    };
 }
 }
