@@ -26,6 +26,7 @@ class AdController extends Controller
         return response()->json([
             'data' => $ads->map(fn (DashboardAd $a) => $this->payload($a))->all(),
             'meta' => [
+                'limit' => $this->adLimit($place->place_plan),
                 'used' => DashboardAd::where('place_id', $place->id)->count(),
             ],
         ]);
@@ -36,16 +37,27 @@ class AdController extends Controller
         $place = $this->ownPlace($request);
         $data = $request->validated();
 
-        if ($this->priceOrderInvalid($data['price_before'] ?? null, $data['price_after'] ?? null)) {
-            return $this->priceFailure();
+        if (! in_array($data['type'], DashboardAd::allowedTypes($place), true)) {
+            return $this->typeFailure();
+        }
+
+        $data = $this->clean($place, $data);
+
+        if ($failure = $this->priceFailureFor($place, $data['type'], $data['price_before'] ?? null, $data['price_after'] ?? null, true)) {
+            return $failure;
         }
 
         $result = DB::transaction(function () use ($place, $data) {
-            // قفل المحل يمنع طلبين متزامنين من تجاوز السقف التقني.
+            // قفل المحل يمنع طلبين متزامنين من تجاوز حد الباقة.
             $locked = Place::whereKey($place->id)->lockForUpdate()->firstOrFail();
 
-            if (DashboardAd::where('place_id', $locked->id)->count() >= (int) config('dashboard_plan.ads.hard_cap')) {
-                return $this->failure('ADS_LIMIT_REACHED', 403);
+            $limit = $this->adLimit($locked->place_plan)
+                ?? (int) config('dashboard_plan.ads.hard_cap');
+
+            if (DashboardAd::where('place_id', $locked->id)->count() >= $limit) {
+                return $this->failure('PLAN_LIMIT_REACHED', 403, [
+                    'limit' => $this->adLimit($locked->place_plan),
+                ]);
             }
 
             $ad = new DashboardAd($data);
@@ -64,7 +76,7 @@ class AdController extends Controller
 
     public function show(Request $request, string $ad): JsonResponse
     {
-        $found = $this->ownAd($request, $ad);
+        $found = $this->ownAd($this->ownPlace($request), $ad);
 
         return $found === null
             ? $this->failure('NOT_FOUND', 404)
@@ -73,7 +85,8 @@ class AdController extends Controller
 
     public function update(UpdateAdRequest $request, string $ad): JsonResponse
     {
-        $found = $this->ownAd($request, $ad);
+        $place = $this->ownPlace($request);
+        $found = $this->ownAd($place, $ad);
 
         if ($found === null) {
             return $this->failure('NOT_FOUND', 404);
@@ -87,12 +100,24 @@ class AdController extends Controller
             ]);
         }
 
-        // المقارنة على القيم الفعلية بعد التعديل (المرسل أو المخزّن).
+        if (array_key_exists('type', $data) && ! in_array($data['type'], DashboardAd::allowedTypes($place), true)) {
+            return $this->typeFailure();
+        }
+
+        // القيم الفعلية بعد التعديل (المرسل أو المخزّن).
+        $type = $data['type'] ?? $found->type;
+        $data = $this->clean($place, $data + ['type' => $type]);
+
         $before = array_key_exists('price_before', $data) ? $data['price_before'] : $found->price_before;
         $after = array_key_exists('price_after', $data) ? $data['price_after'] : $found->price_after;
 
-        if ($this->priceOrderInvalid($before, $after)) {
-            return $this->priceFailure();
+        // تغيير النوع أو الأسعار يُفحص كاملاً؛ تعديل حقل آخر لا يرفض إعلاناً قديماً.
+        $touchesPrices = array_key_exists('type', $request->validated())
+            || array_key_exists('price_before', $data)
+            || array_key_exists('price_after', $data);
+
+        if ($failure = $this->priceFailureFor($place, $type, $before, $after, $touchesPrices)) {
+            return $failure;
         }
 
         $found->fill($data)->save();
@@ -102,7 +127,7 @@ class AdController extends Controller
 
     public function destroy(Request $request, string $ad): JsonResponse|Response
     {
-        $found = $this->ownAd($request, $ad);
+        $found = $this->ownAd($this->ownPlace($request), $ad);
 
         if ($found === null) {
             return $this->failure('NOT_FOUND', 404);
@@ -115,14 +140,70 @@ class AdController extends Controller
 
     private function ownPlace(Request $request): Place
     {
-        return Place::where('user_id', $request->user()->id)->firstOrFail();
+        return Place::with('storeCategory:id,store_category_variant_key')
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
     }
 
-    private function ownAd(Request $request, string $id): ?DashboardAd
+    private function ownAd(Place $place, string $id): ?DashboardAd
     {
-        $place = $this->ownPlace($request);
-
         return DashboardAd::where('place_id', $place->id)->whereKey((int) $id)->first();
+    }
+
+    /** null يعني بلا حد تجاري (الباقة المدفوعة). */
+    private function adLimit(?string $plan): ?int
+    {
+        return $plan === 'paid'
+            ? null
+            : (int) config('dashboard_plan.ads.free_limit');
+    }
+
+    /**
+     * يطابق الفرونت: الأسعار تُحفظ لإعلان عرض بمتجر خاص فقط، والرابط لإعلان وظيفة فقط
+     * عند المطعم والمتجر الخاص؛ غير ذلك يُفرَّغ بدل أن يُرفض.
+     *
+     * @param  array<string, mixed>  $data  يحتوي type (المرسل أو المخزّن)
+     * @return array<string, mixed>
+     */
+    private function clean(Place $place, array $data): array
+    {
+        if (! DashboardAd::allowsPrices($place, $data['type'])) {
+            $data['price_before'] = null;
+            $data['price_after'] = null;
+        }
+
+        if (! DashboardAd::allowsLink($place, $data['type'])) {
+            $data['link'] = null;
+        }
+
+        return $data;
+    }
+
+    /**
+     * عرض بمتجر خاص: السعران مطلوبان والسعر بعد أقل من قبل (الفرونت يرفض الحفظ غير ذلك).
+     */
+    private function priceFailureFor(Place $place, string $type, mixed $before, mixed $after, bool $requireBoth): ?JsonResponse
+    {
+        if (! DashboardAd::allowsPrices($place, $type)) {
+            return null;
+        }
+
+        if ($requireBoth && ($before === null || $after === null)) {
+            return $this->failure('VALIDATION', 422, [
+                'errors' => [
+                    ($before === null ? 'price_before' : 'price_after') => ['The offer prices are required.'],
+                ],
+            ]);
+        }
+
+        return $this->priceOrderInvalid($before, $after) ? $this->priceFailure() : null;
+    }
+
+    private function typeFailure(): JsonResponse
+    {
+        return $this->failure('VALIDATION', 422, [
+            'errors' => ['type' => ['This ad type is not available for your place type.']],
+        ]);
     }
 
     /** السعر بعد الخصم لازم يكون أقل من السعر قبله عند وجود الاثنين. */

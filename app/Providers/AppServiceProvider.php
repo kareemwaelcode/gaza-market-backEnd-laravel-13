@@ -149,6 +149,18 @@ RateLimiter::for('subscription-requests', fn (Request $request) => [
         ->by('subscription-requests-hour:' . ($request->user()?->id ?? $request->ip())),
 ]);
 
+// بيانات شخصية من زائر بلا تسجيل: حد لكل IP وحد لكل رقم واتساب (مُجزّأ بالهاش).
+RateLimiter::for('appointments', fn (Request $request) => [
+    Limit::perMinutes(10, 5)
+        ->by('appointments:ip:' . $request->ip()),
+
+    Limit::perHour(3)
+        ->by('appointments:phone:' . hash(
+            'sha256',
+            (string) $request->input('whatsapp')
+        )),
+]);
+
 RateLimiter::for('otp-request', fn (Request $request) => [
     Limit::perMinute(10)
         ->by('otp-request:ip:' . $request->ip()),

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Dashboard\AmenityController;
+use App\Http\Controllers\Dashboard\AppointmentController;
+use App\Http\Controllers\Dashboard\ClinicHoursController;
 use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
 use App\Http\Controllers\Dashboard\ReservationController;
@@ -72,6 +74,14 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
 
         Route::get('amenities', [AmenityController::class, 'show'])->name('amenities.show');
         Route::put('amenities', [AmenityController::class, 'update'])->name('amenities.update');
+
+        Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('appointments/summary', [AppointmentController::class, 'summary'])->name('appointments.summary');
+        Route::patch('appointments/{appointment}', [AppointmentController::class, 'update'])->where('appointment', '[0-9]{1,18}')->name('appointments.update');
+        Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->where('appointment', '[0-9]{1,18}')->name('appointments.destroy');
+
+        Route::get('clinic-hours', [ClinicHoursController::class, 'show'])->name('clinic-hours.show');
+        Route::put('clinic-hours', [ClinicHoursController::class, 'update'])->name('clinic-hours.update');
 
         Route::get('ads', [AdController::class, 'index'])->name('ads.index');
         Route::post('ads', [AdController::class, 'store'])->name('ads.store');

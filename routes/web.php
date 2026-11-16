@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\AppointmentController as ApiAppointmentController;
 use App\Http\Controllers\Api\LookupController as ApiLookupController;
 use App\Http\Controllers\Api\MarketController as ApiMarketController;
 use App\Http\Controllers\Api\MyPriceController as ApiMyPriceController;
@@ -248,6 +249,12 @@ Route::middleware(['auth', 'active.user', 'throttle:places'])
         Route::post('', [MarketPlaceController::class, 'store'])->name('store');
         Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
     });
+
+// حجز موعد عيادة: عام بلا تسجيل دخول، مع CSRF (جلسة) وthrottle خاص لأنه يستقبل بيانات شخصية.
+Route::post('api/places/{slug}/appointments', [ApiAppointmentController::class, 'store'])
+    ->where('slug', 'p-[a-z0-9]{12}')
+    ->middleware('throttle:appointments')
+    ->name('places.appointments.store');
 
 Route::post('api/places/{slug}/subscription-requests', [ApiSubscriptionRequestController::class, 'store'])
     ->where('slug', 'p-[a-z0-9]{12}')

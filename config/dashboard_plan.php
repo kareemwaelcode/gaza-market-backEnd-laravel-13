@@ -167,8 +167,68 @@ return [
         'max_page_size' => 100,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | إعلانات المحل (dashboard_ads)
+    |--------------------------------------------------------------------------
+    |
+    | نسخة من adTypes و adOptions و limits.free.ads في js/store-type-config.js.
+    | أي تعديل هناك يلزم هنا أيضاً.
+    |
+    | free_limit        : حد الإعلانات للباقة المجانية (الفرونت: ads = 3 للمطاعم والكافيهات والمتاجر).
+    |                     مساحة العمل بلا حد معرّف بالفرونت؛ مفترض = 3 مثل البقية (غير مؤكد).
+    | paid              : لا حد تجاري. hard_cap سقف تقني فقط.
+    | types_by_place    : أنواع الإعلان المسموحة لكل place_type.
+    | store_general_types : متجر بلا تصنيف (general) لا adTypes له بالفرونت، فيعرض كل الأنواع.
+    |
+    | أسعار العرض (adOptions.offerPrices) تخص إعلان offer بمتجر له تصنيف غير general فقط،
+    | والرابط (adOptions.linkOnlyForJob) لإعلان job فقط بالمطعم والمتجر الخاص. الشرطان بـ DashboardAd.
+    |
+    */
+
     'ads' => [
-    'hard_cap' => 100,
-],
+        'free_limit' => 3,
+        'hard_cap' => 100,
+        'types_by_place' => [
+            'workspace' => ['activity', 'workshop', 'job', 'offer'],
+            'restaurant' => ['offer', 'job'],
+            'cafe' => ['activity', 'offer'],
+            'restaurant-cafe' => ['activity', 'offer'],
+            'store' => ['offer', 'job'],
+        ],
+        'store_general_types' => ['activity', 'workshop', 'job', 'offer'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | مواعيد العيادات (dashboard_appointments و dashboard_clinic_hours)
+    |--------------------------------------------------------------------------
+    |
+    | variants       : تصنيفات المتجر التي تدعم المواعيد (hasAppointments بالفرونت = clinic فقط).
+    | free_limit     : حد المواعيد للباقة المجانية (إجمالي ما استقبلته العيادة، freeLimits.appointments = 5).
+    | paid           : لا حد تجاري.
+    | timezone       : منطقة تحديد اليوم وساعات الدوام. التخزين يبقى UTC.
+    | window_days    : أبعد موعد مسموح من الآن.
+    | slot_options   : مدد الموعد المسموحة (دقائق) من clinic-appointments.js.
+    | default_hours  : دوام العيادة قبل أن يحدده المالك (defaultHours بالفرونت).
+    | page_size / max_page_size : حجم صفحة القائمة (cursor) والأقصى المسموح.
+    |
+    */
+
+    'appointments' => [
+        'variants' => ['clinic'],
+        'free_limit' => 5,
+        'timezone' => 'Asia/Gaza',
+        'window_days' => 30,
+        'slot_options' => [15, 20, 30, 45, 60],
+        'default_slot' => 30,
+        'default_hours' => [
+            'from' => '09:00',
+            'to' => '17:00',
+            'closed_days' => ['fri'],
+        ],
+        'page_size' => 20,
+        'max_page_size' => 50,
+    ],
 
 ];
