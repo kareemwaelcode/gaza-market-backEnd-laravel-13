@@ -12,6 +12,7 @@ use App\Models\Regions;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -171,6 +172,23 @@ class ProductTest extends TestCase
             ->assertSee('مستخدم تجريبي')
             ->assertSee($user->user_phone)
             ->assertSee('0599123456');
+    }
+
+    public function test_show_displays_dates_in_the_display_timezone(): void
+    {
+        Carbon::setTestNow('2026-11-16 10:00:00');
+
+        try {
+            $product = $this->product();
+
+            // 10:00 UTC = 12:00 بتوقيت غزة (UTC+2).
+            $this->get(route('product.show', $product->id))
+                ->assertOk()
+                ->assertSee('2026-11-16 12:00')
+                ->assertDontSee('2026-11-16 10:00');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_show_returns_404_for_an_unknown_product(): void

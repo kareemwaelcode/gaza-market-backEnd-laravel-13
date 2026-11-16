@@ -15,7 +15,7 @@
     $planLabels = [
         'paid' => 'Subscribed',
         'free' => 'Free / expired',
-        'expiring' => 'Expiring in 7 days',
+        'expiring' => "Expiring within {$expiringDays} days",
     ];
 @endphp
 <div class="row row-tight" style="margin-top: 16px;">
@@ -99,6 +99,9 @@
                                 @if ($place->place_plan === 'paid')
                                     <span class="badge bg-success">Paid</span>
                                     <br><small>{{ $place->place_plan_expires_at ? 'until '.$place->place_plan_expires_at->timezone(config('app.display_timezone'))->format('Y-m-d') : 'no expiry' }}</small>
+                                    @if ($place->place_plan_expires_at)
+                                        <br><small class="{{ $place->place_plan_expires_at->lte(now()->addDays($expiringDays)) ? 'text-danger' : 'text-muted' }}">{{ max(0, (int) ceil(now()->diffInSeconds($place->place_plan_expires_at, false) / 86400)) }} day(s) left</small>
+                                    @endif
                                 @else
                                     <span class="badge bg-secondary">Free</span>
                                     @if ($place->place_plan_expires_at)

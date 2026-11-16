@@ -91,7 +91,7 @@
                             <td>{{ $price->user?->user_full_name }}<br><small>{{ $price->user?->user_phone }}</small></td>
                             <td>👍 {{ $price->confirm_count }} / 🚩 {{ $price->report_count }}</td>
                             <td><span class="badge {{ $badge[$price->product_price_status] ?? 'bg-secondary' }}">{{ $statusLabel[$price->product_price_status] ?? ucfirst($price->product_price_status) }}</span></td>
-                            <td>{{ $price->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>{{ $price->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('product_price.show', $price->id) }}" class="btn btn-info btn-sm">View</a>

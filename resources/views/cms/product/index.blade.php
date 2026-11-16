@@ -87,7 +87,7 @@
                             <td>{{ $product->area?->area_name_ar }}</td>
                             <td>{{ $product->user?->user_full_name }}<br><small>{{ $product->user?->user_phone }}</small></td>
                             <td><span class="badge {{ $badge[$product->product_status] ?? 'bg-secondary' }}">{{ ucfirst($product->product_status) }}</span></td>
-                            <td>{{ $product->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>{{ $product->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('product.show', $product->id) }}" class="btn btn-info btn-sm">View</a>

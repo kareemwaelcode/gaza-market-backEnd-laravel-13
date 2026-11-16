@@ -229,9 +229,19 @@ class PlaceSubscriptionCmsTest extends TestCase
         $this->assertSame([$paidSoon->id], $this->idsFor(['plan' => 'expiring']));
     }
 
+    public function test_expiring_filter_covers_only_the_last_three_days(): void
+    {
+        $inside = $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(3)->subMinute());
+        $outside = $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(3)->addHour());
+        $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(7));
+
+        $this->assertSame([$inside->id], $this->idsFor(['plan' => 'expiring']));
+        $this->assertNotContains($outside->id, $this->idsFor(['plan' => 'expiring']));
+    }
+
     public function test_expiring_filter_is_ordered_by_the_nearest_end_first(): void
     {
-        $later = $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(6));
+        $later = $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(2));
         $sooner = $this->makePlace(Place::STATUS_APPROVED, 'paid', now()->addDays(1));
 
         $ids = $this->get(route('place.index', ['plan' => 'expiring']))->viewData('places')->pluck('id')->all();

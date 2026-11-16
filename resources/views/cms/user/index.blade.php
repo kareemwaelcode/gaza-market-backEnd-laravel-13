@@ -80,8 +80,8 @@
                             </small>
                         </td>
                         <td>
-                            <span class="d-block"><small class="text-muted">Registered:</small> {{ $user->user_created_at?->format('Y-m-d') ?? '-' }}</span>
-                            <span class="d-block"><small class="text-muted">Last login:</small> {{ $user->user_last_login_at?->format('Y-m-d') ?? '-' }}</span>
+                            <span class="d-block"><small class="text-muted">Registered:</small> {{ $user->user_created_at?->timezone(config('app.display_timezone'))->format('Y-m-d') ?? '-' }}</span>
+                            <span class="d-block"><small class="text-muted">Last login:</small> {{ $user->user_last_login_at?->timezone(config('app.display_timezone'))->format('Y-m-d') ?? '-' }}</span>
                         </td>
                         <td>
                             <div class="btn-group" role="group" aria-label="Toolbar group">

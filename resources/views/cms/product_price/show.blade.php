@@ -85,9 +85,9 @@
         <tr><th>Area</th><td>{{ $price->area?->region?->region_name_ar }} - {{ $price->area?->area_name_ar }}</td></tr>
         <tr><th>Reported by</th><td>{{ $price->user?->user_full_name }} <small>({{ $price->user?->user_phone }})</small></td></tr>
         <tr><th>Votes</th><td>👍 {{ $price->confirm_count }} / 🚩 {{ $price->report_count }}</td></tr>
-        <tr><th>Reviewed</th><td>{{ $price->reviewed_at?->format('Y-m-d H:i') ?: '-' }}</td></tr>
-        <tr><th>Created</th><td>{{ $price->created_at?->format('Y-m-d H:i') }}</td></tr>
-        <tr><th>Updated</th><td>{{ $price->updated_at?->format('Y-m-d H:i') }}</td></tr>
+        <tr><th>Reviewed</th><td>{{ $price->reviewed_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') ?: '-' }}</td></tr>
+        <tr><th>Created</th><td>{{ $price->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td></tr>
+        <tr><th>Updated</th><td>{{ $price->updated_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td></tr>
     </table>
 </div>
 </div>

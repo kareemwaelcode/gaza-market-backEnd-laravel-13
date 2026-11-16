@@ -51,8 +51,8 @@
         <tr><th>Store phone</th><td>{{ $product->product_store_phone ?: '-' }}</td></tr>
         <tr><th>Area</th><td>{{ $product->area?->region?->region_name_ar }} - {{ $product->area?->area_name_ar }}</td></tr>
         <tr><th>Added by</th><td>{{ $product->user?->user_full_name }} <small>({{ $product->user?->user_phone }})</small></td></tr>
-        <tr><th>Created</th><td>{{ $product->created_at?->format('Y-m-d H:i') }}</td></tr>
-        <tr><th>Updated</th><td>{{ $product->updated_at?->format('Y-m-d H:i') }}</td></tr>
+        <tr><th>Created</th><td>{{ $product->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td></tr>
+        <tr><th>Updated</th><td>{{ $product->updated_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td></tr>
     </table>
 </div>
 </div>

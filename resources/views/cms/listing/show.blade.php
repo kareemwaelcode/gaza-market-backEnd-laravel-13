@@ -92,8 +92,8 @@
         <tr><th>Phone</th><td>{{ $listing->listing_phone }}</td></tr>
         <tr><th>WhatsApp</th><td>@if ($listing->whatsapp_link)<a href="{{ $listing->whatsapp_link }}" target="_blank" rel="noopener noreferrer" dir="ltr">{{ $listing->listing_whatsapp }}</a>@else - @endif</td></tr>
         <tr><th>Owner</th><td>{{ $listing->user?->user_full_name }} <small>({{ $listing->user?->user_phone }})</small></td></tr>
-        <tr><th>Created</th><td>{{ $listing->created_at?->format('Y-m-d H:i') }}</td></tr>
-        <tr><th>Published</th><td>{{ $listing->listing_published_at?->format('Y-m-d H:i') ?? '-' }}</td></tr>
+        <tr><th>Created</th><td>{{ $listing->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td></tr>
+        <tr><th>Published</th><td>{{ $listing->listing_published_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') ?? '-' }}</td></tr>
     </table>
 </div>
 </div>

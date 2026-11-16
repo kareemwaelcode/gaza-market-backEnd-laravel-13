@@ -39,7 +39,7 @@
                         <td>{{ $pointTransaction->pointRule?->point_rule_name_en }}</td>
                         <td>{{ $pointTransaction->point_transaction_points > 0 ? '+' : '' }}{{ $pointTransaction->point_transaction_points }}</td>
                         <td>{{ $pointTransaction->point_transaction_source_type ? $pointTransaction->point_transaction_source_type.' #'.$pointTransaction->point_transaction_source_id : '-' }}</td>
-                        <td>{{ $pointTransaction->point_transaction_created_at?->format('Y-m-d H:i') }}</td>
+                        <td>{{ $pointTransaction->point_transaction_created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td>
                     </tr>
                     @endforeach
                 </tbody>

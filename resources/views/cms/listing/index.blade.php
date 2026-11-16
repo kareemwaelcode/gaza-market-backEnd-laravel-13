@@ -84,7 +84,7 @@
                             <td>{{ $listing->user?->user_full_name }}<br><small>{{ $listing->user?->user_phone }}</small></td>
                             <td>{{ number_format((float) $listing->listing_price, 2) }} ₪</td>
                             <td><span class="badge {{ $badge[$listing->listing_status] ?? 'bg-secondary' }}">{{ ucfirst($listing->listing_status) }}</span></td>
-                            <td>{{ $listing->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>{{ $listing->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') }}</td>
                             <td>
                                 <div class="btn-group" role="group" aria-label="Toolbar group">
                                     <a href="{{ route('listing.show', $listing->id) }}" class="btn btn-info btn-sm">View</a>

@@ -31,6 +31,10 @@ class PlaceSubscriptionController extends Controller
             'expiresAt' => $expires?->toIso8601ZuluString('millisecond'),
             // أيام كاملة متبقية (يُقرَّب للأعلى: ما بقي ساعة = يوم). null بلا انتهاء.
             'daysLeft' => $expires === null ? null : (int) ceil(now()->diffInSeconds($expires, false) / 86400),
+            // سعر ومدة التجديد الحاليان (يُنسخان إلى الدفعة وقت التفعيل). الواجهة تعرضهما بدل الأرقام المكتوبة.
+            'price' => number_format((float) config('subscription.price'), 2, '.', ''),
+            'currency' => (string) config('subscription.currency'),
+            'periodMonths' => (int) config('subscription.period_months'),
             'current' => $current === null ? null : [
                 'amount' => $current->subscription_amount,
                 'currency' => $current->subscription_currency,

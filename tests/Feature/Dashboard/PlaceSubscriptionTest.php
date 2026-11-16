@@ -46,7 +46,7 @@ class PlaceSubscriptionTest extends TestCase
 
         $this->actingAs($user)->getJson(self::URL)
             ->assertOk()
-            ->assertExactJson(['data' => ['plan' => 'free', 'expiresAt' => null, 'daysLeft' => null, 'current' => null]]);
+            ->assertExactJson(['data' => ['plan' => 'free', 'expiresAt' => null, 'daysLeft' => null, 'price' => '99.00', 'currency' => 'ILS', 'periodMonths' => 2, 'current' => null]]);
     }
 
     public function test_grant_activates_for_two_months_from_the_moment_of_the_click(): void
@@ -74,6 +74,19 @@ class PlaceSubscriptionTest extends TestCase
             ->assertJsonPath('data.current.amount', '99.00')
             ->assertJsonPath('data.current.currency', 'ILS')
             ->assertJsonPath('data.current.periodMonths', 2);
+    }
+
+    public function test_response_carries_the_renewal_price_and_period_from_config(): void
+    {
+        config(['subscription.price' => 120, 'subscription.currency' => 'USD', 'subscription.period_months' => 3]);
+
+        $user = $this->makeOwner(null, 'free', 'cafe');
+
+        $this->actingAs($user)->getJson(self::URL)
+            ->assertOk()
+            ->assertJsonPath('data.price', '120.00')
+            ->assertJsonPath('data.currency', 'USD')
+            ->assertJsonPath('data.periodMonths', 3);
     }
 
     public function test_early_renewal_starts_from_the_current_end_and_keeps_remaining_days(): void
@@ -119,7 +132,7 @@ class PlaceSubscriptionTest extends TestCase
 
         $this->actingAs($user)->getJson(self::URL)
             ->assertOk()
-            ->assertExactJson(['data' => ['plan' => 'free', 'expiresAt' => null, 'daysLeft' => null, 'current' => null]]);
+            ->assertExactJson(['data' => ['plan' => 'free', 'expiresAt' => null, 'daysLeft' => null, 'price' => '99.00', 'currency' => 'ILS', 'periodMonths' => 2, 'current' => null]]);
     }
 
     public function test_paid_without_expiry_stays_paid(): void

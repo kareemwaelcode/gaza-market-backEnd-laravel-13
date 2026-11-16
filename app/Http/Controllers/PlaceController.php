@@ -19,7 +19,7 @@ class PlaceController extends Controller
 {
     private const PLAN_FILTERS = ['paid', 'free', 'expiring'];
 
-    private const EXPIRING_WITHIN_DAYS = 7;
+    private const EXPIRING_WITHIN_DAYS = 3;
 
 public function index(Request $request)
 {
@@ -60,7 +60,9 @@ public function index(Request $request)
 
     $planFilters = self::PLAN_FILTERS;
 
-    return response()->view('cms.place.index', compact('places', 'areas', 'filters', 'ignoredFilters', 'planFilters'));
+    $expiringDays = self::EXPIRING_WITHIN_DAYS;
+
+    return response()->view('cms.place.index', compact('places', 'areas', 'filters', 'ignoredFilters', 'planFilters', 'expiringDays'));
 }
 
 public function show(string $id)
