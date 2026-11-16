@@ -10,10 +10,20 @@
 | currency      : رمز العملة (3 أحرف، ILS = شيكل).
 | period_months : مدة الباقة بالأشهر. العدّ يبدأ من لحظة التفعيل.
 |
+| reminder.days_before : قبل كم يوم من الانتهاء نرسل تذكير واتساب (من 1 إلى 30، غير ذلك = 3).
+| reminder.at          : ساعة التشغيل اليومي (HH:MM).
+| reminder.timezone    : منطقة ساعة التشغيل. التخزين يبقى UTC.
+|
 */
 
 return [
     'price' => 99,
     'currency' => 'ILS',
     'period_months' => 2,
+
+    'reminder' => [
+        'days_before' => (int) env('SUBSCRIPTION_REMINDER_DAYS', 3),
+        'at' => env('SUBSCRIPTION_REMINDER_AT', '10:00'),
+        'timezone' => 'Asia/Gaza',
+    ],
 ];
