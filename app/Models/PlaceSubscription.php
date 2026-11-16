@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -87,36 +86,6 @@ class PlaceSubscription extends Model
 
             return $cancelled;
         }, 3);
-    }
-
-    /** عدد أيام التذكير قبل الانتهاء. قيمة خارج 1..30 ترجع للافتراضي 3 بدل ما تكسر المهمة. */
-    public static function reminderDays(): int
-    {
-        $days = (int) config('subscription.reminder.days_before');
-
-        return ($days >= 1 && $days <= 30) ? $days : 3;
-    }
-
-    /**
-     * الدفعات التي تحتاج تذكير انتهاء الآن: لم تُذكَّر، غير ملغاة، تنتهي خلال reminderDays()،
-     * وليست مستبدلة بدفعة أحدث للمحل نفسه (التجديد المبكر ينشئ صفاً جديداً فلا نذكّر على القديم).
-     */
-    public function scopeNeedingReminder(Builder $query): Builder
-    {
-        $now = now();
-
-        return $query
-            ->whereNull('subscription_reminder_sent_at')
-            ->whereNull('subscription_cancelled_at')
-            ->where('subscription_ends_at', '>', $now)
-            ->where('subscription_ends_at', '<=', $now->copy()->addDays(self::reminderDays()))
-            ->whereNotExists(function ($q) {
-                $q->selectRaw('1')
-                    ->from('place_subscriptions as newer')
-                    ->whereColumn('newer.place_id', 'place_subscriptions.place_id')
-                    ->whereColumn('newer.subscription_ends_at', '>', 'place_subscriptions.subscription_ends_at')
-                    ->whereNull('newer.subscription_cancelled_at');
-            });
     }
 
     public function place(): BelongsTo
