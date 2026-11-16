@@ -8,6 +8,7 @@ use App\Http\Requests\Dashboard\StoreMenuItemRequest;
 use App\Http\Requests\Dashboard\UpdateMenuItemRequest;
 use App\Models\DashboardMenuItem;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,9 +33,13 @@ $items = DashboardMenuItem::where('place_id', $place->id)
     ->limit((int) config('dashboard_plan.menu_item_hard_cap'))
     ->get();
 
+$limit = $this->planLimit($place->place_plan);
+$kept = PlanOverflow::keptIds(DashboardMenuItem::where('place_id', $place->id), $limit);
+$overCount = $items->filter(fn (DashboardMenuItem $i) => PlanOverflow::isOver($kept, $i->id))->count();
+
 return response()->json([
-    'data' => $items->map(fn (DashboardMenuItem $i) => $this->payload($i))->all(),
-    'meta' => ['limit' => $this->planLimit($place->place_plan), 'used' => $items->count()],
+    'data' => $items->map(fn (DashboardMenuItem $i) => $this->payload($i, PlanOverflow::isOver($kept, $i->id)))->all(),
+    'meta' => ['limit' => $limit, 'used' => $items->count(), 'overLimitCount' => $overCount],
 ]);
 }
 
@@ -78,7 +83,7 @@ $found = $this->ownItem($request, $item);
 
 return $found === null
     ? $this->failure('NOT_FOUND', 404)
-    : response()->json(['data' => $this->payload($found)]);
+    : response()->json(['data' => $this->payloadFor($found)]);
 }
 
 public function update(UpdateMenuItemRequest $request, string $item): JsonResponse
@@ -99,7 +104,7 @@ if ($data === []) {
 
 $found->fill($data)->save();
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 public function destroy(Request $request, string $item): JsonResponse|Response
@@ -149,7 +154,7 @@ if ($old !== null && $old !== $path) {
     Storage::disk('public')->delete($old);
 }
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 public function destroyImage(Request $request, string $item): JsonResponse
@@ -168,7 +173,7 @@ if ($old !== null) {
     Storage::disk('public')->delete($old);
 }
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 private function ownPlace(Request $request): Place
@@ -203,8 +208,20 @@ $limit = config('dashboard_plan.item_limits.free.menu');
 return $limit === null ? null : (int) $limit;
 }
 
+/** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لصنف واحد. */
+private function payloadFor(DashboardMenuItem $item): array
+{
+$place = $item->place;
+$kept = PlanOverflow::keptIds(
+    DashboardMenuItem::where('place_id', $item->place_id),
+    $this->planLimit($place->place_plan),
+);
+
+return $this->payload($item, PlanOverflow::isOver($kept, $item->id));
+}
+
 /** @return array<string, mixed> المعرّفات نصوص حسب عقد الفرونت. */
-private function payload(DashboardMenuItem $item): array
+private function payload(DashboardMenuItem $item, bool $overLimit = false): array
 {
 return [
     'id' => (string) $item->id,
@@ -213,6 +230,7 @@ return [
     'available' => (bool) $item->is_available,
     'categoryId' => $item->item_category_id === null ? null : (string) $item->item_category_id,
     'image' => $item->image_url,
+    'overLimit' => $overLimit,
     'createdAt' => $item->created_at?->toIso8601String(),
 ];
 }
