@@ -167,4 +167,8 @@ return [
         'max_page_size' => 100,
     ],
 
+    'ads' => [
+    'hard_cap' => 100,
+],
+
 ];

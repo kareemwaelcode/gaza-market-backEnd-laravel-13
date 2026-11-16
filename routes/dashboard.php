@@ -4,6 +4,7 @@ use App\Http\Controllers\Dashboard\AmenityController;
 use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
 use App\Http\Controllers\Dashboard\ReservationController;
+use App\Http\Controllers\Dashboard\AdController;
 use App\Http\Controllers\Dashboard\StoreProductController;
 use App\Http\Controllers\Dashboard\StoreServiceController;
 use App\Http\Controllers\Dashboard\SubscriberController;
@@ -71,4 +72,10 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
 
         Route::get('amenities', [AmenityController::class, 'show'])->name('amenities.show');
         Route::put('amenities', [AmenityController::class, 'update'])->name('amenities.update');
+
+        Route::get('ads', [AdController::class, 'index'])->name('ads.index');
+        Route::post('ads', [AdController::class, 'store'])->name('ads.store');
+        Route::get('ads/{ad}', [AdController::class, 'show'])->where('ad', '[0-9]{1,18}')->name('ads.show');
+        Route::patch('ads/{ad}', [AdController::class, 'update'])->where('ad', '[0-9]{1,18}')->name('ads.update');
+        Route::delete('ads/{ad}', [AdController::class, 'destroy'])->where('ad', '[0-9]{1,18}')->name('ads.destroy');
     });
