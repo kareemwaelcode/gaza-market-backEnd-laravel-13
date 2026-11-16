@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dashboard\AmenityController;
 use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
 use App\Http\Controllers\Dashboard\ReservationController;
@@ -8,9 +9,9 @@ use App\Http\Controllers\Dashboard\StoreServiceController;
 use App\Http\Controllers\Dashboard\SubscriberController;
 use App\Http\Controllers\Dashboard\SubscriptionRequestController;
 use App\Http\Controllers\Dashboard\TableController;
+use App\Http\Controllers\Dashboard\WorkspacePricingController;
 use Illuminate\Support\Facades\Route;
 
-// لوحة صاحب المحل: مستخدم نشط + دور store_owner + محل معتمد. مسارات place وvisits في web.php.
 Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
     ->prefix('api/dashboard')
     ->name('owner.')
@@ -64,4 +65,10 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
         Route::post('subscription-requests/{subscriptionRequest}/accept', [SubscriptionRequestController::class, 'accept'])->where('subscriptionRequest', '[0-9]{1,18}')->name('subscription-requests.accept');
         Route::post('subscription-requests/{subscriptionRequest}/reject', [SubscriptionRequestController::class, 'reject'])->where('subscriptionRequest', '[0-9]{1,18}')->name('subscription-requests.reject');
         Route::delete('subscription-requests/{subscriptionRequest}', [SubscriptionRequestController::class, 'destroy'])->where('subscriptionRequest', '[0-9]{1,18}')->name('subscription-requests.destroy');
+
+        Route::get('workspace-pricing', [WorkspacePricingController::class, 'show'])->name('workspace-pricing.show');
+        Route::put('workspace-pricing', [WorkspacePricingController::class, 'update'])->name('workspace-pricing.update');
+
+        Route::get('amenities', [AmenityController::class, 'show'])->name('amenities.show');
+        Route::put('amenities', [AmenityController::class, 'update'])->name('amenities.update');
     });
