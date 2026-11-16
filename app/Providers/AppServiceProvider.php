@@ -136,10 +136,18 @@ RateLimiter::for('dashboard', fn (Request $request) =>
         ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))
 );
 
+
 RateLimiter::for('dashboard-upload', fn (Request $request) =>
     Limit::perMinute(10)
         ->by('dashboard-upload:' . ($request->user()?->id ?? $request->ip()))
 );
+RateLimiter::for('subscription-requests', fn (Request $request) => [
+    Limit::perMinute(5)
+        ->by('subscription-requests:' . ($request->user()?->id ?? $request->ip())),
+
+    Limit::perHour(30)
+        ->by('subscription-requests-hour:' . ($request->user()?->id ?? $request->ip())),
+]);
 
 RateLimiter::for('otp-request', fn (Request $request) => [
     Limit::perMinute(10)
