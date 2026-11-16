@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dashboard\ItemCategoryController;
 use App\Http\Controllers\Dashboard\MenuItemController;
+use App\Http\Controllers\Dashboard\ReservationController;
 use App\Http\Controllers\Dashboard\StoreProductController;
 use App\Http\Controllers\Dashboard\StoreServiceController;
 use App\Http\Controllers\Dashboard\TableController;
@@ -67,4 +68,11 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
             ->where('table', '[0-9]{1,18}')->name('tables.update');
         Route::delete('tables/{table}', [TableController::class, 'destroy'])
             ->where('table', '[0-9]{1,18}')->name('tables.destroy');
+
+                    Route::get('reservations', [ReservationController::class, 'index'])->name('reservations.index');
+        Route::get('reservations/summary', [ReservationController::class, 'summary'])->name('reservations.summary');
+        Route::patch('reservations/{reservation}', [ReservationController::class, 'update'])
+            ->where('reservation', '[0-9]{1,18}')->name('reservations.update');
+        Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy'])
+            ->where('reservation', '[0-9]{1,18}')->name('reservations.destroy');
     });
