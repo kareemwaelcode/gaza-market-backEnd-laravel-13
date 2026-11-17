@@ -8,20 +8,26 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
-        health: '/up',
-    )
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'active.user' => EnsureActiveUser::class,
-            'store.owner' => EnsureStoreOwner::class,
-        ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        // مسارات api/* ترجع JSON دائماً (401 بدل redirect لصفحة login غير موجودة).
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request, Throwable $e) => $request->is('api/*') || $request->expectsJson()
-        );
-    })->create();
+->withRouting(
+    web: __DIR__.'/../routes/web.php',
+    commands: __DIR__.'/../routes/console.php',
+    health: '/up',
+)
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'active.user' => EnsureActiveUser::class,
+        'store.owner' => EnsureStoreOwner::class,
+    ]);
+
+
+    $middleware->redirectGuestsTo(fn (Request $request) =>
+        $request->is('cms/*')
+            ? route('view.login', ['guard' => 'admins'])
+            : null
+    );
+})
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->shouldRenderJsonWhen(
+        fn (Request $request, Throwable $e) => $request->is('api/*') || $request->expectsJson()
+    );
+})->create();
