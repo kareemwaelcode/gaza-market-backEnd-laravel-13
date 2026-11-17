@@ -7,6 +7,7 @@ use App\Http\Requests\Dashboard\StoreStoreServiceRequest;
 use App\Http\Requests\Dashboard\UpdateStoreServiceRequest;
 use App\Models\DashboardStoreService;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,10 +28,15 @@ class StoreServiceController extends Controller
             ->limit((int) config('dashboard_plan.service_items.hard_cap'))
             ->get();
 
+        $limit = $this->serviceLimit($place->place_plan);
+        $kept = PlanOverflow::keptIds(DashboardStoreService::where('place_id', $place->id), $limit);
+        $overCount = $items->filter(fn (DashboardStoreService $s) => PlanOverflow::isOver($kept, $s->id))->count();
+
         return response()->json([
-            'data' => $items->map(fn (DashboardStoreService $s) => $this->payload($s))->all(),
+            'data' => $items->map(fn (DashboardStoreService $s) => $this->payload($s, PlanOverflow::isOver($kept, $s->id)))->all(),
             'meta' => [
-                'limit' => $this->serviceLimit($place->place_plan),
+                'limit' => $limit,
+                'overLimitCount' => $overCount,
                 'used' => DashboardStoreService::where('place_id', $place->id)->count(),
             ],
         ]);
@@ -79,7 +85,7 @@ class StoreServiceController extends Controller
 
         return $found === null
             ? $this->failure('NOT_FOUND', 404)
-            : response()->json(['data' => $this->payload($found)]);
+            : response()->json(['data' => $this->payloadFor($found)]);
     }
 
     public function update(UpdateStoreServiceRequest $request, string $service): JsonResponse
@@ -100,7 +106,7 @@ class StoreServiceController extends Controller
 
         $found->fill($data)->save();
 
-        return response()->json(['data' => $this->payload($found->refresh())]);
+        return response()->json(['data' => $this->payloadFor($found->refresh())]);
     }
 
     public function destroy(Request $request, string $service): JsonResponse|Response
@@ -169,8 +175,19 @@ class StoreServiceController extends Controller
         return $data;
     }
 
+    /** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لخدمة واحدة. */
+    private function payloadFor(DashboardStoreService $s): array
+    {
+        $kept = PlanOverflow::keptIds(
+            DashboardStoreService::where('place_id', $s->place_id),
+            $this->serviceLimit($s->place->place_plan),
+        );
+
+        return $this->payload($s, PlanOverflow::isOver($kept, $s->id));
+    }
+
     /** @return array<string, mixed> المعرّفات نصوص حسب عقد الفرونت. */
-    private function payload(DashboardStoreService $s): array
+    private function payload(DashboardStoreService $s, bool $overLimit = false): array
     {
         return [
             'id' => (string) $s->id,
@@ -180,6 +197,7 @@ class StoreServiceController extends Controller
             'priceFrom' => (bool) $s->price_from,
             'duration' => $s->duration,
             'categoryId' => $s->item_category_id === null ? null : (string) $s->item_category_id,
+            'overLimit' => $overLimit,
             'createdAt' => $s->created_at?->toIso8601String(),
         ];
     }

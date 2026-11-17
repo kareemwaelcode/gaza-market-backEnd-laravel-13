@@ -8,6 +8,7 @@ use App\Http\Requests\Dashboard\StoreStoreProductRequest;
 use App\Http\Requests\Dashboard\UpdateStoreProductRequest;
 use App\Models\DashboardStoreProduct;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -30,10 +31,13 @@ $items = DashboardStoreProduct::where('place_id', $place->id)
     ->get();
 
 $variant = $this->variantOf($place);
+$kept = $this->keptSets($place, $variant);
+$overCount = $items->filter(fn (DashboardStoreProduct $p) => $this->isOver($kept, $p))->count();
 
 return response()->json([
-    'data' => $items->map(fn (DashboardStoreProduct $p) => $this->payload($p))->all(),
+    'data' => $items->map(fn (DashboardStoreProduct $p) => $this->payload($p, $this->isOver($kept, $p)))->all(),
     'meta' => [
+        'overLimitCount' => $overCount,
         'limit' => $this->productLimit($variant, $place->place_plan),
         'used' => DashboardStoreProduct::where('place_id', $place->id)->count(),
         'discountLimit' => $this->discountLimit($variant, $place->place_plan),
@@ -94,7 +98,7 @@ $found = $this->ownProduct($request, $product);
 
 return $found === null
     ? $this->failure('NOT_FOUND', 404)
-    : response()->json(['data' => $this->payload($found)]);
+    : response()->json(['data' => $this->payloadFor($found)]);
 }
 
 public function update(UpdateStoreProductRequest $request, string $product): JsonResponse
@@ -137,7 +141,7 @@ if ($error !== null) {
     return $error;
 }
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 public function destroy(Request $request, string $product): JsonResponse|Response
@@ -187,7 +191,7 @@ if ($old !== null && $old !== $path) {
     Storage::disk('public')->delete($old);
 }
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 public function destroyImage(Request $request, string $product): JsonResponse
@@ -206,7 +210,7 @@ if ($old !== null) {
     Storage::disk('public')->delete($old);
 }
 
-return response()->json(['data' => $this->payload($found->refresh())]);
+return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 private function ownPlace(Request $request): Place
@@ -295,8 +299,51 @@ if (array_key_exists('extra', $data)) {
 return $data;
 }
 
+/**
+* المنتجات التي تبقى ضمن الباقة بعد الانتهاء (أقدم N حسب id)، وبدون حذف ولا عمود جديد.
+* الترتيب: الحد الإجمالي أولاً، ثم حد المخفّضة يُطبَّق على المنتجات الباقية فقط.
+* null = لا حد (باقة مدفوعة).
+*
+* @return array{total: array<int, int>|null, discount: array<int, int>|null}
+*/
+private function keptSets(Place $place, string $variant): array
+{
+$total = PlanOverflow::keptIds(
+    DashboardStoreProduct::where('place_id', $place->id),
+    $this->productLimit($variant, $place->place_plan),
+);
+
+$discountLimit = $this->discountLimit($variant, $place->place_plan);
+
+$discount = $discountLimit === null || $total === null
+    ? null
+    : PlanOverflow::keptIds(
+        DashboardStoreProduct::where('place_id', $place->id)
+            ->where('has_discount', true)
+            ->whereIn('id', $total),
+        $discountLimit,
+    );
+
+return ['total' => $total, 'discount' => $discount];
+}
+
+/** @param  array{total: array<int, int>|null, discount: array<int, int>|null}  $kept */
+private function isOver(array $kept, DashboardStoreProduct $p): bool
+{
+return PlanOverflow::isOver($kept['total'], $p->id)
+    || ($p->has_discount && PlanOverflow::isOver($kept['discount'], $p->id));
+}
+
+/** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لمنتج واحد. */
+private function payloadFor(DashboardStoreProduct $p): array
+{
+$place = Place::with('storeCategory:id,store_category_variant_key')->findOrFail($p->place_id);
+
+return $this->payload($p, $this->isOver($this->keptSets($place, $this->variantOf($place)), $p));
+}
+
 /** @return array<string, mixed> المعرّفات نصوص حسب عقد الفرونت. */
-private function payload(DashboardStoreProduct $p): array
+private function payload(DashboardStoreProduct $p, bool $overLimit = false): array
 {
 return [
     'id' => (string) $p->id,
@@ -312,6 +359,7 @@ return [
     'material' => $p->material,
     'extra' => $p->extra,
     'image' => $p->image_url,
+    'overLimit' => $overLimit,
     'createdAt' => $p->created_at?->toIso8601String(),
 ];
 }

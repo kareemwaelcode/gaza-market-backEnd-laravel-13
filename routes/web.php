@@ -36,6 +36,7 @@ use App\Http\Controllers\SavedListingController;
 use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\StoreCategoryGroupController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
@@ -52,10 +53,19 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 if (app()->environment('local')) {
     Route::redirect('/', '/cms/admins');
 }
+// login
+Route::prefix('cms/')->middleware('guest:admins')->group(function() {
+    Route::get('{guard}/login', [UserAuthController::class , 'showLogin'])->name('view.login');
+    Route::post('{guard}/login', [UserAuthController::class , 'login']);
+});
 
-Route::prefix('cms/admins')->group(function () {
+// logout
+Route::prefix('cms/admins')->middleware('auth:admins')->group(function() {
+    Route::get('logout' , [UserAuthController::class, 'logout'])->name('cms.logout');
+});
+
+Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::view('', 'cms.parent')->name('dashboard');
-
     // الأدمن والمستخدمون
     Route::resource('admin', AdminController::class);
     Route::post('admins_update/{id}', [AdminController::class, 'update'])->name('admins_update');

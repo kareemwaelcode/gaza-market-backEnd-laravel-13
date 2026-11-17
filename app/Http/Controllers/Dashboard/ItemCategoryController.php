@@ -8,6 +8,7 @@ use App\Http\Requests\Dashboard\StoreItemCategoryRequest;
 use App\Http\Requests\Dashboard\UpdateItemCategoryRequest;
 use App\Models\DashboardItemCategory;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,9 +28,16 @@ public function index(ListItemCategoryRequest $request): JsonResponse
         ->limit((int) config('dashboard_plan.category_hard_cap'))
         ->get();
 
+    $limit = $this->planLimit($place->place_plan, $kind);
+    $kept = PlanOverflow::keptIds(
+        DashboardItemCategory::where('place_id', $place->id)->where('kind', $kind),
+        $limit,
+    );
+    $overCount = $items->filter(fn (DashboardItemCategory $c) => PlanOverflow::isOver($kept, $c->id))->count();
+
     return response()->json([
-        'data' => $items->map(fn (DashboardItemCategory $c) => $this->payload($c))->all(),
-        'meta' => ['limit' => $this->planLimit($place->place_plan, $kind), 'used' => $items->count()],
+        'data' => $items->map(fn (DashboardItemCategory $c) => $this->payload($c, PlanOverflow::isOver($kept, $c->id)))->all(),
+        'meta' => ['limit' => $limit, 'used' => $items->count(), 'overLimitCount' => $overCount],
     ]);
 }
 
@@ -78,7 +86,7 @@ public function show(Request $request, string $category): JsonResponse
 
     return $found === null
         ? $this->failure('NOT_FOUND', 404)
-        : response()->json(['data' => $this->payload($found)]);
+        : response()->json(['data' => $this->payloadFor($found)]);
 }
 
 public function update(UpdateItemCategoryRequest $request, string $category): JsonResponse
@@ -97,7 +105,7 @@ public function update(UpdateItemCategoryRequest $request, string $category): Js
         return $this->failure('CATEGORY_EXISTS', 409);
     }
 
-    return response()->json(['data' => $this->payload($found->refresh())]);
+    return response()->json(['data' => $this->payloadFor($found->refresh())]);
 }
 
 public function destroy(Request $request, string $category): JsonResponse|Response
@@ -136,13 +144,25 @@ private function planLimit(?string $plan, string $kind): ?int
     return $limit === null ? null : (int) $limit;
 }
 
+/** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لتصنيف واحد. */
+private function payloadFor(DashboardItemCategory $category): array
+{
+    $kept = PlanOverflow::keptIds(
+        DashboardItemCategory::where('place_id', $category->place_id)->where('kind', $category->kind),
+        $this->planLimit($category->place->place_plan, $category->kind),
+    );
+
+    return $this->payload($category, PlanOverflow::isOver($kept, $category->id));
+}
+
 /** @return array<string, mixed> المعرّف نص حسب عقد الفرونت. */
-private function payload(DashboardItemCategory $category): array
+private function payload(DashboardItemCategory $category, bool $overLimit = false): array
 {
     return [
         'id' => (string) $category->id,
         'kind' => $category->kind,
         'name' => $category->name,
+        'overLimit' => $overLimit,
         'createdAt' => $category->created_at?->toIso8601String(),
     ];
 }

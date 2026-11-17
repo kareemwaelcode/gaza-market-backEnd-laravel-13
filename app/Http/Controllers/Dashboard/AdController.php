@@ -7,6 +7,7 @@ use App\Http\Requests\Dashboard\StoreAdRequest;
 use App\Http\Requests\Dashboard\UpdateAdRequest;
 use App\Models\DashboardAd;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -23,10 +24,15 @@ class AdController extends Controller
             ->limit((int) config('dashboard_plan.ads.hard_cap'))
             ->get();
 
+        $limit = $this->adLimit($place->place_plan);
+        $kept = PlanOverflow::keptIds(DashboardAd::where('place_id', $place->id), $limit);
+        $overCount = $ads->filter(fn (DashboardAd $a) => PlanOverflow::isOver($kept, $a->id))->count();
+
         return response()->json([
-            'data' => $ads->map(fn (DashboardAd $a) => $this->payload($a))->all(),
+            'data' => $ads->map(fn (DashboardAd $a) => $this->payload($a, PlanOverflow::isOver($kept, $a->id)))->all(),
             'meta' => [
-                'limit' => $this->adLimit($place->place_plan),
+                'limit' => $limit,
+                'overLimitCount' => $overCount,
                 'used' => DashboardAd::where('place_id', $place->id)->count(),
             ],
         ]);
@@ -80,7 +86,7 @@ class AdController extends Controller
 
         return $found === null
             ? $this->failure('NOT_FOUND', 404)
-            : response()->json(['data' => $this->payload($found)]);
+            : response()->json(['data' => $this->payloadFor($found)]);
     }
 
     public function update(UpdateAdRequest $request, string $ad): JsonResponse
@@ -122,7 +128,7 @@ class AdController extends Controller
 
         $found->fill($data)->save();
 
-        return response()->json(['data' => $this->payload($found->refresh())]);
+        return response()->json(['data' => $this->payloadFor($found->refresh())]);
     }
 
     public function destroy(Request $request, string $ad): JsonResponse|Response
@@ -219,8 +225,19 @@ class AdController extends Controller
         ]);
     }
 
+    /** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لإعلان واحد. */
+    private function payloadFor(DashboardAd $a): array
+    {
+        $kept = PlanOverflow::keptIds(
+            DashboardAd::where('place_id', $a->place_id),
+            $this->adLimit($a->place->place_plan),
+        );
+
+        return $this->payload($a, PlanOverflow::isOver($kept, $a->id));
+    }
+
     /** @return array<string, mixed> المعرّفات نصوص حسب عقد الفرونت. */
-    private function payload(DashboardAd $a): array
+    private function payload(DashboardAd $a, bool $overLimit = false): array
     {
         return [
             'id' => (string) $a->id,
@@ -232,6 +249,7 @@ class AdController extends Controller
             'priceBefore' => $a->price_before === null ? null : (float) $a->price_before,
             'priceAfter' => $a->price_after === null ? null : (float) $a->price_after,
             'isHidden' => (bool) $a->is_hidden,
+            'overLimit' => $overLimit,
             'createdAt' => $a->created_at?->toIso8601String(),
         ];
     }

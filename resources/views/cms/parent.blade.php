@@ -22,7 +22,7 @@
 <link href="{{ asset('cms/vendor/css-hamburgers/hamburgers.min.css') }}" rel="stylesheet" media="all"/>
 <link href="{{ asset('cms/css/theme.css') }}" rel="stylesheet" media="all"/>
 <link href="{{ asset('cms/css/app.css') }}" rel="stylesheet" media="all"/>
-//new links
+
   <link rel="stylesheet" href="{{ asset('cms/plugins/toastr/toastr.min.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -263,21 +263,16 @@
   </div>
   <div class="account-wrap">
     <div class="account-item clearfix js-item-menu" role="button" tabindex="0" aria-haspopup="true" aria-label="Account menu">
-      <div class="image"><img src="{{ asset('cms/images/icon/avatar-01.jpg') }}" alt="John Doe"></div>
-      <div class="content"><a class="js-acc-btn" href="#">john doe</a></div>
+      <div class="image"><img src="{{ asset('cms/images/gazamarket.logo.jpeg') }}" alt="John Doe"></div>
+      <div class="content"><a class="js-acc-btn" href="#">Kareem</a></div>
       <div class="account-dropdown js-dropdown">
         <div class="info clearfix">
-          <div class="image"><a href="#"><img src="{{ asset('cms/images/icon/avatar-01.jpg') }}" alt="John Doe"></a></div>
+          <div class="image"><a href="#"><img src="{{ asset('cms/images/gazamarket.logo.jpeg') }}" alt="John Doe"></a></div>
           <div class="content">
-            <h5 class="name"><a href="#">john doe</a></h5><span class="email">johndoe@example.com</span>
+            <h5 class="name"><a href="#">Kareem</a></h5><span class="email">kareemwael.dev@gmail.com</span>
           </div>
         </div>
-        <div class="account-dropdown__body">
-          <div class="account-dropdown__item"><a href="#"><i class="fa-solid fa-user"></i>Account</a></div>
-          <div class="account-dropdown__item"><a href="#"><i class="fa-solid fa-gear"></i>Setting</a></div>
-          <div class="account-dropdown__item"><a href="#"><i class="fa-solid fa-sack-dollar"></i>Billing</a></div>
-        </div>
-        <div class="account-dropdown__footer"><a href="#"><i class="fa-solid fa-power-off"></i>Logout</a></div>
+        <div class="account-dropdown__footer"><a href="{{ route('cms.logout') }}"><i class="fa-solid fa-power-off"></i>Logout</a></div>
       </div>
     </div>
   </div>

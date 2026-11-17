@@ -7,6 +7,7 @@ use App\Http\Requests\Dashboard\StoreTableRequest;
 use App\Http\Requests\Dashboard\UpdateTableRequest;
 use App\Models\DashboardTable;
 use App\Models\Place;
+use App\Support\PlanOverflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,13 +28,18 @@ class TableController extends Controller
             ->limit((int) config('dashboard_plan.tables.hard_cap'))
             ->get();
 
+        $limit = $this->tableLimit($place->place_plan);
+        $kept = PlanOverflow::keptIds(DashboardTable::where('place_id', $place->id), $limit);
+        $overCount = $items->filter(fn (DashboardTable $t) => PlanOverflow::isOver($kept, $t->id))->count();
+
         return response()->json([
-            'data' => $items->map(fn (DashboardTable $t) => $this->payload($t))->all(),
+            'data' => $items->map(fn (DashboardTable $t) => $this->payload($t, PlanOverflow::isOver($kept, $t->id)))->all(),
             'meta' => [
-                'limit' => $this->tableLimit($place->place_plan),
+                'limit' => $limit,
                 'used' => DashboardTable::where('place_id', $place->id)->count(),
-                // الإخفاء بسبب انتهاء الباقة غير مبني بعد (تفعيل الباقة ب٨).
-                'hidden' => 0,
+                // hidden قديم ومحفوظ للتوافق: نفس عدد العناصر فوق حد الباقة بعد الانتهاء.
+                'hidden' => $overCount,
+                'overLimitCount' => $overCount,
             ],
         ]);
     }
@@ -94,7 +100,7 @@ class TableController extends Controller
 
         $found->fill($data)->save();
 
-        return response()->json(['data' => $this->payload($found->refresh())]);
+        return response()->json(['data' => $this->payloadFor($found->refresh())]);
     }
 
     public function destroy(Request $request, string $table): JsonResponse|Response
@@ -134,14 +140,26 @@ class TableController extends Controller
             : (int) config('dashboard_plan.tables.free_limit');
     }
 
+    /** @return array<string, mixed> payload مع حساب علامة "فوق حد الباقة" لطاولة واحدة. */
+    private function payloadFor(DashboardTable $t): array
+    {
+        $kept = PlanOverflow::keptIds(
+            DashboardTable::where('place_id', $t->place_id),
+            $this->tableLimit($t->place->place_plan),
+        );
+
+        return $this->payload($t, PlanOverflow::isOver($kept, $t->id));
+    }
+
     /** @return array<string, mixed> المعرّفات نصوص حسب عقد الفرونت. */
-    private function payload(DashboardTable $t): array
+    private function payload(DashboardTable $t, bool $overLimit = false): array
     {
         return [
             'id' => (string) $t->id,
             'name' => $t->name,
             'seats' => $t->seats,
             'status' => $t->status,
+            'overLimit' => $overLimit,
         ];
     }
 
