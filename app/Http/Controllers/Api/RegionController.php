@@ -5,18 +5,28 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\GeneratesUniqueSlug;
 use App\Http\Controllers\Controller;
 use App\Models\Regions;
+use App\Support\ApiCache;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class RegionController extends Controller
+class RegionController extends Controller implements HasMiddleware
 {
     use GeneratesUniqueSlug;
 
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth:admins-api', except: ['index', 'show']),
+        ];
+    }
+
     public function index(): JsonResponse
     {
-        $regions = Regions::ordered()->paginate(5);
+        $regions = ApiCache::lookup('regions', fn () => Regions::ordered()->paginate(5)->toArray());
 
         return response()->json([
             'status' => true,

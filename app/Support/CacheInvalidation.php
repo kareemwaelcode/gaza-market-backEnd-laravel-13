@@ -5,9 +5,13 @@ namespace App\Support;
 use App\Models\Area;
 use App\Models\Category;
 use App\Models\CategoryGroup;
+use App\Models\HeroSection;
 use App\Models\Listing;
 use App\Models\ListingCategory;
+use App\Models\NavigationItem;
 use App\Models\Place;
+use App\Models\PointLevel;
+use App\Models\PointRule;
 use App\Models\Regions;
 use App\Models\StoreCategory;
 use App\Models\StoreCategoryGroup;
@@ -31,6 +35,11 @@ class CacheInvalidation
         foreach ($lookups as $model) {
             $model::saved(fn () => ApiCache::lookupsChanged());
             $model::deleted(fn () => ApiCache::lookupsChanged());
+        }
+
+        foreach ([NavigationItem::class, HeroSection::class, PointRule::class, PointLevel::class] as $model) {
+            $model::saved(fn () => ApiCache::bump(ApiCache::LOOKUPS));
+            $model::deleted(fn () => ApiCache::bump(ApiCache::LOOKUPS));
         }
 
         Listing::saved(function (Listing $listing) {

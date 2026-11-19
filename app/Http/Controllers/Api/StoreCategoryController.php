@@ -6,6 +6,7 @@ use App\Enums\StoreCategoryVariant;
 use App\Http\Controllers\Api\Concerns\GeneratesUniqueSlug;
 use App\Http\Controllers\Controller;
 use App\Models\StoreCategory;
+use App\Support\ApiCache;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +28,7 @@ class StoreCategoryController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $storeCategories = StoreCategory::with('storeCategoryGroup:id,store_category_group_name_en')->ordered()->paginate(10);
+        $storeCategories = ApiCache::lookup('store-categories', fn () => StoreCategory::with('storeCategoryGroup:id,store_category_group_name_en')->ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

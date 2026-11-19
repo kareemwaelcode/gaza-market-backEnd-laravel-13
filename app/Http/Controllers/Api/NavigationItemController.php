@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\GeneratesUniqueSlug;
 use App\Http\Controllers\Controller;
 use App\Models\NavigationItem;
+use App\Support\ApiCache;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class NavigationItemController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $navigationItems = NavigationItem::ordered()->paginate(10);
+        $navigationItems = ApiCache::lookup('navigation-items', fn () => NavigationItem::ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

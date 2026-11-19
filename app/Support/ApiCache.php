@@ -5,6 +5,7 @@ namespace App\Support;
 use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Throwable;
@@ -68,6 +69,23 @@ try {
     self::safely(fn () => $lock->release());
 }
 }
+public static function lookup(string $key, Closure $callback, bool $paged = true): array
+{
+    $page = $paged ? Paginator::resolveCurrentPage() : 1;
+
+    if ($page > (int) config('prices.cache.max_page')) {
+        return $callback();
+    }
+
+    return self::remember(
+        [self::LOOKUPS],
+        $key.':'.$page,
+        (int) config('prices.cache.lookups_ttl'),
+        $callback,
+        fn (array $value) => ($value['data'] ?? $value) === [],
+    );
+}
+
 public static function bump(string ...$groups): void
 {
 self::safely(function () use ($groups) {

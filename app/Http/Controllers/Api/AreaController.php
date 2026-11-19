@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\GeneratesUniqueSlug;
 use App\Http\Controllers\Controller;
 use App\Models\Area;
+use App\Support\ApiCache;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class AreaController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $areas = Area::with('region:id,region_name_en')->ordered()->paginate(10);
+        $areas = ApiCache::lookup('areas', fn () => Area::with('region:id,region_name_en')->ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

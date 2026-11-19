@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PointLevel;
+use App\Support\ApiCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -21,7 +22,7 @@ class PointLevelController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $pointLevels = PointLevel::ordered()->paginate(10);
+        $pointLevels = ApiCache::lookup('point-levels', fn () => PointLevel::ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

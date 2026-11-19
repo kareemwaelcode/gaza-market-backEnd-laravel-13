@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PointRule;
+use App\Support\ApiCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -20,7 +21,7 @@ class PointRuleController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $pointRules = PointRule::ordered()->paginate(10);
+        $pointRules = ApiCache::lookup('point-rules', fn () => PointRule::ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

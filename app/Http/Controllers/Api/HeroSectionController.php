@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\HeroSection;
+use App\Support\ApiCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -32,7 +33,7 @@ class HeroSectionController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $heroSections = HeroSection::orderBy('id')->get();
+        $heroSections = ApiCache::lookup('hero-sections', fn () => HeroSection::orderBy('id')->get()->toArray(), paged: false);
 
         return response()->json([
             'status' => true,

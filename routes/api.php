@@ -27,20 +27,25 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:api');
 
-Route::apiResource('regions', RegionController::class);
-Route::apiResource('units', UnitController::class);
-Route::apiResource('areas', AreaController::class);
-Route::apiResource('category-groups', CategoryGroupController::class);
-Route::apiResource('store-category-groups', StoreCategoryGroupController::class);
-Route::apiResource('store-categories', StoreCategoryController::class);
-Route::apiResource('listing-categories', ListingCategoryController::class);
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('navigation-items', NavigationItemController::class);
-Route::apiResource('point-rules', PointRuleController::class)->only(['index', 'show', 'update']);
-Route::apiResource('point-levels', PointLevelController::class)->only(['index', 'show', 'update']);
-Route::apiResource('hero-sections', HeroSectionController::class);
+Route::middleware('throttle:lookups')->group(function () {
+    Route::apiResource('regions', RegionController::class);
+    Route::apiResource('units', UnitController::class);
+    Route::apiResource('areas', AreaController::class);
+    Route::apiResource('category-groups', CategoryGroupController::class);
+    Route::apiResource('store-category-groups', StoreCategoryGroupController::class);
+    Route::apiResource('store-categories', StoreCategoryController::class);
+    Route::apiResource('listing-categories', ListingCategoryController::class);
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('navigation-items', NavigationItemController::class);
+    Route::apiResource('point-rules', PointRuleController::class)->only(['index', 'show', 'update']);
+    Route::apiResource('point-levels', PointLevelController::class)->only(['index', 'show', 'update']);
+    Route::apiResource('hero-sections', HeroSectionController::class);
+});
 Route::apiResource('users', UserController::class);
 Route::apiResource('admin/places', AdminPlaceController::class);
+Route::post('admins/login', [AdminController::class, 'login']);
+Route::post('admins/logout', [AdminController::class, 'logout']);
+Route::get('admins/me', [AdminController::class, 'me']);
 Route::apiResource('admins', AdminController::class);
 Route::apiResource('point-transactions', PointTransactionController::class);
 Route::apiResource('place-visits', PlaceVisitController::class);
@@ -49,7 +54,7 @@ Route::apiResource('listings', ListingController::class)->only(['index', 'show',
 Route::post('listings/{id}/approve', [ListingController::class, 'approve'])->whereNumber('id');
 Route::post('listings/{id}/reject', [ListingController::class, 'reject'])->whereNumber('id');
 
-Route::apiResource('products', ProductController::class)->only(['index', 'show', 'destroy']);
+Route::apiResource('products', ProductController::class)->only(['index', 'show', 'destroy'])->whereNumber('product');
 Route::get('products/{id}/receipt', [ProductController::class, 'receipt'])->whereNumber('id');
 Route::post('products/{id}/approve', [ProductController::class, 'approve'])->whereNumber('id');
 Route::post('products/{id}/hide', [ProductController::class, 'hide'])->whereNumber('id');
@@ -59,4 +64,3 @@ Route::apiResource('product-prices', ProductPriceController::class)->only(['inde
 Route::get('product-prices/{id}/receipt', [ProductPriceController::class, 'receipt'])->whereNumber('id');
 Route::post('product-prices/{id}/approve', [ProductPriceController::class, 'approve'])->whereNumber('id');
 Route::post('product-prices/{id}/reject', [ProductPriceController::class, 'reject'])->whereNumber('id');
-

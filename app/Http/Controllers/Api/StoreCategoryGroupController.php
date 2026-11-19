@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\GeneratesUniqueSlug;
 use App\Http\Controllers\Controller;
 use App\Models\StoreCategoryGroup;
+use App\Support\ApiCache;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class StoreCategoryGroupController extends Controller implements HasMiddleware
 
     public function index(): JsonResponse
     {
-        $storeCategoryGroups = StoreCategoryGroup::ordered()->paginate(10);
+        $storeCategoryGroups = ApiCache::lookup('store-category-groups', fn () => StoreCategoryGroup::ordered()->paginate(10)->toArray());
 
         return response()->json([
             'status' => true,

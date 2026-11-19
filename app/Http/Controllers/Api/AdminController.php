@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class AdminController extends Controller implements HasMiddleware
 {
     // هاش وهمي: نفس زمن التحقق سواء الإيميل موجود أو لا
-    private const DUMMY_HASH = '$2y$12$usesomesillystringforsalt.0000000000000000000000000000';
+    private const DUMMY_HASH = '$2y$12$R1sXL9BbKRYizrilvpOXaemK9uyybO4tbLwHACcPknFDPeeOxDkDG';
 
     public static function middleware(): array
     {
