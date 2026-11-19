@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\AppointmentController as ApiAppointmentController;
-use App\Http\Controllers\Api\LookupController as ApiLookupController;
 use App\Http\Controllers\Api\MarketController as ApiMarketController;
 use App\Http\Controllers\Api\MyPriceController as ApiMyPriceController;
 use App\Http\Controllers\Api\PlaceController as ApiPlaceController;
@@ -43,37 +42,26 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-/*
-|--------------------------------------------------------------------------
-| CMS (لوحة الأدمن)
-|--------------------------------------------------------------------------
-*/
-
-// محلياً فقط: جذر الدومين يحوّل للوحة. على السيرفر الجذر للفرونت.
 if (app()->environment('local')) {
     Route::redirect('/', '/cms/admins');
 }
-// login
 Route::prefix('cms/')->middleware('guest:admins')->group(function() {
     Route::get('{guard}/login', [UserAuthController::class , 'showLogin'])->name('view.login');
     Route::post('{guard}/login', [UserAuthController::class , 'login']);
 });
 
-// logout
 Route::prefix('cms/admins')->middleware('auth:admins')->group(function() {
     Route::get('logout' , [UserAuthController::class, 'logout'])->name('cms.logout');
 });
 
 Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::view('', 'cms.parent')->name('dashboard');
-    // الأدمن والمستخدمون
     Route::resource('admin', AdminController::class);
     Route::post('admins_update/{id}', [AdminController::class, 'update'])->name('admins_update');
 
     Route::resource('user', UserController::class)->only(['index', 'destroy']);
     Route::post('user_toggle_status/{id}', [UserController::class, 'toggleStatus'])->name('user_toggle_status');
 
-    // المناطق والوحدات
     Route::resource('region', RegionsController::class);
     Route::post('region_update/{id}', [RegionsController::class, 'update'])->name('region_update');
 
@@ -83,7 +71,6 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::resource('unit', UnitController::class);
     Route::post('unit_update/{id}', [UnitController::class, 'update'])->name('unit_update');
 
-    // التصنيفات
     Route::resource('category_group', CategoryGroupController::class);
     Route::post('category_group_update/{id}', [CategoryGroupController::class, 'update'])->name('category_group_update');
 
@@ -96,7 +83,6 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::resource('store_category', StoreCategoryController::class);
     Route::post('store_category_update/{id}', [StoreCategoryController::class, 'update'])->name('store_category_update');
 
-    // النقاط
     Route::resource('point_rule', PointRuleController::class)->only(['index', 'edit']);
     Route::post('point_rule_update/{id}', [PointRuleController::class, 'update'])->name('point_rule_update');
 
@@ -105,14 +91,12 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
 
     Route::resource('point_transaction', PointTransactionController::class)->only(['index']);
 
-    // محتوى الواجهة
     Route::resource('hero_section', HeroSectionController::class)->only(['index', 'edit']);
     Route::post('hero_section_update/{id}', [HeroSectionController::class, 'update'])->name('hero_section_update');
 
     Route::resource('navigation_item', NavigationItemController::class)->only(['index', 'create', 'store', 'edit', 'destroy']);
     Route::post('navigation_item_update/{id}', [NavigationItemController::class, 'update'])->name('navigation_item_update');
 
-    // السوق
     Route::resource('listing_category', ListingCategoryController::class)->only(['index', 'create', 'store', 'edit', 'destroy']);
     Route::post('listing_category_update/{id}', [ListingCategoryController::class, 'update'])->name('listing_category_update');
 
@@ -120,7 +104,6 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::post('listing_approve/{id}', [ListingController::class, 'approve'])->name('listing_approve');
     Route::post('listing_reject/{id}', [ListingController::class, 'reject'])->name('listing_reject');
 
-    // المحلات
     Route::resource('place', PlaceController::class)->only(['index', 'show', 'destroy']);
     Route::post('place_approve/{id}', [PlaceController::class, 'approve'])->name('place_approve');
     Route::post('place_reject/{id}', [PlaceController::class, 'reject'])->name('place_reject');
@@ -129,7 +112,6 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
 
     Route::resource('place_visit', PlaceVisitController::class)->only(['index']);
 
-    // المنتجات والأسعار
     Route::resource('product', ProductController::class)->only(['index', 'show', 'destroy']);
     Route::get('product_receipt/{id}', [ProductController::class, 'receipt'])->name('product_receipt');
     Route::post('product_approve/{id}', [ProductController::class, 'approve'])->name('product_approve');
@@ -142,18 +124,8 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::post('product_price_reject/{id}', [ProductPriceController::class, 'reject'])->name('product_price_reject');
 });
 
-/*
-|--------------------------------------------------------------------------
-| API عام (بدون جلسة)
-|--------------------------------------------------------------------------
-*/
-
 Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])
     ->group(function () {
-        Route::get('api/lookups', [ApiLookupController::class, 'index'])
-            ->middleware('throttle:lookups')
-            ->name('lookups.index');
-
         Route::get('api/market', [ApiMarketController::class, 'index'])
             ->middleware('throttle:market-feed')
             ->name('market.index');
@@ -194,12 +166,6 @@ Route::post('api/places/{place}/visit', [MarketPlaceVisitController::class, 'sto
     ->middleware('throttle:place-visit')
     ->name('places.visit');
 
-/*
-|--------------------------------------------------------------------------
-| تسجيل الدخول والحساب
-|--------------------------------------------------------------------------
-*/
-
 Route::prefix('api/auth')->name('auth.')->group(function () {
     Route::get('me', [AuthController::class, 'me'])
         ->middleware('active.user')
@@ -223,12 +189,6 @@ Route::prefix('api/auth')->name('auth.')->group(function () {
         ->middleware(['auth', 'active.user', 'throttle:profile-avatar'])
         ->name('me.avatar');
 });
-
-/*
-|--------------------------------------------------------------------------
-| API المستخدم (يتطلب تسجيل دخول)
-|--------------------------------------------------------------------------
-*/
 
 Route::post('api/market', [MarketListingController::class, 'store'])
     ->middleware(['auth', 'active.user'])
@@ -262,7 +222,6 @@ Route::middleware(['auth', 'active.user', 'throttle:places'])
         Route::get('mine', [MarketPlaceController::class, 'mine'])->name('mine');
     });
 
-// حجز موعد عيادة: عام بلا تسجيل دخول، مع CSRF (جلسة) وthrottle خاص لأنه يستقبل بيانات شخصية.
 Route::post('api/places/{slug}/appointments', [ApiAppointmentController::class, 'store'])
     ->where('slug', 'p-[a-z0-9]{12}')
     ->middleware('throttle:appointments')
@@ -297,12 +256,6 @@ Route::middleware(['auth', 'active.user'])
         Route::get('prices', [ApiMyPriceController::class, 'index'])->middleware('throttle:my-prices')->name('prices');
         Route::get('points', [ApiPointController::class, 'show'])->middleware('throttle:points')->name('points');
     });
-
-/*
-|--------------------------------------------------------------------------
-| لوحة صاحب المحل
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
     ->prefix('api/dashboard')
