@@ -3,127 +3,229 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
+use App\Models\ProductPrice;
 use App\Support\ApiCache;
+use App\Support\PriceTicker;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\Paginator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
-use Throwable;
+use Illuminate\Validation\Rule;
 
-class ProductController extends Controller
+/**
+ * إدارة منتجات الكتالوج للأدمن (مراجعة، إخفاء، حذف).
+ * بحث المنتجات وإضافتهم من المستخدم بيضلوا بـ Api\ProductController.
+ */
+class ProductController extends Controller implements HasMiddleware
 {
-private const PER_PAGE = 20;
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth:admins-api'),
+        ];
+    }
 
-public function store(StoreProductRequest $request): JsonResponse
-{
-$storedPath = null;
+    public function index(Request $request): JsonResponse
+    {
+        $validator = validator($request->query(), [
+            'status' => ['nullable', Rule::in(Product::STATUSES)],
+            'category_id' => ['nullable', 'integer', 'min:1'],
+            'area_id' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
 
-try {
-    $product = new Product;
-    $product->fill($request->safe()->except('product_receipt_image'));
-    $product->product_status = Product::STATUS_PENDING;
-    $product->user_id = $request->user()->id;
-
-    if ($request->hasFile('product_receipt_image')) {
-        $path = $request->file('product_receipt_image')->store('receipts', 'local');
-
-        if ($path === false) {
-            throw new RuntimeException('Failed to store product receipt image');
+        if ($validator->fails()) {
+            return $this->validationError($validator->errors()->toArray());
         }
 
-        $storedPath = $path;
-        $product->product_receipt_image = $path;
+        $filters = array_filter($validator->validated(), fn ($value) => $value !== null);
+
+        $products = Product::query()
+            ->with([
+                'user:id,user_full_name,user_phone',
+                'category:id,category_name_ar,category_name_en',
+                'unit:id,unit_name_ar,unit_name_en',
+                'area:id,area_name_ar',
+            ])
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('product_status', $status))
+            ->when($filters['category_id'] ?? null, fn ($q, $id) => $q->where('category_id', $id))
+            ->when($filters['area_id'] ?? null, fn ($q, $id) => $q->where('area_id', $id))
+            ->orderByRaw("case when product_status = 'pending' then 0 else 1 end")
+            ->orderByDesc('id')
+            ->paginate((int) ($filters['per_page'] ?? 15))
+            ->appends($filters);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data of Products',
+            'data' => $products,
+        ], 200);
     }
 
-    $product->save();
-} catch (Throwable $e) {
-    if ($storedPath !== null) {
-        Storage::disk('local')->delete($storedPath);
+    public function show(string $id): JsonResponse
+    {
+        $product = Product::with([
+            'user:id,user_full_name,user_phone,user_status',
+            'category',
+            'unit',
+            'area:id,area_name_ar,region_id',
+            'area.region:id,region_name_ar',
+        ])->withCount('prices')->findOrFail($id);
+
+        // الأدمن بيشوف رقم المحل، والإيصال بيتحمّل من راوت منفصل
+        $product->makeVisible('product_store_phone');
+        $product->setAttribute('has_receipt', filled($product->product_receipt_image));
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data of Product',
+            'data' => $product,
+        ], 200);
     }
 
-    report($e);
+    public function receipt(string $id)
+    {
+        $product = Product::findOrFail($id);
+        $path = $product->product_receipt_image;
 
-    return response()->json(['icon' => 'error', 'title' => 'Could not save the price'], 500);
-}
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
 
-return response()->json([
-    'data' => [
-        'id' => $product->id,
-        'status' => $product->product_status,
-    ],
-], 201);
-}
+        return Storage::disk('local')->response($path);
+    }
 
-public function search(Request $request): JsonResponse
-{
-$validator = validator($request->query(), [
-    'q' => ['required', 'string', 'min:2', 'max:50'],
-]);
+    public function approve(string $id): JsonResponse
+    {
+        $product = Product::findOrFail($id);
 
-if ($validator->fails()) {
-    return response()->json([
-        'icon' => 'error',
-        'title' => $validator->getMessageBag()->first(),
-    ], 400);
-}
+        $approved = DB::transaction(function () use ($product) {
+            $updated = Product::whereKey($product->id)
+                ->where('product_status', Product::STATUS_PENDING)
+                ->update([
+                    'product_status' => Product::STATUS_ACTIVE,
+                    'updated_at' => now(),
+                ]);
 
-// توحيد الكلمة: نفس النتيجة لـ " Sugar" و"sugar" (الـ collation بالداتابيز utf8mb4_unicode_ci)
-$term = mb_strtolower(trim((string) $request->query('q')));
+            if (! $updated) {
+                return false;
+            }
 
-$pageNumber = Paginator::resolveCurrentPage();
-$build = fn () => $this->searchPayload($term);
+            $product->refresh()->createFirstPrice();
 
-$payload = $pageNumber > (int) config('prices.cache.max_page')
-    ? $build()
-    : ApiCache::remember(
-        [ApiCache::PRODUCTS],
-        'search:'.md5(json_encode([$term, $pageNumber])),
-        (int) config('prices.cache.search_ttl'),
-        $build,
-        fn (array $value) => $value['meta']['total'] === 0,
-    );
+            return true;
+        });
 
-return response()->json($payload);
-}
+        if (! $approved) {
+            return $this->conflict('Only pending products can be approved');
+        }
 
-/** @return array{data: array, meta: array} */
-private function searchPayload(string $term): array
-{
-$representatives = Product::query()
-    ->active()
-    ->search($term)
-    ->selectRaw('min(id)')
-    ->groupBy('product_name_ar', 'product_name_en', 'product_quantity', 'unit_id');
+        PriceTicker::refreshAfterChange();
+        ApiCache::productsChanged();
 
-$page = Product::query()
-    ->whereIn('id', $representatives)
-    ->with('unit:id,unit_name_ar,unit_name_en')
-    ->orderByDesc('id')
-    ->paginate(self::PER_PAGE)
-    ->appends(['q' => $term]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Approved Successfully',
+            'data' => $product->fresh(),
+        ], 200);
+    }
 
-$items = $page->getCollection()->map(fn (Product $product) => [
-    'id' => $product->id,
-    'name_ar' => $product->product_name_ar,
-    'name_en' => $product->product_name_en,
-    'quantity' => $product->product_quantity,
-    'unit' => $product->unit ? [
-        'name_ar' => $product->unit->unit_name_ar,
-        'name_en' => $product->unit->unit_name_en,
-    ] : null,
-])->values();
+    public function hide(string $id): JsonResponse
+    {
+        return $this->changeStatus($id, Product::STATUS_ACTIVE, Product::STATUS_HIDDEN, 'Only active products can be hidden', 'Hidden Successfully');
+    }
 
-return [
-    'data' => $items->all(),
-    'meta' => [
-        'current_page' => $page->currentPage(),
-        'last_page' => $page->lastPage(),
-        'per_page' => $page->perPage(),
-        'total' => $page->total(),
-    ],
-];
-}
+    public function unhide(string $id): JsonResponse
+    {
+        return $this->changeStatus($id, Product::STATUS_HIDDEN, Product::STATUS_ACTIVE, 'Only hidden products can be shown', 'Shown Successfully');
+    }
+
+    public function destroy(string $id): JsonResponse
+    {
+        $product = Product::findOrFail($id);
+
+        $priceReceipts = [];
+
+        try {
+            // الأسعار (وأصواتها بالـ cascade) بتنحذف مع المنتج كوحدة وحدة
+            $deleted = DB::transaction(function () use ($product, &$priceReceipts) {
+                $priceReceipts = ProductPrice::query()
+                    ->where('product_id', $product->id)
+                    ->whereNotNull('product_price_receipt_image')
+                    ->pluck('product_price_receipt_image')
+                    ->all();
+
+                ProductPrice::query()->where('product_id', $product->id)->delete();
+
+                return Product::whereKey($product->id)->delete();
+            });
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return $this->conflict('This product is still referenced and cannot be deleted');
+            }
+
+            throw $e;
+        }
+
+        if (! $deleted) {
+            return response()->json(['status' => false, 'message' => 'Product not found'], 404);
+        }
+
+        // الملفات بعد الـ commit: لو فشلت المعاملة ما منخسر أي وصل
+        $paths = array_filter(array_merge([$product->product_receipt_image], $priceReceipts));
+
+        foreach ($paths as $path) {
+            Storage::disk('local')->delete($path);
+        }
+
+        PriceTicker::refreshAfterChange();
+        ApiCache::productsChanged();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Deleted Successfully',
+        ], 200);
+    }
+
+    private function changeStatus(string $id, string $from, string $to, string $error, string $success): JsonResponse
+    {
+        $product = Product::findOrFail($id);
+
+        // تحديث شرطي بعملية وحدة (آمن مع الطلبات المتزامنة)
+        $updated = Product::whereKey($product->id)
+            ->where('product_status', $from)
+            ->update([
+                'product_status' => $to,
+                'updated_at' => now(),
+            ]);
+
+        if (! $updated) {
+            return $this->conflict($error);
+        }
+
+        PriceTicker::refreshAfterChange();
+        ApiCache::productsChanged();
+
+        return response()->json([
+            'status' => true,
+            'message' => $success,
+            'data' => $product->fresh(),
+        ], 200);
+    }
+
+    private function conflict(string $message): JsonResponse
+    {
+        return response()->json(['status' => false, 'message' => $message], 409);
+    }
+
+    private function validationError(array $errors): JsonResponse
+    {
+        return response()->json([
+            'status' => false,
+            'message' => 'Validation failed',
+            'errors' => $errors,
+        ], 422);
+    }
 }
