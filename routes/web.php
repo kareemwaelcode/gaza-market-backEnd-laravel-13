@@ -45,13 +45,13 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 if (app()->environment('local')) {
     Route::redirect('/', '/cms/admins');
 }
-Route::prefix('cms/')->middleware('guest:admins')->group(function() {
-    Route::get('{guard}/login', [UserAuthController::class , 'showLogin'])->name('view.login');
-    Route::post('{guard}/login', [UserAuthController::class , 'login']);
+Route::prefix('cms/')->middleware('guest:admins')->group(function () {
+    Route::get('{guard}/login', [UserAuthController::class, 'showLogin'])->name('view.login');
+    Route::post('{guard}/login', [UserAuthController::class, 'login']);
 });
 
-Route::prefix('cms/admins')->middleware('auth:admins')->group(function() {
-    Route::get('logout' , [UserAuthController::class, 'logout'])->name('cms.logout');
+Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
+    Route::get('logout', [UserAuthController::class, 'logout'])->name('cms.logout');
 });
 
 Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
@@ -267,4 +267,4 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
         Route::get('visits', [MarketPlaceVisitController::class, 'summary'])->name('visits.summary');
     });
 
-require __DIR__.'/dashboard.php';
+require __DIR__ . '/dashboard.php';

@@ -91,11 +91,9 @@ Route::middleware(['active.user', 'store.owner', 'throttle:dashboard'])
         Route::patch('ads/{ad}', [AdController::class, 'update'])->where('ad', '[0-9]{1,18}')->name('ads.update');
         Route::delete('ads/{ad}', [AdController::class, 'destroy'])->where('ad', '[0-9]{1,18}')->name('ads.destroy');
 
-        
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
         Route::delete('notifications', [NotificationController::class, 'clear'])->name('notifications.clear');
 
-        
         Route::get('subscription', [PlaceSubscriptionController::class, 'show'])->name('subscription.show');
     });
