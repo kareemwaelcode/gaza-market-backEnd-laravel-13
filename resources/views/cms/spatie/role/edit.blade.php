@@ -16,11 +16,11 @@
         <form id="create_form">
             @csrf
             <div class="row">
-        <div class="col-12 col-md-9">
+        <div class="col-12 col-md-6">
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
-            <option value="admin" @($roles->guard_name == 'admin') selected @endif>Admin</option>
-            <option value="user" @($roles->guard_name == 'user') selected @endif>User</option>
+            <option value="admin" @if($roles->guard_name == 'admin') selected @endif>Admin</option>
+            <option value="user" @if($roles->guard_name == 'user') selected @endif>User</option>
         </select>
     </div>
                 

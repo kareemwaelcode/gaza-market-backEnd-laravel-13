@@ -47,7 +47,8 @@ class RoleController extends Controller
 
     public function edit(string $id)
     {
-        //
+        $roles = Role::findOrFail($id);
+        return response()->view('cms.spatie.role.edit', compact('roles'));  
     }
 
     public function update(Request $request, string $id)
