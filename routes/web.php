@@ -23,6 +23,7 @@ use App\Http\Controllers\MarketListingController;
 use App\Http\Controllers\MarketPlaceController;
 use App\Http\Controllers\MarketPlaceVisitController;
 use App\Http\Controllers\NavigationItemController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\PlaceVisitController;
 use App\Http\Controllers\PointLevelController;
@@ -31,6 +32,8 @@ use App\Http\Controllers\PointTransactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductPriceController;
 use App\Http\Controllers\RegionsController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SavedListingController;
 use App\Http\Controllers\StoreCategoryController;
 use App\Http\Controllers\StoreCategoryGroupController;
@@ -122,6 +125,15 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::get('product_price_receipt/{id}', [ProductPriceController::class, 'receipt'])->name('product_price_receipt');
     Route::post('product_price_approve/{id}', [ProductPriceController::class, 'approve'])->name('product_price_approve');
     Route::post('product_price_reject/{id}', [ProductPriceController::class, 'reject'])->name('product_price_reject');
+
+    // Role And Permission
+    Route::resource('roles', RoleController::class);
+    Route::post('roles_update/{id}', [RoleController::class, 'update'])->name('roles_update');
+    Route::resource('permissions', PermissionController::class);
+    Route::post('permissions_update/{id}', [PermissionController::class, 'update'])->name('permissions_update');
+    Route::resource('roles.permissions', RolePermissionController::class);
+
+    
 });
 
 Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])
