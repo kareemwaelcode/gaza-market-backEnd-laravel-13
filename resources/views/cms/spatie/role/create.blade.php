@@ -19,8 +19,8 @@
         <div class="col-12 col-md-6">
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
-            <option value="admin">Admin</option>
-            <option value="user">User</option>
+            <option value="admins">Admin</option>
+            <option value="web">User</option>
         </select>
     </div>
                 

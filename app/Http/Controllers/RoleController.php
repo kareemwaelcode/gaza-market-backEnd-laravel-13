@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    /**
+     * أسماء الـ guards المسموحة للرولات. لازم تطابق مفاتيح config('auth.guards'):
+     * Spatie يستخدمها لإيجاد موديل المستخدم عند حذف الرول (users()->detach()).
+     */
+    private const GUARDS = ['admins', 'users'];
+
     public function index()
     {
         $roles = Role::orderBy('id', 'desc')->paginate(10);
@@ -21,7 +28,7 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $validator = validator($request->all(), [
-            'guard_name' => 'required',
+            'guard_name' => ['required', Rule::in(self::GUARDS)],
             'name'       => 'required',
         ]);
 
@@ -48,13 +55,13 @@ class RoleController extends Controller
     public function edit(string $id)
     {
         $roles = Role::findOrFail($id);
-        return response()->view('cms.spatie.role.edit', compact('roles'));  
+        return response()->view('cms.spatie.role.edit', compact('roles'));
     }
 
     public function update(Request $request, string $id)
     {
         $validator = validator($request->all(), [
-            'guard_name' => 'required',
+            'guard_name' => ['required', Rule::in(self::GUARDS)],
             'name'       => 'required',
         ]);
 
