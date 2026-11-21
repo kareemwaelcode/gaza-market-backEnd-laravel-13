@@ -19,8 +19,8 @@
         <div class="col-12 col-md-6">
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
-            <option value="admin" @if($roles->guard_name == 'admin') selected @endif>Admin</option>
-            <option value="user" @if($roles->guard_name == 'user') selected @endif>User</option>
+            <option value="admins" @if($roles->guard_name == 'admins') selected @endif>Admin</option>
+            <option value="users" @if($roles->guard_name == 'users') selected @endif>User</option>
         </select>
     </div>
                 

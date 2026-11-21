@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -11,23 +12,15 @@ class RolePermissionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index($roleId)
+    public function index(Role $role)
     {
-        $permissions = Permission::all();
-        $rolePermissions = Role::findOrFail($roleId)->permissions;
+        $permissions = Permission::where('guard_name', $role->guard_name)
+            ->orderBy('name')
+            ->get();
 
-    if (count($rolePermissions) > 0) {
-        foreach ($permissions as $permission) {
-            $permission->setAttribute('active' , false);
-            foreach($rolePermissions as $rolePermission) {
-                if($rolePermission->id == $permission->id) {
-                    $permission->active = true;
-                }
+        $assignedIds = $role->permissions()->pluck('permissions.id')->all();
 
-                }
-            }
-        }
-        return response()->view('cms.spatie.role.role-permission' , ['roleId' => $roleId, 'permissions' => $permissions ]);
+        return response()->view('cms.spatie.role.role-permission', compact('role', 'permissions', 'assignedIds'));
     }
 
     /**
@@ -41,29 +34,27 @@ class RolePermissionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, Role $role)
     {
-        $validator = Validator($request->all(), [
-            // 'role_id' => 'required|exists:roles,id',
-            // 'permission_id' => 'required|exists:permissions,id',
+        $validator = validator($request->all(), [
+            'permission_id' => [
+                'required',
+                'integer',
+                Rule::exists('permissions', 'id')->where('guard_name', $role->guard_name),
+            ],
+            'active' => ['required', 'boolean'],
         ]);
 
-        if (!$validator->fails()) {
-            $role = Role::findOrFail($roleId);
-            $permission = Permission::findOrFail($request->input('permission_id'));
-
-            if ($role->hasPermissionTo($permission->id)) {
-                $role->revokePermissionTo($permission->id);
-            } else {
-                $role->givePermiisionTo($permission->id);
-            }
-            return response()->json(['icon' => 'success' , 'title' => 'permission updated successfully'] , 200);
-
+        if ($validator->fails()) {
+            return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
         }
 
-        else{
-            return response()->json(['massage' => $validator->getMessageBag()->first()] , 400);
-        }
+        $permission = Permission::findOrFail($request->input('permission_id'));
+        $active = $request->boolean('active');
+
+        $active ? $role->givePermissionTo($permission) : $role->revokePermissionTo($permission);
+
+        return response()->json(['icon' => 'success', 'title' => 'permission updated successfully', 'active' => $active], 200);
     }
 
     /**

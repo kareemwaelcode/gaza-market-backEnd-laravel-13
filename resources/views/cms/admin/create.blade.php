@@ -13,8 +13,17 @@
         <strong>Adding supervisor details.</strong>
     </div>
     <div class="card-body card-body">
-        <form>
-            <div class="row">
+    <form>
+        <div class="row">
+        <div class="col-12 col-md-6">
+        <label for="role_id" class="form-control-label">Role Name</label>
+        <select name="role_id" id="role_id" class="form-select">
+            @foreach ($roles as $role )
+            <option value="{{$role->id}}">{{$role->name}}</option>
+            @endforeach
+        </select>
+    </div>
+
                 <div class="col-lg-6 mb-3">
                     <label for="full_name" class="form-control-label">Full name</label>
                     <input type="text" id="full_name" name="full_name" placeholder="Enter Full Name.." class="form-control">
@@ -67,6 +76,7 @@
     formData.append('email', document.getElementById('email').value);
     formData.append('password', document.getElementById('password').value);
     formData.append('mobile', document.getElementById('mobile').value);
+    formData.append('role_id', document.getElementById('role_id').value);
     store('/cms/admins/admin' , formData);
     }
     </script>

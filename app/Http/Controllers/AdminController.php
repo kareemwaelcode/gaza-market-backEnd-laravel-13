@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 class AdminController extends Controller
 {
     /**
@@ -21,7 +22,8 @@ class AdminController extends Controller
      */
     public function create()
     {
-        return response()->view('cms.admin.create');
+        $roles = Role::where('guard_name' , 'admin')->get();
+        return response()->view('cms.admin.create' , compact('roles'));
     }
 
     /**

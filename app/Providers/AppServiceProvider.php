@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Admin;
 use App\Services\WhatsApp\LogWhatsAppSender;
 use App\Services\WhatsApp\WhatsAppSendGuard;
 use App\Services\WhatsApp\WhatsAppSender;
@@ -10,15 +11,18 @@ use App\Support\CacheInvalidation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use App\Support\RetryFilesystem;   // <-- أضف هذا السطر
 use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton('files', fn () => new RetryFilesystem());   // <-- أضف هذا السطر
         $this->app->bind(WhatsAppSender::class, function () {
             $driver = (string) config('whatsapp.driver');
 
@@ -46,6 +50,9 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
 
         CacheInvalidation::register();
+
+        // super-admin بيعدّي كل فحوصات can()/@can من غير ما نعدّد الصلاحيات له.
+        Gate::before(fn ($user) => $user instanceof Admin && $user->hasRole('super-admin') ? true : null);
 
         RateLimiter::for(
             'lookups',

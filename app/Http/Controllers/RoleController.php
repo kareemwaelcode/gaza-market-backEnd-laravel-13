@@ -29,7 +29,7 @@ class RoleController extends Controller
     {
         $validator = validator($request->all(), [
             'guard_name' => ['required', Rule::in(self::GUARDS)],
-            'name'       => 'required',
+            'name'       => ['required', 'string', 'max:125', Rule::unique('roles', 'name')->where('guard_name', $request->input('guard_name'))],
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +62,7 @@ class RoleController extends Controller
     {
         $validator = validator($request->all(), [
             'guard_name' => ['required', Rule::in(self::GUARDS)],
-            'name'       => 'required',
+            'name'       => ['required', 'string', 'max:125', Rule::unique('roles', 'name')->where('guard_name', $request->input('guard_name'))->ignore($id)],
         ]);
 
         if ($validator->fails()) {

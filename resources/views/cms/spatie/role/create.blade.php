@@ -20,7 +20,7 @@
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
             <option value="admins">Admin</option>
-            <option value="web">User</option>
+            <option value="users">User</option>
         </select>
     </div>
                 
@@ -30,13 +30,7 @@
                     <span class="help-block">Please enter the Role name in Arabic</span>
                 </div>
             </div>
-            {{--  <div class="row">
-                <div class="col-lg-6 mb-3">
-                    <label for="region_sort_order" class="form-control-label">Sort Order</label>
-                    <input type="number" id="region_sort_order" name="region_sort_order" min="0" max="127" placeholder="Enter Sort Order.." class="form-control">
-                    <span class="help-block">Please enter the sort order (0 - 127)</span>
-                </div>
-            </div>  --}}
+
         </form>
     </div>
     <div class="card-footer">
