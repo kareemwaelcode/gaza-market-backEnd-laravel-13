@@ -34,6 +34,7 @@
                         <td>{{ $roles->firstItem() + $loop->index }}</td>
                         <td><span class="badge bg-success">{{ $role->guard_name }}</span></td>
                         <td>{{ $role->name }}</td>
+                        <a href="{{ route('roles.permissions.index' , $role->id)}}" type="button" class="btn btn-primary"> (({$role->permissions_count}))permission/s</a>
                         <td>
                             <div class="btn-group" role="group" aria-label="Toolbar group">
                             <a href="{{ route('roles.edit' ,$role->id ) }}">

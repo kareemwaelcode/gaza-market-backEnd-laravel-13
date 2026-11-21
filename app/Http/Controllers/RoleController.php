@@ -16,7 +16,7 @@ class RoleController extends Controller
 
     public function index()
     {
-        $roles = Role::orderBy('id', 'desc')->paginate(10);
+        $roles = Role::withCount('permissions')->orderBy('id', 'desc')->paginate(10);
         return response()->view('cms.spatie.role.index', compact('roles'));
     }
 
