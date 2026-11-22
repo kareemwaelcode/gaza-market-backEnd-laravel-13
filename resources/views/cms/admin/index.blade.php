@@ -26,6 +26,7 @@
                         <th>Full Name</th>
                         <th>Email</th>
                         <th>Mobile</th>
+                        <th>Role</th>
                         <th>Setting</th>
                     </tr>
                 </thead>
@@ -35,11 +36,16 @@
                         <td>{{ $admins->firstItem() + $loop->index }}</td>
                         <td>{{ $admin->full_name }}</td>
                         <td>{{ $admin->email }}</td>
-                        <td>{{ $admin->mobile }}
+                        <td>{{ $admin->mobile }}</td>
+                        <td>{{ $admin->roles->pluck('name')->join('، ') ?: '—' }}</td>
                         <td>
                             <div class="btn-group" role="group" aria-label="Toolbar group">
+                                @can('Edit-Admin')
                             <a href="{{ route('admin.edit' ,$admin->id ) }}">
+                                @endcan
+                                @can('Delet-Admin')
                                 <button type="button" class="btn btn-info"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-pen preview-icon"><path d="M2 21a8 8 0 0 1 10.821-7.487"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="8" r="5"/></svg></button>
+                                @endcan    
                             </a>
                             <a href="#">
                                 <button type="button" onclick="performDestroy({{$admin->id}}, this)"  class="btn btn-danger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash preview-icon"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>

@@ -4,117 +4,100 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
+
 class AdminController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    /** لازم يطابق مفتاح الـ guard في config('auth.guards') وقيمة $guard_name في موديل Admin */
+    private const GUARD = 'admins';
+
     public function index()
     {
-        $admins = Admin::orderBy('created_at', 'asc')->paginate(5);
+        $admins = Admin::with('roles:id,name')->orderBy('created_at', 'asc')->paginate(5);
         return response()->view('cms.admin.index', compact('admins'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $roles = Role::where('guard_name' , 'admin')->get();
-        return response()->view('cms.admin.create' , compact('roles'));
+        $roles = Role::where('guard_name', self::GUARD)->orderBy('name')->get();
+        return response()->view('cms.admin.create', compact('roles'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
-{
-    $validator = validator($request->all(), [
-    'full_name' => 'required',
-    'email' => 'required',
-    'mobile' => 'required',
-    'password' => 'required',
-    ]);
+    {
+        $validator = validator($request->all(), [
+            'full_name' => 'required',
+            'email'     => 'required',
+            'mobile'    => 'required',
+            'password'  => 'required',
+            'role_id'   => ['required', Rule::exists('roles', 'id')->where('guard_name', self::GUARD)],
+        ]);
 
-    if(! $validator->fails()) {
-        $admins = new Admin();
-        $admins->full_name = $request->input('full_name');
-        $admins->email = $request->input('email');
-        $admins->mobile = $request->input('mobile');
-        $admins->password = Hash::make($request->input('password'));
-        $isSaved = $admins->save();
-
-        if ($isSaved) {
-            return response()->json(['icon' => 'success' , 'title'=> 'Created is Successfully'] , 200);
-
+        if ($validator->fails()) {
+            return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
         }
-        else {
-            return response()->json(['icon' => 'error' , 'title' => 'Created is Failed'] , 400);
 
-        }
-        
+        DB::transaction(function () use ($request) {
+            $admin = new Admin();
+            $admin->full_name = $request->input('full_name');
+            $admin->email = $request->input('email');
+            $admin->mobile = $request->input('mobile');
+            $admin->password = Hash::make($request->input('password'));
+            $admin->save();
+
+            $admin->syncRoles([(int) $request->input('role_id')]);
+        });
+
+        return response()->json(['icon' => 'success', 'title' => 'Created is Successfully'], 200);
     }
-    else {
-        return response()->json(['icon' => 'error' ,'title' => $validator->getMessageBag()->first()] , 400);
 
-    }
-}
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        $admins = Admin::findOrFail($id);
-        return response()->view('cms.admin.edit', compact('admins'));  
+        $admins = Admin::with('roles:id,name')->findOrFail($id);
+        $roles = Role::where('guard_name', self::GUARD)->orderBy('name')->get();
+        $currentRoleId = $admins->roles->first()?->id;
+
+        return response()->view('cms.admin.edit', compact('admins', 'roles', 'currentRoleId'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-    $validator = validator($request->all(), [
-    'full_name' => 'required',
-    'email' => 'required',
-    'mobile' => 'required',
-    ]);
+        $validator = validator($request->all(), [
+            'full_name' => 'required',
+            'email'     => 'required',
+            'mobile'    => 'required',
+            'role_id'   => ['required', Rule::exists('roles', 'id')->where('guard_name', self::GUARD)],
+        ]);
 
-    if(! $validator->fails()) {
-    $admins = Admin::FindOrFail($id);
-    $admins->full_name = $request->input('full_name');
-    $admins->email = $request->input('email');
-    $admins->mobile = $request->input('mobile');
-    $isUpdated = $admins->save();
-    return ['redirect' => route('admin.index')];
-    if ($isUpdated) {
-        return response()->json(['icon' => 'success' , 'title'=> 'Updated is Successfully'] , 200);
+        if ($validator->fails()) {
+            return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
         }
-    else {
-        return response()->json(['icon' => 'error' , 'title' => 'Updated is Failed'] , 400);
-    }
-        
-    }
-    else {
-    return response()->json(['icon' => 'error' ,'title' => $validator->getMessageBag()->first()] , 400);
-    }
+
+        $admin = Admin::findOrFail($id);
+
+        DB::transaction(function () use ($request, $admin) {
+            $admin->full_name = $request->input('full_name');
+            $admin->email = $request->input('email');
+            $admin->mobile = $request->input('mobile');
+            $admin->save();
+
+            $admin->syncRoles([(int) $request->input('role_id')]);
+        });
+
+        // storeRoute() في crud.js يقرأ response.data.redirect
+        return ['redirect' => route('admin.index')];
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        $admins = Admin::destroy($id);
+        Admin::destroy($id);
     }
 }

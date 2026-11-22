@@ -12,32 +12,38 @@
     <div class="card-header">
         <strong>Adding supervisor details.</strong>
     </div>
-    <div class="card-body card-body">
+    <div class="card-body">
         <form>
             <div class="row">
-                <div class="col-lg-6 mb-3">
+                <div class="col-12 col-md-6 mb-3">
                     <label for="full_name" class="form-control-label">Full name</label>
-                    <input type="text" id="full_name" name="full_name" 
-                    value="{{ $admins->full_name }}"placeholder="Enter Full Name.." class="form-control">
+                    <input type="text" id="full_name" name="full_name"
+                    value="{{ $admins->full_name }}" placeholder="Enter Full Name.." class="form-control">
                     <span class="help-block">Please enter your Full Name</span>
                 </div>
-                <div class="col-lg-6 mb-3">
+                <div class="col-12 col-md-6 mb-3">
                     <label for="mobile" class="form-control-label">Mobile</label>
-                    <input type="text" id="mobile" name="mobile" 
-                    value="{{ $admins->mobile }}"placeholder="Enter Mobile.." class="form-control">
+                    <input type="text" id="mobile" name="mobile"
+                    value="{{ $admins->mobile }}" placeholder="Enter Mobile.." class="form-control">
                     <span class="help-block">Please enter your Mobile</span>
                 </div>
-            </div>
-        </form>
-    </div>
-    <div class="card-body card-body">
-        <form>
-            <div class="row">
-                <div class="col-lg-6 mb-3">
+                <div class="col-12 col-md-6 mb-3">
                     <label for="email" class="form-control-label">Email</label>
-                    <input type="email" id="email" name="email" 
-                    value="{{ $admins->email }}"placeholder="Enter Email.." class="form-control">
+                    <input type="email" id="email" name="email"
+                    value="{{ $admins->email }}" placeholder="Enter Email.." class="form-control">
                     <span class="help-block">Please enter your email</span>
+                </div>
+                <div class="col-12 col-md-6 mb-3">
+                    <label for="role_id" class="form-control-label">Role Name</label>
+                    <select name="role_id" id="role_id" class="form-select">
+                        @unless ($currentRoleId)
+                            <option value="" selected disabled>— اختر الرول —</option>
+                        @endunless
+                        @foreach ($roles as $role)
+                            <option value="{{ $role->id }}" @selected($role->id === $currentRoleId)>{{ $role->name }}</option>
+                        @endforeach
+                    </select>
+                    <span class="help-block">Please choose a role</span>
                 </div>
             </div>
         </form>
@@ -60,6 +66,7 @@
         formData.append('full_name', document.getElementById('full_name').value);
         formData.append('mobile', document.getElementById('mobile').value);
         formData.append('email', document.getElementById('email').value);
+        formData.append('role_id', document.getElementById('role_id').value);
         storeRoute('/cms/admins/admins_update/' +id, formData);
     }
     </script>
