@@ -18,7 +18,6 @@ class StoreProductPriceRequest extends FormRequest
     public function rules(): array
     {
     return [
-        // السعر لمنتج موجود ومعتمد بالكتالوج: ما بننشئ منتج جديد من هون
         'product_id' => [
             'required',
             'integer',
@@ -29,11 +28,10 @@ class StoreProductPriceRequest extends FormRequest
         'store_name' => ['required', 'string', 'max:120'],
         'store_address' => ['nullable', 'string', 'max:255'],
         'store_phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{6,20}$/'],
-        'receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        'receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:max_width=6000,max_height=6000'],
     ];
     }
 
-    // نفس شكل أخطاء API الأسعار الحالي: {icon, title} مع 400
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(response()->json([

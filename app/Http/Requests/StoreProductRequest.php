@@ -35,11 +35,10 @@ return [
     'area_id' => ['required', 'integer', Rule::exists('areas', 'id')],
     'product_store_address' => ['nullable', 'string', 'max:150'],
     'product_store_phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{6,20}$/'],
-    'product_receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+    'product_receipt_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:max_width=6000,max_height=6000'],
 ];
 }
 
-// نفس شكل أخطاء الـ CMS الحالي: {icon, title} مع 400
 protected function failedValidation(Validator $validator): void
 {
     throw new HttpResponseException(response()->json([

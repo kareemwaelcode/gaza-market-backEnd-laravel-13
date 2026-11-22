@@ -35,7 +35,7 @@ class StorePlaceRequest extends FormRequest
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'regex:'.self::PHONE_REGEX],
             'whatsapp' => ['required', 'string', 'regex:'.self::WHATSAPP_REGEX],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
         ];
     }
 

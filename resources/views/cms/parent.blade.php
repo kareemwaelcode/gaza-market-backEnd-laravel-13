@@ -307,7 +307,7 @@
             <h5 class="name"><a href="#">Kareem</a></h5><span class="email">kareemwael.dev@gmail.com</span>
           </div>
         </div>
-        <div class="account-dropdown__footer"><a href="{{ route('cms.logout') }}"><i class="fa-solid fa-power-off"></i>Logout</a></div>
+        <div class="account-dropdown__footer"><form id="cms-logout-form" method="POST" action="{{ route('cms.logout') }}" class="d-none">@csrf</form><a href="#" onclick="event.preventDefault();document.getElementById('cms-logout-form').submit();"><i class="fa-solid fa-power-off"></i>Logout</a></div>
       </div>
     </div>
   </div>

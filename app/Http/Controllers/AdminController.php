@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,6 @@ use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
-    /** لازم يطابق مفتاح الـ guard في config('auth.guards') وقيمة $guard_name في موديل Admin */
     private const GUARD = 'admins';
 
     public function index()
@@ -29,10 +29,10 @@ class AdminController extends Controller
     public function store(Request $request)
     {
         $validator = validator($request->all(), [
-            'full_name' => 'required',
-            'email'     => 'required',
-            'mobile'    => 'required',
-            'password'  => 'required',
+            'full_name' => 'required|string|max:255',
+            'email'     => ['required', 'email', 'max:255', Rule::unique('admins', 'email')],
+            'mobile'    => 'required|string|max:20',
+            'password'  => 'required|string|min:8|max:255',
             'role_id'   => ['required', Rule::exists('roles', 'id')->where('guard_name', self::GUARD)],
         ]);
 
@@ -56,7 +56,6 @@ class AdminController extends Controller
 
     public function show(string $id)
     {
-        //
     }
 
     public function edit(string $id)
@@ -71,9 +70,9 @@ class AdminController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = validator($request->all(), [
-            'full_name' => 'required',
-            'email'     => 'required',
-            'mobile'    => 'required',
+            'full_name' => 'required|string|max:255',
+            'email'     => ['required', 'email', 'max:255', Rule::unique('admins', 'email')->ignore($id)],
+            'mobile'    => 'required|string|max:20',
             'role_id'   => ['required', Rule::exists('roles', 'id')->where('guard_name', self::GUARD)],
         ]);
 
@@ -92,12 +91,21 @@ class AdminController extends Controller
             $admin->syncRoles([(int) $request->input('role_id')]);
         });
 
-        // storeRoute() في crud.js يقرأ response.data.redirect
         return ['redirect' => route('admin.index')];
     }
 
     public function destroy(string $id)
     {
+        if ((int) $id === (int) Auth::guard(self::GUARD)->id()) {
+            return response()->json(['icon' => 'error', 'title' => 'You cannot delete your own account'], 400);
+        }
+
+        if (Admin::count() <= 1) {
+            return response()->json(['icon' => 'error', 'title' => 'You cannot delete the last admin'], 400);
+        }
+
         Admin::destroy($id);
+
+        return response()->json(['icon' => 'success', 'title' => 'Deleted successfully'], 200);
     }
 }

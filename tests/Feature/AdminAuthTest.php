@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AdminAuthTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected bool $actAsAdmin = false;
 
     public function test_guest_is_redirected_to_the_admin_login_page(): void

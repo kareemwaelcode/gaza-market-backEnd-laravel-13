@@ -20,7 +20,7 @@
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
             <option value="admins">Admin</option>
-            <option value="users">User</option>
+            <option value="web">User</option>
         </select>
     </div>
                 

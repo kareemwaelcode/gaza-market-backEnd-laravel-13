@@ -307,7 +307,7 @@
             <h5 class="name"><a href="#">Kareem</a></h5><span class="email">kareemwael.dev@gmail.com</span>
           </div>
         </div>
-        <div class="account-dropdown__footer"><a href="<?php echo e(route('cms.logout')); ?>"><i class="fa-solid fa-power-off"></i>Logout</a></div>
+        <div class="account-dropdown__footer"><form id="cms-logout-form" method="POST" action="<?php echo e(route('cms.logout')); ?>" class="d-none"><?php echo csrf_field(); ?></form><a href="#" onclick="event.preventDefault();document.getElementById('cms-logout-form').submit();"><i class="fa-solid fa-power-off"></i>Logout</a></div>
       </div>
     </div>
   </div>

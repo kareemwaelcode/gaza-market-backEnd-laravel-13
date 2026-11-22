@@ -8,11 +8,7 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    /**
-     * أسماء الـ guards المسموحة للرولات. لازم تطابق مفاتيح config('auth.guards'):
-     * Spatie يستخدمها لإيجاد موديل المستخدم عند حذف الرول (users()->detach()).
-     */
-    private const GUARDS = ['admins', 'users'];
+    private const GUARDS = ['admins', 'web'];
 
     public function index()
     {
@@ -49,7 +45,6 @@ class RoleController extends Controller
 
     public function show(string $id)
     {
-        //
     }
 
     public function edit(string $id)

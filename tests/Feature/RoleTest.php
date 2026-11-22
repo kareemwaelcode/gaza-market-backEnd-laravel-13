@@ -47,15 +47,15 @@ class RoleTest extends TestCase
     {
         $role = Role::create(['name' => 'old', 'guard_name' => 'admins']);
 
-        $this->postJson("/cms/admins/roles_update/{$role->id}", ['guard_name' => 'users', 'name' => 'new'])
+        $this->postJson("/cms/admins/roles_update/{$role->id}", ['guard_name' => 'web', 'name' => 'new'])
             ->assertOk()
             ->assertJson(['icon' => 'success']);
 
-        $this->assertDatabaseHas('roles', ['id' => $role->id, 'name' => 'new', 'guard_name' => 'users']);
+        $this->assertDatabaseHas('roles', ['id' => $role->id, 'name' => 'new', 'guard_name' => 'web']);
 
         $this->postJson("/cms/admins/roles_update/{$role->id}", ['guard_name' => 'admin', 'name' => 'bad'])
             ->assertStatus(400);
 
-        $this->assertDatabaseHas('roles', ['id' => $role->id, 'guard_name' => 'users']);
+        $this->assertDatabaseHas('roles', ['id' => $role->id, 'guard_name' => 'web']);
     }
 }

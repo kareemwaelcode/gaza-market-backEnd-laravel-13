@@ -20,7 +20,7 @@
             <label for="guard_name" class="form-control-label">Guard Name</label>
         <select name="guard_name" id="guard_name" class="form-select">
             <option value="admins" @if($permissions->guard_name == 'admins') selected @endif>Admin</option>
-            <option value="users" @if($permissions->guard_name == 'users') selected @endif>User</option>
+            <option value="web" @if($permissions->guard_name == 'web') selected @endif>User</option>
         </select>
     </div>
                 

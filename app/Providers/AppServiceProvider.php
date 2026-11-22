@@ -15,14 +15,14 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use App\Support\RetryFilesystem;   // <-- أضف هذا السطر
+use App\Support\RetryFilesystem;
 use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton('files', fn () => new RetryFilesystem());   // <-- أضف هذا السطر
+        $this->app->singleton('files', fn () => new RetryFilesystem());
         $this->app->bind(WhatsAppSender::class, function () {
             $driver = (string) config('whatsapp.driver');
 
@@ -51,13 +51,30 @@ class AppServiceProvider extends ServiceProvider
 
         CacheInvalidation::register();
 
-        // super-admin بيعدّي كل فحوصات can()/@can من غير ما نعدّد الصلاحيات له.
         Gate::before(fn ($user) => $user instanceof Admin && $user->hasRole('super-admin') ? true : null);
 
         RateLimiter::for(
             'lookups',
             fn(Request $request) =>
                 Limit::perMinute(120)->by('lookups:' . $request->ip())
+        );
+
+        RateLimiter::for(
+            'search-product',
+            fn(Request $request) =>
+                Limit::perMinute(30)->by('search-product:' . $request->ip())
+        );
+
+        RateLimiter::for(
+            'create-market',
+            fn(Request $request) =>
+                Limit::perHour(10)->by('create-market:' . ($request->user()?->id ?? $request->ip()))
+        );
+
+        RateLimiter::for(
+            'create-product',
+            fn(Request $request) =>
+                Limit::perHour(10)->by('create-product:' . ($request->user()?->id ?? $request->ip()))
         );
 
         RateLimiter::for(
@@ -181,7 +198,6 @@ class AppServiceProvider extends ServiceProvider
                     ->by('dashboard:' . ($request->user()?->id ?? $request->ip()))
         );
 
-
         RateLimiter::for(
             'dashboard-upload',
             fn(Request $request) =>
@@ -196,7 +212,6 @@ class AppServiceProvider extends ServiceProvider
                 ->by('subscription-requests-hour:' . ($request->user()?->id ?? $request->ip())),
         ]);
 
-        // بيانات شخصية من زائر بلا تسجيل: حد لكل IP وحد لكل رقم واتساب (مُجزّأ بالهاش).
         RateLimiter::for('appointments', fn(Request $request) => [
             Limit::perMinutes(10, 5)
                 ->by('appointments:ip:' . $request->ip()),

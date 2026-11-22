@@ -20,12 +20,7 @@ use App\Http\Controllers\Api\StoreCategoryController;
 use App\Http\Controllers\Api\StoreCategoryGroupController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
 
 Route::middleware('throttle:lookups')->group(function () {
     Route::apiResource('regions', RegionController::class);

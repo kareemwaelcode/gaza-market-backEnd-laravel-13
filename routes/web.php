@@ -49,12 +49,12 @@ if (app()->environment('local')) {
     Route::redirect('/', '/cms/admins');
 }
 Route::prefix('cms/')->middleware('guest:admins')->group(function () {
-    Route::get('{guard}/login', [UserAuthController::class, 'showLogin'])->name('view.login');
-    Route::post('{guard}/login', [UserAuthController::class, 'login']);
+    Route::get('{guard}/login', [UserAuthController::class, 'showLogin'])->where('guard', 'admins')->name('view.login');
+    Route::post('{guard}/login', [UserAuthController::class, 'login'])->where('guard', 'admins')->middleware('throttle:admin-login');
 });
 
 Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
-    Route::get('logout', [UserAuthController::class, 'logout'])->name('cms.logout');
+    Route::post('logout', [UserAuthController::class, 'logout'])->name('cms.logout');
 });
 
 Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
@@ -126,7 +126,6 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::post('product_price_approve/{id}', [ProductPriceController::class, 'approve'])->name('product_price_approve');
     Route::post('product_price_reject/{id}', [ProductPriceController::class, 'reject'])->name('product_price_reject');
 
-    // Role And Permission
     Route::resource('roles', RoleController::class);
     Route::post('roles_update/{id}', [RoleController::class, 'update'])->name('roles_update');
     Route::resource('permissions', PermissionController::class);
@@ -157,6 +156,7 @@ Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, Pr
             ->name('places.show');
 
         Route::get('api/products/search', [ApiProductController::class, 'search'])
+            ->middleware('throttle:search-product')
             ->name('products.search');
 
         Route::get('api/products/{product}/prices', [ApiProductPriceHistoryController::class, 'index'])
@@ -203,7 +203,7 @@ Route::prefix('api/auth')->name('auth.')->group(function () {
 });
 
 Route::post('api/market', [MarketListingController::class, 'store'])
-    ->middleware(['auth', 'active.user'])
+    ->middleware(['auth', 'active.user', 'throttle:create-market'])
     ->name('market.store');
 
 Route::middleware(['auth', 'active.user', 'throttle:saved-listings'])
@@ -245,7 +245,7 @@ Route::post('api/places/{slug}/subscription-requests', [ApiSubscriptionRequestCo
     ->name('places.subscription-requests.store');
 
 Route::post('api/products', [ApiProductController::class, 'store'])
-    ->middleware(['auth', 'active.user'])
+    ->middleware(['auth', 'active.user', 'throttle:create-product'])
     ->name('products.store');
 
 Route::get('api/prices/my-votes', [ApiProductPriceController::class, 'myVotes'])

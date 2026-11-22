@@ -7,20 +7,12 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
-/**
- * قواعد مشتركة للأدوار والصلاحيات (name + guard_name).
- *
- * الـ guards لازم تطابق مفاتيح config('auth.guards') لأن Spatie يستخدمها
- * لإيجاد موديل المستخدم (مثلاً عند حذف دور: users()->detach()).
- */
 abstract class GuardedNameRequest extends FormRequest
 {
-    public const GUARDS = ['admins', 'users'];
+    public const GUARDS = ['admins', 'web'];
 
-    /** اسم الجدول الفعلي (من config/permission.php). */
     abstract protected function table(): string;
 
-    /** اسم باراميتر الـ resource route (role / permission). */
     abstract protected function resourceParam(): string;
 
     public function authorize(): bool
@@ -30,7 +22,6 @@ abstract class GuardedNameRequest extends FormRequest
 
     public function rules(): array
     {
-        // مسار التحديث بيجي مرة بـ {id} (roles_update) ومرة بـ {role}/{permission} (resource).
         $currentId = $this->route('id') ?? $this->route($this->resourceParam());
 
         return [
@@ -46,9 +37,6 @@ abstract class GuardedNameRequest extends FormRequest
         ];
     }
 
-    /**
-     * نفس شكل الاستجابة القديم للـ CMS (JSON + 400) بدل 422 الافتراضي.
-     */
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(response()->json([

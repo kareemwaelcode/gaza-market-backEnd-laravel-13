@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
-    private const GUARDS = ['admins', 'users'];
+    private const GUARDS = ['admins', 'web'];
 
     public function index()
     {
@@ -45,7 +45,6 @@ class PermissionController extends Controller
 
     public function show(string $id)
     {
-        //
     }
 
     public function edit(string $id)

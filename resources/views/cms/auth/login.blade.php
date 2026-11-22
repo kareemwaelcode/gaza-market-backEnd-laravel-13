@@ -67,7 +67,7 @@
 
   <script>
   function login() {
-    var guard = '{{request('guard')}}';
+    var guard = '{{ $guard }}';
     axios.post('/cms/'+guard+'/login', {
       email: document.getElementById('email').value,
       password: document.getElementById('password').value,
