@@ -20,7 +20,15 @@ if (self::ttl() <= 0) {
     return self::query();
 }
 
-$cached = ApiCache::store()->get(self::KEY);
+try {
+    $cached = ApiCache::store()->get(self::KEY);
+} catch (Throwable $e) {
+    // الكاش واقع (Redis مثلاً): الزائر بياخد الشريط من الداتابيز بدل 500،
+    // نفس سلوك ApiCache::remember.
+    report($e);
+
+    return self::query();
+}
 
 if (is_array($cached)) {
     return $cached;
