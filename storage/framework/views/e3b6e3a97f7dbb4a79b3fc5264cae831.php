@@ -15,17 +15,14 @@
 <meta name="twitter:description" content="Marketing analytics dashboard with traffic trend, source breakdown, and top pages."/>
 <meta name="theme-color" content="#4272d7"/>
 <link href="<?php echo e(asset('cms/css/font-face.css')); ?>" rel="stylesheet" media="all"/>
-<link rel="preconnect" href="<?php echo e(asset('cms/https://rsms.me/')); ?>"/>
-<link rel="stylesheet" href="<?php echo e(asset('cms/https://rsms.me/inter/inter.css')); ?>"/>
+<link rel="preconnect" href="https://rsms.me/"/>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css"/>
 <link href="<?php echo e(asset('cms/vendor/fontawesome-7.3.1/css/all.min.css')); ?>" rel="stylesheet" media="all"/>
 <link href="<?php echo e(asset('cms/vendor/bootstrap-5.3.8.min.css')); ?>" rel="stylesheet" media="all"/>
 <link href="<?php echo e(asset('cms/vendor/css-hamburgers/hamburgers.min.css')); ?>" rel="stylesheet" media="all"/>
 <link href="<?php echo e(asset('cms/css/theme.css')); ?>" rel="stylesheet" media="all"/>
 <link href="<?php echo e(asset('cms/css/app.css')); ?>" rel="stylesheet" media="all"/>
 
-  <link rel="stylesheet" href="<?php echo e(asset('cms/plugins/toastr/toastr.min.css')); ?>">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
 
 <?php echo $__env->yieldContent('styles'); ?>
 </head>
@@ -34,7 +31,7 @@
 <header class="header-mobile d-block d-lg-none">
 <div class="header-mobile__bar">
 <div class="container-fluid">
-<div class="header-mobile-inner"><a class="logo" href="index.html"><img src="<?php echo e(asset('cms/images/icon/logo.png')); ?>" alt="CoolAdsmin"></a>
+<div class="header-mobile-inner"><a class="logo" href="<?php echo e(route('dashboard')); ?>"><img src="<?php echo e(asset('cms/images/icon/logo.png')); ?>" alt="Gaza Market"></a>
 <button class="hamburger hamburger--slider" type="button" aria-label="Toggle navigation"><span class="hamburger-box"><span class="hamburger-inner"></span></span></button>
 </div>
 </div>
@@ -432,7 +429,7 @@
 <script src="<?php echo e(asset('cms/js/main-vanilla.js')); ?>"></script>
 <script src="<?php echo e(asset('cms/js/modern-plugins.js')); ?>"></script>
 //new links
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
 <script src="<?php echo e(asset('cms/js/crud.js')); ?>"></script>
 <?php echo $__env->yieldContent('scripts'); ?>

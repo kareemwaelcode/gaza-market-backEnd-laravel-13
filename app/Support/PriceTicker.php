@@ -83,6 +83,11 @@ try {
         });
 } catch (LockTimeoutException) {
     return self::query();
+} catch (Throwable $e) {
+    // الكاش وقع بين القراءة والقفل أو الكتابة: نفس سلوك ApiCache::remember، من الداتابيز بدل 500.
+    report($e);
+
+    return self::query();
 }
 }
 

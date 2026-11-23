@@ -23,9 +23,6 @@
     <link href="{{ asset('cms/vendor/css-hamburgers/hamburgers.min.css') }}" rel="stylesheet" media="all"/>
     <link href="{{ asset('cms/css/theme.css') }}" rel="stylesheet" media="all"/>
     <link href="{{ asset('cms/css/app.css') }}" rel="stylesheet" media="all"/>
-  <link rel="stylesheet" href="{{ asset('cms/plugins/toastr/toastr.min.css') }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
   </head>
 
   <body class="app auth-page">
@@ -60,7 +57,7 @@
     <script src="{{asset('cms/js/bootstrap5-init.js')}}"></script>
     <script src="{{asset('cms/js/main-vanilla.js')}}"></script>
     <script src="{{asset('cms/js/modern-plugins.js')}}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
     <script src="{{ asset('cms/js/crud.js') }}"></script>
   </body>
