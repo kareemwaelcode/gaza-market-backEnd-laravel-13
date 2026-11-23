@@ -28,6 +28,8 @@
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="WHATSAPP_DRIVER" value="log"/>
+        <env name="WHATSAPP_ALLOWED_TO" value=""/>
+        <env name="WHATSAPP_DAILY_LIMIT" value="0"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
