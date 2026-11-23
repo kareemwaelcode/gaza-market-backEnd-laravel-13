@@ -8,8 +8,10 @@ use App\Models\ListingCategory;
 use App\Models\ListingImage;
 use App\Models\Regions;
 use App\Models\User;
+use App\Services\ImageProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -319,5 +321,31 @@ class MarketListingStoreTest extends TestCase
 
         $this->submit($user, array_merge($data, ['images' => $this->images(1)]))->assertCreated();
         $this->assertDatabaseCount('listings', 1);
+    }
+
+    public function test_images_are_processed_before_the_transaction_opens(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $baseline = DB::transactionLevel(); // RefreshDatabase بيفتح transaction للاختبار نفسه
+
+        $spy = new class extends ImageProcessor
+        {
+            /** @var array<int, int> */
+            public array $levels = [];
+
+            public function process(UploadedFile $file, string $profile): string|false
+            {
+                $this->levels[] = DB::transactionLevel();
+
+                return parent::process($file, $profile);
+            }
+        };
+        $this->app->instance(ImageProcessor::class, $spy);
+
+        $this->submit($user, $this->validData(['images' => $this->images(3)]))->assertCreated();
+
+        $this->assertSame([$baseline, $baseline, $baseline], $spy->levels);
+        $this->assertDatabaseCount('listing_images', 3);
     }
 }

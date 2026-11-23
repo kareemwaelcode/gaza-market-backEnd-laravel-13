@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Listing;
 use App\Models\ListingImage;
+use App\Services\ImageProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\BuildsMarketData;
 use Tests\TestCase;
@@ -211,5 +213,54 @@ class MarketOwnerTest extends TestCase
 
         $this->assertSame(Listing::STATUS_APPROVED, $foreign->fresh()->listing_status);
         $this->assertSame(Listing::STATUS_PENDING, $pending->fresh()->listing_status);
+    }
+
+    private function spyProcessor(): object
+    {
+        $spy = new class extends ImageProcessor
+        {
+            /** @var array<int, int> */
+            public array $levels = [];
+
+            public function process(UploadedFile $file, string $profile): string|false
+            {
+                $this->levels[] = DB::transactionLevel();
+
+                return parent::process($file, $profile);
+            }
+        };
+        $this->app->instance(ImageProcessor::class, $spy);
+
+        return $spy;
+    }
+
+    public function test_update_processes_images_before_the_transaction_and_lock(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $listing = $this->makeListing($user, Listing::STATUS_PENDING);
+        $baseline = DB::transactionLevel();
+        $spy = $this->spyProcessor();
+
+        $this->actingAs($user)->post('/api/market/'.$listing->id, $this->payload($listing, [
+            'images' => [UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.png')],
+        ]), ['Accept' => 'application/json'])->assertOk()->assertJsonCount(2, 'data.images');
+
+        $this->assertSame([$baseline, $baseline], $spy->levels);
+    }
+
+    public function test_update_of_an_approved_listing_does_not_process_images(): void
+    {
+        Storage::fake('public');
+        $user = $this->makeUser();
+        $listing = $this->makeListing($user, Listing::STATUS_APPROVED);
+        $spy = $this->spyProcessor();
+
+        $this->actingAs($user)->post('/api/market/'.$listing->id, $this->payload($listing, [
+            'images' => [UploadedFile::fake()->image('a.jpg')],
+        ]), ['Accept' => 'application/json'])->assertStatus(409);
+
+        $this->assertSame([], $spy->levels);
+        $this->assertSame([], Storage::disk('public')->allFiles());
     }
 }

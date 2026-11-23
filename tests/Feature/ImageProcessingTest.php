@@ -154,6 +154,64 @@ class ImageProcessingTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
+    public function test_a_gif_is_refused_even_when_called_directly(): void
+    {
+        Storage::fake('public');
+
+        $this->assertFalse($this->process(UploadedFile::fake()->image('anim.gif', 200, 200), 'photo'));
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_the_type_is_read_from_the_content_not_the_extension(): void
+    {
+        Storage::fake('public');
+
+        $gif = UploadedFile::fake()->image('anim.gif', 200, 200);
+        $disguised = UploadedFile::fake()->createWithContent('photo.jpg', file_get_contents($gif->getRealPath()));
+
+        $this->assertFalse($this->process($disguised, 'photo'));
+    }
+
+    public function test_an_image_over_the_pixel_limit_is_refused(): void
+    {
+        Storage::fake('public');
+        config(['images.max_pixels' => 1_000_000]);
+
+        $this->assertFalse($this->process(UploadedFile::fake()->image('big.jpg', 1500, 1000), 'photo')); // 1.5 مليون
+        $this->assertIsString($this->process(UploadedFile::fake()->image('ok.jpg', 800, 600), 'photo'));  // 0.48 مليون
+        $this->assertCount(1, Storage::disk('public')->allFiles());
+    }
+
+    public function test_no_temporary_files_are_left_behind_on_success_or_failure(): void
+    {
+        Storage::fake('public');
+        config(['images.max_pixels' => 1_000_000]);
+        $before = glob(sys_get_temp_dir().'/img_*') ?: [];
+
+        $this->process(UploadedFile::fake()->image('ok.jpg', 400, 300), 'photo');
+        $this->process(UploadedFile::fake()->createWithContent('bad.jpg', 'not an image'), 'photo');
+        $this->process(UploadedFile::fake()->image('anim.gif', 100, 100), 'photo');
+        $this->process(UploadedFile::fake()->image('big.jpg', 1500, 1000), 'photo');
+
+        $this->assertSame($before, glob(sys_get_temp_dir().'/img_*') ?: []);
+    }
+
+    public function test_process_returns_a_temp_file_the_caller_must_discard(): void
+    {
+        $processor = app(ImageProcessor::class);
+
+        $temp = $processor->process(UploadedFile::fake()->image('a.jpg', 300, 200), 'photo');
+
+        $this->assertIsString($temp);
+        $this->assertFileExists($temp);
+
+        $processor->discard($temp);
+        $processor->discard(false);
+        $processor->discard(null);
+
+        $this->assertFileDoesNotExist($temp);
+    }
+
     public function test_an_unknown_profile_is_a_programming_error(): void
     {
         Storage::fake('public');

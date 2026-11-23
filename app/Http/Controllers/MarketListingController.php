@@ -85,9 +85,27 @@ class MarketListingController extends Controller
         $storedPaths = [];
         $oldPaths = [];
         $outcome = null;
+        $prepared = [];
+        $processor = app(ImageProcessor::class);
 
         try {
-            $result = DB::transaction(function () use ($request, $user, $listing, &$storedPaths, &$oldPaths, &$outcome) {
+            if ($request->hasFile('images')) {
+                // فحص سريع بدون قفل: ما منعالج صور (ثقيل) لطلب أصلًا مرفوض
+                $status = Listing::query()->where('user_id', $user->id)->whereKey($listing)->value('listing_status');
+
+                if ($status === null) {
+                    return $this->notFound();
+                }
+
+                if ($status !== Listing::STATUS_PENDING) {
+                    return $this->conflict('Only listings under review can be edited');
+                }
+
+                // المعالجة الثقيلة قبل الـ transaction والقفل، مش جوّاهم
+                $prepared = $this->prepareImages($processor, $request->file('images'));
+            }
+
+            $result = DB::transaction(function () use ($request, $user, $listing, $processor, $prepared, &$storedPaths, &$oldPaths, &$outcome) {
                 $model = Listing::query()
                     ->where('user_id', $user->id)
                     ->whereKey($listing)
@@ -118,8 +136,8 @@ class MarketListingController extends Controller
 
                     ListingImage::where('listing_id', $model->id)->delete();
 
-                    foreach (array_values($request->file('images')) as $index => $file) {
-                        $path = app(ImageProcessor::class)->store($file, "listings/{$model->id}", 'public', 'photo');
+                    foreach ($prepared as $index => $processed) {
+                        $path = $processor->publish($processed, "listings/{$model->id}", 'public');
 
                         if ($path === false) {
                             throw new RuntimeException('Failed to store listing image');
@@ -141,6 +159,8 @@ class MarketListingController extends Controller
             report($e);
 
             return response()->json(['icon' => 'error', 'title' => 'Could not update the listing'], 500);
+        } finally {
+            $processor->discard($prepared);
         }
 
         if ($outcome === 'missing') {
@@ -309,9 +329,14 @@ class MarketListingController extends Controller
     {
         $storedPaths = [];
         $directory = null;
+        $prepared = [];
+        $processor = app(ImageProcessor::class);
 
         try {
-            $listing = DB::transaction(function () use ($request, &$storedPaths, &$directory) {
+            // المعالجة الثقيلة (تصغير + WebP) قبل الـ transaction، جوّاها بس نسخ الملفات الجاهزة
+            $prepared = $this->prepareImages($processor, $request->file('images'));
+
+            $listing = DB::transaction(function () use ($request, $processor, $prepared, &$storedPaths, &$directory) {
                 $listing = new Listing;
                 $listing->fill($request->safe()->except(['images', 'listing_is_negotiable']));
                 $listing->listing_is_negotiable = $request->boolean('listing_is_negotiable');
@@ -321,8 +346,8 @@ class MarketListingController extends Controller
 
                 $directory = "listings/{$listing->id}";
 
-                foreach (array_values($request->file('images')) as $index => $file) {
-                    $path = app(ImageProcessor::class)->store($file, $directory, 'public', 'photo');
+                foreach ($prepared as $index => $processed) {
+                    $path = $processor->publish($processed, $directory, 'public');
 
                     if ($path === false) {
                         throw new RuntimeException('Failed to store listing image');
@@ -348,9 +373,41 @@ class MarketListingController extends Controller
             report($e);
 
             return response()->json(['icon' => 'error', 'title' => 'Could not save the listing'], 500);
+        } finally {
+            $processor->discard($prepared);
         }
 
         return $this->listingResponse($listing, 201);
+    }
+
+    /**
+     * بيعالج كل الصور ويرجّع مسارات الملفات المؤقتة الجاهزة بنفس الترتيب.
+     * لو وحدة فشلت بينظّف اللي خلص منها ويرمي استثناء، فالمستدعي ما بيضل عنده ملفات معلّقة.
+     *
+     * @param  array<int, \Illuminate\Http\UploadedFile>  $files
+     * @return array<int, string>
+     */
+    private function prepareImages(ImageProcessor $processor, array $files): array
+    {
+        $prepared = [];
+
+        try {
+            foreach (array_values($files) as $file) {
+                $processed = $processor->process($file, 'photo');
+
+                if ($processed === false) {
+                    throw new RuntimeException('Failed to process listing image');
+                }
+
+                $prepared[] = $processed;
+            }
+        } catch (Throwable $e) {
+            $processor->discard($prepared);
+
+            throw $e;
+        }
+
+        return $prepared;
     }
 
     private function listingResponse(Listing $listing, int $status): JsonResponse
