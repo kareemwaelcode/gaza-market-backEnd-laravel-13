@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use App\Services\ImageProcessor;
 
 /**
  * لوحة صاحب المحل (المرحلة أ): قراءة وتعديل بيانات محله.
@@ -84,7 +85,7 @@ public function logo(UpdateDashboardPlaceLogoRequest $request): JsonResponse
     $place = $this->ownPlace($request);
     $oldLogo = $place->place_logo;
 
-    $path = $request->file('logo')->store("places/{$place->id}", 'public');
+    $path = app(ImageProcessor::class)->store($request->file('logo'), "places/{$place->id}", 'public', 'logo');
 
     if ($path === false) {
         return $this->failure('SERVER', 500);

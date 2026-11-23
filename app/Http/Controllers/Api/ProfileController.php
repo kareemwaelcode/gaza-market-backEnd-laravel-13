@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateAvatarRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Services\ImageProcessor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -48,7 +49,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $old = $user->user_avatar;
 
-        $path = $request->file('avatar')->store("avatars/{$user->id}", 'public');
+        $path = app(ImageProcessor::class)->store($request->file('avatar'), "avatars/{$user->id}", 'public', 'avatar');
 
         if ($path === false) {
             return response()->json(['code' => 'SERVER'], 500);

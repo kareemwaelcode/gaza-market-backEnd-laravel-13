@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
+use App\Services\ImageProcessor;
 
 class PublicProductPriceController extends Controller
 {
@@ -170,7 +171,7 @@ $price->user_id = $request->user()->id;
 $price->product_price_status = ProductPrice::STATUS_APPROVED;
 
 if ($request->hasFile('receipt_image')) {
-    $path = $request->file('receipt_image')->store('receipts', 'local');
+    $path = app(ImageProcessor::class)->store($request->file('receipt_image'), 'receipts', 'local', 'receipt');
 
     if ($path === false) {
         throw new RuntimeException('Failed to store price receipt image');

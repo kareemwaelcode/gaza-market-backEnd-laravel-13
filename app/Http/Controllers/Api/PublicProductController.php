@@ -12,6 +12,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
+use App\Services\ImageProcessor;
 
 class PublicProductController extends Controller
 {
@@ -28,7 +29,7 @@ try {
     $product->user_id = $request->user()->id;
 
     if ($request->hasFile('product_receipt_image')) {
-        $path = $request->file('product_receipt_image')->store('receipts', 'local');
+        $path = app(ImageProcessor::class)->store($request->file('product_receipt_image'), 'receipts', 'local', 'receipt');
 
         if ($path === false) {
             throw new RuntimeException('Failed to store product receipt image');

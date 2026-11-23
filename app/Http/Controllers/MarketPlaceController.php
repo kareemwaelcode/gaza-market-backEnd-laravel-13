@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Services\ImageProcessor;
 
 class MarketPlaceController extends Controller
 {
@@ -57,7 +58,7 @@ public function store(StorePlaceRequest $request): JsonResponse
                 $place->save();
 
                 if ($request->hasFile('image')) {
-                    $storedPath = $request->file('image')->store("places/{$place->id}", 'public');
+                    $storedPath = app(ImageProcessor::class)->store($request->file('image'), "places/{$place->id}", 'public', 'logo');
 
                     if ($storedPath === false) {
                         throw new \RuntimeException('Failed to store place image');

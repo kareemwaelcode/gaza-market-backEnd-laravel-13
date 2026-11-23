@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
+use App\Services\ImageProcessor;
 
 class MarketListingController extends Controller
 {
@@ -118,7 +119,7 @@ class MarketListingController extends Controller
                     ListingImage::where('listing_id', $model->id)->delete();
 
                     foreach (array_values($request->file('images')) as $index => $file) {
-                        $path = $file->store("listings/{$model->id}", 'public');
+                        $path = app(ImageProcessor::class)->store($file, "listings/{$model->id}", 'public', 'photo');
 
                         if ($path === false) {
                             throw new RuntimeException('Failed to store listing image');
@@ -321,7 +322,7 @@ class MarketListingController extends Controller
                 $directory = "listings/{$listing->id}";
 
                 foreach (array_values($request->file('images')) as $index => $file) {
-                    $path = $file->store($directory, 'public');
+                    $path = app(ImageProcessor::class)->store($file, $directory, 'public', 'photo');
 
                     if ($path === false) {
                         throw new RuntimeException('Failed to store listing image');

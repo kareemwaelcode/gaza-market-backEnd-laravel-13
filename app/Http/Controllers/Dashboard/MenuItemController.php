@@ -15,6 +15,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use App\Services\ImageProcessor;
 
 class MenuItemController extends Controller
 {
@@ -134,7 +135,7 @@ if ($found === null) {
 }
 
 $old = $found->image;
-$path = $request->file('image')->store("places/{$found->place_id}/menu", 'public');
+$path = app(ImageProcessor::class)->store($request->file('image'), "places/{$found->place_id}/menu", 'public', 'photo');
 
 if ($path === false) {
     return $this->failure('SERVER', 500);
