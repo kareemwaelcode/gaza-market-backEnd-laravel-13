@@ -3,8 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Place;
+use App\Services\WhatsApp\WhatsAppCircuitOpenException;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Services\WhatsApp\WhatsAppSendException;
+use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -18,7 +20,7 @@ class SendPlaceStatusMessage implements ShouldQueue
 {
 use InteractsWithQueue, Queueable;
 
-public int $tries = 5;
+public int $maxExceptions = 5;
 
 /** @var array<int, int> */
 public array $backoff = [30, 120, 600, 3600];
@@ -28,6 +30,11 @@ public int $placeId,
 public string $status
 ) {
 $this->afterCommit();
+}
+
+public function retryUntil(): DateTimeInterface
+{
+return now()->addDay();
 }
 
 public function handle(WhatsAppSender $sender): void
@@ -81,6 +88,8 @@ try {
         $this->messageFor($place),
         $this->idempotencyKey($place)
     );
+} catch (WhatsAppCircuitOpenException $e) {
+    $this->release(max(1, $e->retryAfter));
 } catch (WhatsAppSendException $e) {
     // إعادة المحاولة عند حدوث خطأ مؤقت.
     if ($e->retryable) {

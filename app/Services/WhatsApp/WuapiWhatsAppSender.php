@@ -13,6 +13,7 @@ class WuapiWhatsAppSender implements WhatsAppSender
         private readonly ?string $accountId,
         private readonly int $timeout = 10,
         private readonly ?WhatsAppSendGuard $guard = null,
+        private readonly ?WhatsAppCircuitBreaker $breaker = null,
     ) {}
 
     public function send(string $to, string $text, ?string $idempotencyKey = null): void
@@ -20,6 +21,8 @@ class WuapiWhatsAppSender implements WhatsAppSender
         if (blank($this->baseUrl) || blank($this->apiKey) || blank($this->accountId)) {
             throw WhatsAppSendException::permanent('wuapi is not configured (base url, api key or account id missing).');
         }
+
+        $this->breaker?->ensureAvailable();
 
         // السقف اليومي وقائمة الأرقام المسموحة: قبل أي اتصال بالمزوّد.
         $this->guard?->acquire($to);
@@ -42,11 +45,14 @@ class WuapiWhatsAppSender implements WhatsAppSender
             ]);
         } catch (ConnectionException) {
             $this->guard?->release();
+            $this->breaker?->recordFailure();
 
             throw WhatsAppSendException::retryable('wuapi connection failed.');
         }
 
         if ($response->successful()) {
+            $this->breaker?->recordSuccess();
+
             return;
         }
 
@@ -59,8 +65,12 @@ class WuapiWhatsAppSender implements WhatsAppSender
         $message = "wuapi responded with HTTP {$status}.";
 
         if ($status === 429 || $status >= 500) {
+            $this->breaker?->recordFailure();
+
             throw WhatsAppSendException::retryable($message);
         }
+
+        $this->breaker?->recordSuccess();
 
         throw WhatsAppSendException::permanent($message);
     }

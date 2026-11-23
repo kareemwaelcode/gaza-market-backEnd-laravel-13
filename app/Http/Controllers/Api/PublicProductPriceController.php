@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductPriceRequest;
 use App\Http\Requests\VotePriceRequest;
 use App\Models\Area;
+use App\Models\Category;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
 use App\Services\PointService;
@@ -67,16 +68,32 @@ return response()->json($payload);
 /** @return array{data: array, next_cursor: null, has_more: bool, total: int} */
 private function feedPayload(?string $region, ?string $category, int $limit): array
 {
+$areaId = null;
+$categoryId = null;
+
+if ($region !== null) {
+    $areaId = Area::where('area_slug', $region)->value('id');
+}
+
+if ($category !== null) {
+    $categoryId = Category::where('category_slug', $category)->value('id');
+}
+
+if (($region !== null && $areaId === null) || ($category !== null && $categoryId === null)) {
+    return [
+        'data' => [],
+        'next_cursor' => null,
+        'has_more' => false,
+        'total' => 0,
+    ];
+}
+
 $page = ProductPrice::query()
 ->approved()
-->whereHas('product', function (Builder $q) use ($category) {
-    $q->active();
-
-    if ($category !== null) {
-        $q->whereHas('category', fn (Builder $c) => $c->where('category_slug', $category));
-    }
-})
-->when($region, fn (Builder $q, string $slug) => $q->whereHas('area', fn (Builder $a) => $a->where('area_slug', $slug)))
+->whereHas('product', fn (Builder $q) => $q
+    ->active()
+    ->when($categoryId, fn (Builder $p, $id) => $p->where('category_id', $id)))
+->when($areaId, fn (Builder $q, $id) => $q->where('area_id', $id))
 ->with([
     'product:id,product_name_ar,product_name_en,product_quantity,category_id,unit_id',
     'product.category:id,category_slug',

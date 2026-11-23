@@ -241,6 +241,38 @@ class ProductPriceApiTest extends TestCase
         $this->actingAs($me)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => range(1, 50)]))->assertOk();
     }
 
+    public function test_feed_returns_an_empty_page_for_an_unknown_region_or_category(): void
+    {
+        $lookups = $this->lookups('Nuseirat');
+        $owner = $this->makeUser();
+
+        $this->makePrice($this->makeProduct($lookups, $owner), $lookups, $owner);
+
+        $empty = ['data' => [], 'next_cursor' => null, 'has_more' => false, 'total' => 0];
+
+        $this->getJson('/api/prices?region=Unknown')->assertOk()->assertExactJson($empty);
+        $this->getJson('/api/prices?category=unknown-category')->assertOk()->assertExactJson($empty);
+        $this->getJson('/api/prices?region=Nuseirat&category=unknown-category')->assertOk()->assertExactJson($empty);
+        $this->getJson('/api/prices?region=Unknown&category='.$lookups['category']->category_slug)->assertOk()->assertExactJson($empty);
+    }
+
+    public function test_feed_filtered_by_region_and_category_keeps_total_and_has_more(): void
+    {
+        $lookups = $this->lookups('Nuseirat');
+        $owner = $this->makeUser();
+        $product = $this->makeProduct($lookups, $owner);
+
+        $this->makePrice($product, $lookups, $owner);
+        $this->makePrice($product, $lookups, $owner);
+        $this->makePrice($product, $lookups, $owner);
+
+        $this->getJson('/api/prices?region=Nuseirat&category='.$lookups['category']->category_slug.'&limit=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('has_more', true);
+    }
+
     public function test_feed_rejects_invalid_query_values(): void
     {
         $this->getJson('/api/prices?limit=0')->assertStatus(400)->assertJson(['icon' => 'error']);

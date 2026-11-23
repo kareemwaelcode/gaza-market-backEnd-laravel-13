@@ -29,4 +29,12 @@ return [
         explode(',', (string) env('WHATSAPP_ALLOWED_TO', ''))
     ))),
 
+    'circuit' => [
+        'enabled' => (bool) env('WHATSAPP_CIRCUIT_ENABLED', true),
+        'threshold' => (int) env('WHATSAPP_CIRCUIT_THRESHOLD', 5),
+        'window' => (int) env('WHATSAPP_CIRCUIT_WINDOW', 60),
+        'open_seconds' => (int) env('WHATSAPP_CIRCUIT_OPEN_SECONDS', 120),
+        'store' => env('WHATSAPP_CIRCUIT_STORE'),
+    ],
+
 ];

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Admin;
 use App\Services\WhatsApp\LogWhatsAppSender;
+use App\Services\WhatsApp\WhatsAppCircuitBreaker;
 use App\Services\WhatsApp\WhatsAppSendGuard;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Services\WhatsApp\WuapiWhatsAppSender;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
                     config('whatsapp.wuapi.account_id'),
                     (int) config('whatsapp.wuapi.timeout', 10),
                     WhatsAppSendGuard::fromConfig(),
+                    WhatsAppCircuitBreaker::fromConfig(),
                 ),
 
                 default => throw new InvalidArgumentException(

@@ -2,19 +2,21 @@
 
 namespace App\Jobs;
 
+use App\Services\WhatsApp\WhatsAppCircuitOpenException;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Services\WhatsApp\WhatsAppSendException;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Log;
 
 class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
 {
     use InteractsWithQueue, Queueable;
 
-    public int $tries = 3;
+    public int $maxExceptions = 3;
 
     /** @var array<int, int> */
     public array $backoff = [5, 15];
@@ -25,6 +27,11 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
         public string $code,
         public int $issuedAt,
     ) {}
+
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->setTimestamp($this->issuedAt + (int) config('otp.ttl') + 60);
+    }
 
     public function handle(WhatsAppSender $sender): void
     {
@@ -43,6 +50,12 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
 
         try {
             $sender->send($to, $this->message(), $this->idempotencyKey());
+        } catch (WhatsAppCircuitOpenException $e) {
+            $remaining = $this->issuedAt + (int) config('otp.ttl') - now()->timestamp;
+
+            if ($remaining > 0) {
+                $this->release(max(1, min($e->retryAfter, $remaining)));
+            }
         } catch (WhatsAppSendException $e) {
             if ($e->retryable) {
                 throw $e;

@@ -8,6 +8,7 @@ use App\Models\Place;
 use App\Models\Regions;
 use App\Models\User;
 use App\Services\WhatsApp\LogWhatsAppSender;
+use App\Services\WhatsApp\WhatsAppCircuitOpenException;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Services\WhatsApp\WhatsAppSendException;
 use App\Services\WhatsApp\WuapiWhatsAppSender;
@@ -266,6 +267,27 @@ class PlaceOwnerNotificationTest extends TestCase
         $this->expectException(WhatsAppSendException::class);
 
         (new SendPlaceStatusMessage($place->id, Place::STATUS_APPROVED))->handle($sender);
+    }
+
+    public function test_open_circuit_releases_the_job_instead_of_failing_it(): void
+    {
+        $sender = $this->fakeSender(new WhatsAppCircuitOpenException(45));
+        $place = $this->makePlace(null, Place::STATUS_APPROVED);
+
+        $job = (new SendPlaceStatusMessage($place->id, Place::STATUS_APPROVED))->withFakeQueueInteractions();
+        $job->handle($sender);
+
+        $job->assertReleased(45);
+        $job->assertNotFailed();
+    }
+
+    public function test_retry_settings_count_only_real_exceptions(): void
+    {
+        $job = new SendPlaceStatusMessage(1, Place::STATUS_APPROVED);
+
+        $this->assertSame(5, $job->maxExceptions);
+        $this->assertFalse(property_exists($job, 'tries'));
+        $this->assertEqualsWithDelta(now()->addDay()->timestamp, $job->retryUntil()->getTimestamp(), 5);
     }
 
     public function test_permanent_failure_fails_the_job_without_retrying(): void
