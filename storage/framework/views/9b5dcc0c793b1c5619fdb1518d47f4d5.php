@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'place visits'); ?>
 
 <?php $__env->startSection('styles'); ?>

@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'edit navigation item'); ?>
 
 <?php $__env->startSection('styles'); ?>

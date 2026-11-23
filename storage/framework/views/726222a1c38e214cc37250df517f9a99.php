@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'edit point rule'); ?>
 
 <?php $__env->startSection('styles'); ?>

@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'create listing category'); ?>
 
 <?php $__env->startSection('styles'); ?>

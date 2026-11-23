@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'index hero section'); ?>
 
 <?php $__env->startSection('styles'); ?>

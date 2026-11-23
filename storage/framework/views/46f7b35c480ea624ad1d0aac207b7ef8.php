@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'index point level'); ?>
 
 <?php $__env->startSection('styles'); ?>

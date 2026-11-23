@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'show place'); ?>
 
 <?php $__env->startSection('styles'); ?>

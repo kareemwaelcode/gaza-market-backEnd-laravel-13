@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'index point transaction'); ?>
 
 <?php $__env->startSection('styles'); ?>

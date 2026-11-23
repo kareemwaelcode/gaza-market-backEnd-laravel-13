@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'index user'); ?>
 
 <?php $__env->startSection('styles'); ?>

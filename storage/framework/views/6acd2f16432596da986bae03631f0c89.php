@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'show product'); ?>
 
 <?php $__env->startSection('styles'); ?>

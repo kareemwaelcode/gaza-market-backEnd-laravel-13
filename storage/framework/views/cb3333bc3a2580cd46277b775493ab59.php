@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'index product price'); ?>
 
 <?php $__env->startSection('styles'); ?>
