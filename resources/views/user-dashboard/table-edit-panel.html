@@ -1,0 +1,42 @@
+<div class="pep-scrim" id="tep-scrim" data-action="close-table-add"></div>
+
+<aside class="pep-panel" id="tep-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title" id="tep-title">طاولة جديدة</h3>
+      <div class="pep-subtitle" id="tep-subtitle">أضف طاولة جديدة لنشاطك</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-table-add" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div id="tep-single-fields">
+      <div class="field">
+        <label for="tep-name">اسم/رقم الطاولة</label>
+        <input type="text" id="tep-name" maxlength="40" placeholder="مثال: طاولة 1">
+      </div>
+
+      <div class="field">
+        <label for="tep-seats">عدد الكراسي — اختياري</label>
+        <input type="number" id="tep-seats" min="1" placeholder="مثال: 4">
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>الحالة</label>
+        <div class="seg-group" id="tep-status-group">
+          <button type="button" class="seg-btn active" data-value="available">متاحة</button>
+          <button type="button" class="seg-btn" data-value="occupied">مستخدمة</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-table-add">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="tep-save-btn">حفظ الطاولة</button>
+  </div>
+</aside>

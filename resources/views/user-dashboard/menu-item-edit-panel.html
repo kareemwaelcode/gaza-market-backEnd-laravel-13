@@ -1,0 +1,62 @@
+<div class="pep-scrim" id="mie-scrim" data-action="close-menu-item-add"></div>
+
+<aside class="pep-panel" id="mie-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title" id="mie-title">صنف جديد</h3>
+      <div class="pep-subtitle">الأصناف والأسعار التي يراها الزوار في منيوك</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-menu-item-add" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="pep-avatar-row">
+      <div class="pep-avatar-preview pep-item-thumb" id="mie-image-preview">
+        <i data-lucide="utensils" class="icon"></i>
+      </div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost btn-sm" id="mie-upload-btn">
+          <i data-lucide="upload" class="icon"></i> رفع صورة
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="mie-remove-image-btn" style="display:none;">
+          <i data-lucide="x" class="icon"></i> إزالة
+        </button>
+        <input type="file" id="mie-image-input" accept="image/*" style="display:none;">
+      </div>
+    </div>
+
+    <div class="field mt-20">
+      <label for="mie-name">اسم الصنف</label>
+      <input type="text" id="mie-name" placeholder="مثال: مسقعة باللحمة">
+    </div>
+
+    <div class="field">
+      <label for="mie-category">التصنيف</label>
+      <select id="mie-category">
+        <option value="">بدون تصنيف</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="mie-price">السعر (₪)</label>
+      <input type="number" id="mie-price" min="0" step="0.5" placeholder="0">
+    </div>
+
+    <div class="field" style="margin-bottom:0;">
+      <label>الحالة</label>
+      <div class="seg-group" id="mie-status-group">
+        <button type="button" class="seg-btn active" data-value="available">متاح</button>
+        <button type="button" class="seg-btn" data-value="unavailable">غير متاح</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-menu-item-add">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="mie-save-btn">حفظ الصنف</button>
+  </div>
+</aside>

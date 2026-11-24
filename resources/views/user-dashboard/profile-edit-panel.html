@@ -1,0 +1,100 @@
+<div class="pep-scrim" id="pep-scrim" data-action="close-profile-edit"></div>
+
+<aside class="pep-panel" id="pep-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">تعديل بيانات المساحة</h3>
+      <div class="pep-subtitle">هاي المعلومات بتظهر للزوار بصفحتك العامة</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-profile-edit" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="pep-avatar-row">
+      <div class="pep-avatar-preview" id="pep-avatar-preview">م</div>
+      <div>
+        <button type="button" class="btn btn-ghost btn-sm" id="pep-upload-btn">
+          <i data-lucide="upload" class="icon"></i> رفع صورة
+        </button>
+        <input type="file" id="pep-image-input" accept="image/*" style="display:none;">
+      </div>
+    </div>
+
+    <div class="field mt-20">
+      <label for="pep-name">اسم المساحة</label>
+      <input type="text" id="pep-name" placeholder="اسم النشاط">
+    </div>
+
+    <div class="field">
+      <label for="pep-region">المنطقة</label>
+      <select id="pep-region">
+        <option value="">اختر المنطقة</option>
+
+        <optgroup label="شمال غزة">
+          <option value="Alrimal">الرمال</option>
+          <option value="Alshaati">الشاطئ</option>
+          <option value="Sheikh Radwan">الشيخ رضوان</option>
+          <option value="Saftawi">الصفطاوي</option>
+          <option value="Tal Al-Hawa">تل الهوا</option>
+          <option value="Jabalia">جباليا</option>
+          <option value="Beit Hanoun">بيت حانون</option>
+          <option value="Beit Lahia">بيت لاهيا</option>
+        </optgroup>
+
+        <optgroup label="الوسطى">
+          <option value="Nuseirat">النصيرات</option>
+          <option value="Breij">البريج</option>
+          <option value="Maghazi">المغازي</option>
+          <option value="Zawayda">الزوايدة</option>
+          <option value="Deir al-Balah">دير البلح</option>
+        </optgroup>
+
+        <optgroup label="الجنوب">
+          <option value="Khan Yunis">خان يونس</option>
+          <option value="Rafah">رفح</option>
+          <option value="Mawasi Khan Yunis">مواصي خان يونس</option>
+          <option value="Mawasi al-Qarara">مواصي القرارة</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="pep-address">العنوان</label>
+      <input type="text" id="pep-address" placeholder="مثال: شارع الجلاء">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="pep-phone">رقم الهاتف</label>
+        <input type="tel" id="pep-phone" placeholder="05xxxxxxxx">
+      </div>
+      <div class="field">
+        <label for="pep-whatsapp">واتساب</label>
+        <input type="tel" id="pep-whatsapp" placeholder="05xxxxxxxx">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>الموقع على الخريطة</label>
+      <div class="pep-map" id="pep-map">
+        <div class="pep-map-pin" id="pep-map-pin" style="display:none;"></div>
+      </div>
+      <div class="pep-coords-row">
+        <span id="pep-coords-status">أو انقر على الخريطة لتحديد الموقع</span>
+        <span class="pep-coords-value" id="pep-coords-value"></span>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm mt-12" id="pep-use-my-location">
+        <i data-lucide="locate-fixed" class="icon"></i> استخدم موقعي الحالي
+      </button>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-profile-edit">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="pep-save-btn">حفظ التغييرات</button>
+  </div>
+</aside>

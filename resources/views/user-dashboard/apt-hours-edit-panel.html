@@ -1,0 +1,36 @@
+<div class="pep-scrim" id="aph-scrim" data-action="close-apt-hours"></div>
+
+<aside class="pep-panel" id="aph-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">دوام العيادة والأوقات المتاحة</h3>
+      <div class="pep-subtitle">حدد أيام الدوام وساعاته ومدة الموعد الواحد</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-apt-hours" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="section-title" style="margin-top:0;">أيام الدوام</div>
+    <div class="aph-days" id="aph-rows"></div>
+
+    <div class="section-title">مدة الموعد الواحد</div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="aph-slot">تُقسَّم ساعات الدوام إلى مواعيد بهذه المدة</label>
+      <select id="aph-slot">
+        <option value="15">15 دقيقة</option>
+        <option value="20">20 دقيقة</option>
+        <option value="30">30 دقيقة</option>
+        <option value="45">45 دقيقة</option>
+        <option value="60">60 دقيقة</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-primary" id="aph-save-btn">حفظ التغييرات</button>
+  </div>
+</aside>

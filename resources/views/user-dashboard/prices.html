@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>المنتجات والأسعار — سوق غزة</title>
+<script src="../js/gm-core.js" defer></script>
+<script src="auth/auth-api.js" defer></script>
+<script src="auth/auth-guard.js" defer></script>
+<link rel="stylesheet" href="../css/user-dashboard.css">
+</head>
+<body data-page="prices">
+<script>(function(){try{if(localStorage.getItem('gaza-market-dashboard-theme')==='dark'){document.body.classList.add('dark-mode');}}catch(e){}})();</script>
+
+  <div id="topnav-slot"></div>
+
+  <aside class="side-panel">
+    <div id="topbar-slot"></div>
+    <div id="sidebar-slot"></div>
+  </aside>
+
+  <div class="app-shell">
+    <main class="app-main">
+
+      <button class="mobile-menu-btn" data-action="open-sidebar" aria-label="فتح القائمة">
+        <i data-lucide="menu" class="icon"></i>
+      </button>
+
+      <div class="app-content">
+
+        <div class="page-head">
+          <div>
+            <div class="breadcrumb">سوق غزة <span class="sep">/</span> <span class="current">المنتجات والأسعار</span></div>
+            <div class="page-title">المنتجات والأسعار</div>
+            <div class="page-subtitle" id="product-usage-counter" style="display:none;"></div>
+          </div>
+          <div class="page-actions">
+            <button type="button" class="btn btn-ghost" data-action="open-product-category-panel">
+              <i data-lucide="folder-plus" class="icon"></i> التصنيفات
+              <span class="btn-count" id="product-cat-btn-count">0</span>
+            </button>
+            <button type="button" class="btn btn-primary" data-action="open-product-item-add">
+              <i data-lucide="plus" class="icon"></i> إضافة منتج
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="card stat-card">
+            <div class="icon-wrap brand"><i data-lucide="layers" class="icon"></i></div>
+            <div><div class="value" id="product-stat-total">0</div><div class="label">إجمالي المنتجات</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap blue"><i data-lucide="badge-check" class="icon"></i></div>
+            <div><div class="value" id="product-stat-available">0</div><div class="label">منتجات متوفرة</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap amber"><i data-lucide="folder" class="icon"></i></div>
+            <div><div class="value" id="product-stat-categories">0</div><div class="label">التصنيفات</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap red"><i data-lucide="ban" class="icon"></i></div>
+            <div><div class="value" id="product-stat-unavailable">0</div><div class="label">منتجات غير متوفرة حالياً</div></div>
+          </div>
+        </div>
+
+        <div id="product-data-wrap" style="display:none;">
+          <div class="card card-pad">
+            <div class="card-header menu-card-header">
+              <div>
+                <h3>قائمة المنتجات</h3>
+                <div class="sub">المنتجات والأسعار التي يراها الزوار عند تصفح متجرك</div>
+              </div>
+              <div class="menu-search">
+                <input type="search" id="product-search-input" placeholder="ابحث عن منتج...">
+                <i data-lucide="search" class="icon"></i>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table menu-table">
+                <thead>
+                  <tr>
+                    <th>المنتج</th>
+                    <th>التصنيف</th>
+                    <th>السعر</th>
+                    <th>الحالة</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="product-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad empty-state" id="product-empty-state">
+          <i data-lucide="shopping-bag" class="icon"></i>
+          <div class="title">لا توجد منتجات بعد</div>
+          <div class="sub">أضف أول منتج بمتجرك ليظهر للزوار</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="product-category-slot"></div>
+  <div id="product-item-edit-slot"></div>
+  <div id="services-edit-slot"></div>
+  <div id="mobile-nav-slot"></div>
+
+  <script src="../js/vendor/lucide.min.js" defer></script>
+  <script src="../js/add-store-api.js" defer></script>
+  <script src="../js/store-type-config.js" defer></script>
+  <script src="../js/dashboard/core.js" defer></script>
+  <script src="../js/dashboard/shell.js" defer></script>
+  <script src="../js/dashboard/page-runner.js" defer></script>
+  <script src="../js/dashboard/common.js" defer></script>
+  <script src="../js/dashboard/pages/extra-fields.js" defer></script>
+  <script src="../js/dashboard/pages/prices.js" defer></script>
+</body>
+</html>

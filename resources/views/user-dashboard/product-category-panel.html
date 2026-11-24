@@ -1,0 +1,40 @@
+<div class="pep-scrim" id="pcp-scrim" data-action="close-product-category-panel"></div>
+
+<aside class="pep-panel" id="pcp-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">تصنيفات المنتجات</h3>
+      <div class="pep-subtitle">نظّم منتجاتك ضمن أقسام (زي: مواد غذائية، مخللات...)</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-product-category-panel" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="field" style="margin-bottom:18px;">
+      <label for="pcp-new-name">تصنيف جديد</label>
+      <div class="flex gap-8">
+        <input type="text" id="pcp-new-name" placeholder="مثال: مواد غذائية" style="flex:1;">
+        <button type="button" class="btn btn-primary btn-sm" id="pcp-add-btn">
+          <i data-lucide="plus" class="icon"></i> إضافة
+        </button>
+      </div>
+    </div>
+
+    <div class="field" id="pcp-suggestions" style="display:none;margin-bottom:18px;">
+      <label>اقتراحات لنشاطك</label>
+      <div id="pcp-suggestions-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+
+    <div id="pcp-list"></div>
+
+    <div class="empty-state" id="pcp-empty" style="display:none;padding:24px 4px;">
+      <i data-lucide="folder" class="icon"></i>
+      <div class="title">لا توجد تصنيفات بعد</div>
+      <div class="sub">أضف أول تصنيف لتنظيم منتجاتك</div>
+    </div>
+
+  </div>
+</aside>

@@ -1,0 +1,97 @@
+<div class="pep-scrim" id="pie-scrim" data-action="close-product-item-add"></div>
+
+<aside class="pep-panel" id="pie-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title" id="pie-title">منتج جديد</h3>
+      <div class="pep-subtitle">المنتجات والأسعار التي يراها الزوار عند تصفح متجرك</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-product-item-add" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="pep-avatar-row">
+      <div class="pep-avatar-preview pep-item-thumb" id="pie-image-preview">
+        <i data-lucide="package" class="icon"></i>
+      </div>
+      <div class="flex gap-8">
+        <button type="button" class="btn btn-ghost btn-sm" id="pie-upload-btn">
+          <i data-lucide="upload" class="icon"></i> رفع صورة
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="pie-remove-image-btn" style="display:none;">
+          <i data-lucide="x" class="icon"></i> إزالة
+        </button>
+        <input type="file" id="pie-image-input" accept="image/*" style="display:none;">
+      </div>
+    </div>
+
+    <div class="field mt-20">
+      <label for="pie-name">اسم المنتج</label>
+      <input type="text" id="pie-name" placeholder="">
+    </div>
+
+    <div class="field">
+      <label for="pie-category">التصنيف</label>
+      <select id="pie-category">
+        <option value="">بدون تصنيف</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="pie-price">السعر (₪)</label>
+      <input type="number" id="pie-price" min="0" step="0.5" placeholder="0">
+    </div>
+
+    <div class="field" id="pie-size-field" style="display:none;">
+      <label for="pie-size">المقاس / النمرة</label>
+      <input type="text" id="pie-size" maxlength="20" placeholder="مثال: 42 أو M">
+    </div>
+
+    <div class="field" id="pie-brand-field" style="display:none;">
+      <label for="pie-brand">الماركة</label>
+      <input type="text" id="pie-brand" maxlength="40" placeholder="اسم الماركة">
+    </div>
+
+    <div class="field" id="pie-color-field" style="display:none;">
+      <label for="pie-color">اللون</label>
+      <input type="text" id="pie-color" maxlength="40" placeholder="مثال: ذهبي، فضي، أسود">
+    </div>
+
+    <div class="field" id="pie-material-field" style="display:none;">
+      <label for="pie-material">الخامة</label>
+      <input type="text" id="pie-material" maxlength="40" placeholder="مثال: ستانلس ستيل، جلد، فضة">
+    </div>
+
+    <div id="pie-extra-fields"></div>
+
+    <div class="field" id="pie-details-field" style="display:none;">
+      <label for="pie-details">تفاصيل المنتج</label>
+      <textarea id="pie-details" rows="3" maxlength="300" placeholder="مثال: متوفر منها 6 ألوان، قطن 100%"></textarea>
+    </div>
+
+    <div class="field" id="pie-discount-field" style="display:none;">
+      <label>الخصم</label>
+      <div class="seg-group" id="pie-discount-group">
+        <button type="button" class="seg-btn active" data-value="none">بدون خصم</button>
+        <button type="button" class="seg-btn" data-value="discount">عليه خصم</button>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0;">
+      <label>الحالة</label>
+      <div class="seg-group" id="pie-status-group">
+        <button type="button" class="seg-btn active" data-value="available">متاح</button>
+        <button type="button" class="seg-btn" data-value="unavailable">غير متاح</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-product-item-add">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="pie-save-btn">حفظ المنتج</button>
+  </div>
+</aside>

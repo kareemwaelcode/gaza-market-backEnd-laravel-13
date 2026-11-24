@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>تسجيل الدخول — سوق غزة</title>
+<link rel="stylesheet" href="../../css/user-dashboard.css">
+<link rel="stylesheet" href="auth.css">
+</head>
+<body data-page="login">
+
+  <button type="button" class="icon-btn auth-theme-toggle" data-action="toggle-theme" aria-label="التبديل إلى الوضع الليلي">
+    <i data-lucide="moon" class="icon"></i>
+  </button>
+
+  <main class="auth-page">
+    <div class="auth-shell">
+
+      <div class="auth-brand">
+        <div class="auth-logo">غ</div>
+        <h1 class="auth-title">الدخول إلى لوحة التحكم</h1>
+        <p class="auth-subtitle">سوق غزة · تسجيل الدخول</p>
+      </div>
+
+      <div class="card auth-card">
+
+        <div class="auth-alert" id="login-alert" role="alert" hidden>
+          <i data-lucide="alert-circle" class="icon"></i>
+          <span id="login-alert-text"></span>
+        </div>
+
+        <form id="login-form" novalidate>
+
+          <div class="field" id="login-whatsapp-field">
+            <label for="login-whatsapp">رقم الواتساب</label>
+            <div class="auth-input-wrap">
+              <i data-lucide="message-circle" class="icon auth-input-icon"></i>
+              <input
+                type="tel"
+                id="login-whatsapp"
+                name="whatsapp"
+                class="auth-input-ltr"
+                inputmode="numeric"
+                autocomplete="username"
+                dir="ltr"
+                placeholder="972597******"
+              >
+            </div>
+            <div class="hint">اكتب الرقم بدءاً برمز الدولة (972 أو 970) بدون علامة +</div>
+            <div class="field-error" id="login-whatsapp-error"></div>
+          </div>
+
+          <div class="field" id="login-password-field">
+            <div class="auth-label-row">
+              <label for="login-password">كلمة المرور</label>
+              <a href="forgot-password.html" class="auth-link">نسيت كلمة المرور؟</a>
+            </div>
+            <div class="auth-input-wrap">
+              <i data-lucide="lock" class="icon auth-input-icon"></i>
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                class="auth-input-ltr"
+                autocomplete="current-password"
+                dir="ltr"
+                placeholder="••••••••"
+              >
+              <button type="button" class="icon-btn auth-input-action" data-action="toggle-password" data-target="login-password" aria-label="إظهار كلمة المرور">
+                <i data-lucide="eye" class="icon"></i>
+              </button>
+            </div>
+            <div class="field-error" id="login-password-error"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit" id="login-submit">
+            <i data-lucide="log-in" class="icon"></i> تسجيل الدخول
+          </button>
+
+        </form>
+
+        <div class="auth-step-links">
+          <a href="forgot-password.html?mode=activate" class="auth-link">
+            أول مرة تدخل؟ فعّل حسابك
+          </a>
+        </div>
+      </div>
+
+      <p class="auth-footnote">لأصحاب الأماكن وفريق العمل المسجلين فقط</p>
+
+    </div>
+  </main>
+
+  <script src="../../js/vendor/lucide.min.js" defer></script>
+  <script src="../../js/gm-core.js" defer></script>
+  <script src="auth-api.js" defer></script>
+  <script src="dashboard-auth.js" defer></script>
+</body>
+</html>

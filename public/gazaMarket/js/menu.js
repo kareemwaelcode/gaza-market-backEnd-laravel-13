@@ -1,0 +1,419 @@
+'use strict';
+
+(function () {
+  var root = document.getElementById('placePage');
+  if (!root) return;
+
+  var api = window.GMPlaces;
+
+  var headEl = document.getElementById('placeHead');
+  var avatarEl = document.getElementById('placeAvatar');
+  var nameEl = document.getElementById('placeName');
+  var statusEl = document.getElementById('placeStatus');
+  var statusTextEl = document.getElementById('placeStatusText');
+  var whereEl = document.getElementById('placeWhere');
+  var whereTextEl = document.getElementById('placeWhereText');
+  var waBtn = document.getElementById('placeWa');
+  var callBtn = document.getElementById('placeCall');
+  var skeletonEl = document.getElementById('placeSkeleton');
+  var stateEl = document.getElementById('placeState');
+  var stateTitleEl = document.getElementById('placeStateTitle');
+  var stateSubEl = document.getElementById('placeStateSub');
+  var retryBtn = document.getElementById('placeRetry');
+  var menuSection = document.getElementById('menu');
+  var toolbarEl = document.getElementById('placeToolbar');
+  var searchEl = document.getElementById('placeSearch');
+  var searchWrapEl = document.getElementById('placeSearchWrap');
+  var gridEl = document.getElementById('placeMenuGrid');
+  var emptyEl = document.getElementById('placeMenuEmpty');
+  var emptyTitleEl = document.getElementById('placeMenuEmptyTitle');
+  var emptySubEl = document.getElementById('placeMenuEmptySub');
+
+  var FOOD_TYPES = ['restaurant', 'cafe', 'restaurant-cafe'];
+  var BOOKING_TYPES = ['cafe', 'restaurant-cafe'];
+  var WORKSPACE_TYPES = ['workspace'];
+  var SLUG_RE = /^[a-z0-9-]{1,80}$/i;
+  var SEARCH_DELAY_MS = 120;
+
+  var ICONS = {
+    utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+    store: '<path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/>',
+    coffee: '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>'
+  };
+
+  var state = { place: null, menu: null, workspace: null, term: '', searchTimer: 0 };
+  var reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+
+  function t(key) {
+    return typeof i18n !== 'undefined' && i18n.t ? i18n.t(key) : key;
+  }
+
+  function currentLang() {
+    return document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
+  }
+
+  function icon(name, size) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'places-icon');
+    svg.setAttribute('width', String(size || 18));
+    svg.setAttribute('height', String(size || 18));
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    svg.innerHTML = ICONS[name] || ICONS.utensils;
+    return svg;
+  }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+
+  function isFood(place) {
+    return !!place && FOOD_TYPES.indexOf(place.type) !== -1;
+  }
+
+  function isWorkspace(place) {
+    return !!place && WORKSPACE_TYPES.indexOf(place.type) !== -1;
+  }
+
+  // Any place that is not a restaurant, cafe, restaurant + cafe or workspace is a store.
+  function isStore(place) {
+    return !!place && !isFood(place) && !isWorkspace(place);
+  }
+
+  function hasBooking(place) {
+    return !!place && BOOKING_TYPES.indexOf(place.type) !== -1;
+  }
+
+  function itemIconName() {
+    if (isStore(state.place)) return 'store';
+    return state.place && state.place.type === 'cafe' ? 'coffee' : 'utensils';
+  }
+
+  function placeName(place) {
+    var ar = place.name_ar;
+    var en = place.name_en;
+    return currentLang() === 'ar' ? ar || en : en || ar;
+  }
+
+  function formatPrice(value) {
+    return Number(value).toFixed(2);
+  }
+
+  function normalizeText(value) {
+    return String(value || '').toLowerCase().replace(/[ً-ٰٟ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').trim();
+  }
+
+  function slugFromUrl() {
+    try {
+      var id = new URLSearchParams(window.location.search).get('id');
+      return id && SLUG_RE.test(id) ? id : '';
+    } catch (err) {
+      return '';
+    }
+  }
+
+  function show(node, on) {
+    if (node) node.hidden = !on;
+  }
+
+  function setLoading(on) {
+    if (on) root.setAttribute('aria-busy', 'true');
+    else root.removeAttribute('aria-busy');
+    show(skeletonEl, on);
+  }
+
+  function showState(titleKey, subKey, canRetry) {
+    stateTitleEl.textContent = t(titleKey);
+    stateSubEl.textContent = t(subKey);
+    show(retryBtn, !!canRetry);
+    show(stateEl, true);
+    stateEl.dataset.titleKey = titleKey;
+    stateEl.dataset.subKey = subKey;
+  }
+
+  function hideAll() {
+    show(headEl, false);
+    show(stateEl, false);
+    show(menuSection, false);
+    if (window.GMWorkspace) window.GMWorkspace.hide();
+  }
+
+  function renderHead() {
+    var place = state.place;
+    if (!place) return;
+    var name = placeName(place);
+    nameEl.textContent = name;
+    document.title = name + ' | ' + t('place.siteName');
+
+    avatarEl.textContent = '';
+    if (place.image_url) {
+      var img = document.createElement('img');
+      img.src = place.image_url;
+      img.alt = '';
+      img.width = 96;
+      img.height = 96;
+      img.decoding = 'async';
+      img.addEventListener('error', function () {
+        avatarEl.textContent = '';
+        avatarEl.appendChild(icon(itemIconName(), 40));
+      });
+      avatarEl.appendChild(img);
+    } else {
+      avatarEl.appendChild(icon(itemIconName(), 40));
+    }
+
+    statusEl.classList.toggle('is-open', place.is_open);
+    statusEl.classList.toggle('is-closed', !place.is_open);
+    statusTextEl.textContent = t(place.is_open ? 'place.openNow' : 'stores.closed');
+
+    var parts = [];
+    if (place.region) parts.push(t(place.region));
+    var address = currentLang() === 'ar' ? place.address_ar : place.address_en;
+    if (address) parts.push(address);
+    whereTextEl.textContent = parts.join(' · ');
+    show(whereEl, parts.length > 0);
+
+    if (place.whatsapp) {
+      waBtn.href = 'https://wa.me/' + place.whatsapp;
+      show(waBtn, true);
+    } else {
+      show(waBtn, false);
+    }
+    if (place.phone) {
+      callBtn.href = 'tel:+' + place.phone;
+      show(callBtn, true);
+    } else {
+      show(callBtn, false);
+    }
+    show(headEl, true);
+    if (window.GMBooking) window.GMBooking.setPlace(slugFromUrl(), hasBooking(place), place.booking_available !== false);
+  }
+
+  function groupMenu() {
+    var menu = state.menu;
+    var tokens = normalizeText(state.term).split(/\s+/).filter(Boolean);
+    var groups = menu.categories.map(function (cat) {
+      return { id: cat.id, name: cat.name, items: [] };
+    });
+    var byId = {};
+    groups.forEach(function (g) { byId[g.id] = g; });
+    var other = { id: '_other', name: t('place.otherItems'), items: [] };
+
+    menu.items.forEach(function (item) {
+      var group = item.categoryId && byId[item.categoryId] ? byId[item.categoryId] : other;
+      if (tokens.length) {
+        var haystack = normalizeText(item.name + ' ' + group.name);
+        for (var i = 0; i < tokens.length; i++) {
+          if (haystack.indexOf(tokens[i]) === -1) return;
+        }
+      }
+      group.items.push(item);
+    });
+    groups.push(other);
+    return groups.filter(function (g) { return g.items.length > 0; });
+  }
+
+  function itemImageSources(item) {
+    var list = [];
+    if (item.image) list.push(item.image);
+    if (state.place && state.place.image_url && state.place.image_url !== item.image) list.push(state.place.image_url);
+    return list;
+  }
+
+  function fillThumb(thumb, sources) {
+    var src = sources.shift();
+    thumb.textContent = '';
+    if (!src) {
+      thumb.classList.add('is-empty');
+      return;
+    }
+    var img = document.createElement('img');
+    img.alt = '';
+    img.width = 64;
+    img.height = 64;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.addEventListener('error', function () { fillThumb(thumb, sources); });
+    img.src = src;
+    thumb.appendChild(img);
+  }
+
+  function itemMetaText(item) {
+    var parts = [];
+    if (item.details) parts.push(item.details);
+    (item.attributes || []).forEach(function (attr) {
+      parts.push(t('place.attr.' + attr.key) + ': ' + attr.value);
+    });
+    return parts.join(' · ');
+  }
+
+  function buildItem(item) {
+    var row = el('li', 'place-item' + (item.available ? '' : ' is-unavailable'));
+    var thumb = el('span', 'place-item__thumb');
+    fillThumb(thumb, itemImageSources(item));
+    row.appendChild(thumb);
+
+    var info = el('span', 'place-item__info');
+    info.appendChild(el('span', 'place-item__name', item.name));
+    if (!item.available) info.appendChild(el('span', 'place-item__badge', t('place.unavailable')));
+    var meta = itemMetaText(item);
+    if (meta) info.appendChild(el('span', 'place-item__meta', meta));
+    row.appendChild(info);
+
+    if (item.discount) row.appendChild(el('span', 'place-item__discount', t('place.hasDiscount')));
+
+    if (item.price !== null) {
+      var price = el('span', 'place-item__price');
+      price.setAttribute('dir', 'ltr');
+      price.appendChild(document.createTextNode(formatPrice(item.price) + ' '));
+      price.appendChild(el('span', 'place-item__cur', '₪'));
+      row.appendChild(price);
+    }
+    return row;
+  }
+
+  function applyMenuLabels() {
+    var store = isStore(state.place);
+    var searchKey = store ? 'place.searchProducts' : 'place.searchMenu';
+    var titleEl = document.getElementById('placeMenuTitle');
+    searchEl.setAttribute('data-i18n-placeholder', searchKey);
+    searchEl.placeholder = t(searchKey);
+    searchEl.setAttribute('aria-label', t(searchKey));
+    gridEl.classList.toggle('place-menu__grid--store', store);
+    if (titleEl) {
+      titleEl.setAttribute('data-i18n', store ? 'places.products' : 'places.menu');
+      titleEl.textContent = t(store ? 'places.products' : 'places.menu');
+    }
+  }
+
+  function renderMenu() {
+    if (!state.menu) return;
+    applyMenuLabels();
+    var hasAny = state.menu.items.length > 0;
+    var groups = hasAny ? groupMenu() : [];
+
+    gridEl.textContent = '';
+    show(toolbarEl, hasAny || isFood(state.place));
+    show(searchWrapEl, hasAny);
+
+    if (!hasAny) {
+      emptyTitleEl.textContent = t(isStore(state.place) ? 'place.noProducts' : 'place.noMenu');
+      emptySubEl.textContent = t(isStore(state.place) ? 'place.noProductsSub' : 'place.noMenuSub');
+      show(emptyEl, true);
+      show(gridEl, false);
+      return;
+    }
+
+    if (!groups.length) {
+      emptyTitleEl.textContent = t('place.noResults');
+      emptySubEl.textContent = t('place.noResultsSub');
+      show(emptyEl, true);
+      show(gridEl, false);
+      return;
+    }
+
+    show(emptyEl, false);
+    show(gridEl, true);
+
+    groups.forEach(function (group) {
+      var section = el('section', 'place-cat');
+      section.id = 'place-cat-' + group.id;
+      section.dataset.cat = group.id;
+      section.appendChild(el('h2', 'place-cat__title', group.name));
+      var list = el('ul', 'place-cat__list');
+      group.items.forEach(function (item) { list.appendChild(buildItem(item)); });
+      section.appendChild(list);
+      gridEl.appendChild(section);
+    });
+  }
+
+  function renderPlaceholderForType() {
+    state.menu = { categories: [], items: [] };
+    show(menuSection, true);
+    show(toolbarEl, false);
+    show(gridEl, false);
+    emptyTitleEl.textContent = t('place.soonTitle');
+    emptySubEl.textContent = t('place.soonSub');
+    show(emptyEl, true);
+  }
+
+  function load() {
+    var slug = slugFromUrl();
+    hideAll();
+    if (!slug) {
+      setLoading(false);
+      showState('place.notFound', 'place.notFoundSub', false);
+      return;
+    }
+    if (!api || typeof api.getPlace !== 'function') {
+      setLoading(false);
+      showState('place.loadError', 'place.loadErrorSub', true);
+      return;
+    }
+
+    setLoading(true);
+    state.workspace = null;
+    api.getPlace(slug).then(function (place) {
+      state.place = place;
+      if (isWorkspace(place) && window.GMWorkspace && typeof api.getWorkspace === 'function') {
+        return api.getWorkspace(slug).then(function (ws) { return { kind: 'workspace', data: ws }; });
+      }
+      if (isFood(place) && !place.has_menu) return { kind: 'menu', data: { categories: [], items: [] } };
+      return api.getMenu(slug).then(function (menu) { return { kind: 'menu', data: menu }; });
+    }).then(function (result) {
+      setLoading(false);
+      renderHead();
+      if (result && result.kind === 'workspace') {
+        state.workspace = result.data;
+        window.GMWorkspace.show(slug, result.data);
+      } else if (result) {
+        state.menu = result.data;
+        show(menuSection, true);
+        renderMenu();
+      } else {
+        renderPlaceholderForType();
+      }
+    }).catch(function (err) {
+      setLoading(false);
+      hideAll();
+      if (err && err.code === 'not_found') showState('place.notFound', 'place.notFoundSub', false);
+      else showState('place.loadError', 'place.loadErrorSub', true);
+    });
+  }
+
+  searchEl.addEventListener('input', function () {
+    window.clearTimeout(state.searchTimer);
+    state.searchTimer = window.setTimeout(function () {
+      state.term = searchEl.value || '';
+      renderMenu();
+    }, SEARCH_DELAY_MS);
+  });
+
+  retryBtn.addEventListener('click', load);
+
+  var lastLang = currentLang();
+  new MutationObserver(function () {
+    var lang = currentLang();
+    if (lang === lastLang) return;
+    lastLang = lang;
+    if (state.place) renderHead();
+    if (state.menu && (isFood(state.place) || isStore(state.place))) renderMenu();
+    if (state.workspace && window.GMWorkspace) window.GMWorkspace.refresh();
+    if (!stateEl.hidden && stateEl.dataset.titleKey) {
+      stateTitleEl.textContent = t(stateEl.dataset.titleKey);
+      stateSubEl.textContent = t(stateEl.dataset.subKey);
+    }
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+  if (document.readyState === 'complete') load();
+  else document.addEventListener('DOMContentLoaded', load);
+})();

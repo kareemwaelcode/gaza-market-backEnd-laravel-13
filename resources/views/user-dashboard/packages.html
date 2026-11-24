@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>الباقات — سوق غزة</title>
+<script src="../js/gm-core.js" defer></script>
+<script src="auth/auth-api.js" defer></script>
+<script src="auth/auth-guard.js" defer></script>
+<link rel="stylesheet" href="../css/user-dashboard.css">
+</head>
+<body data-page="packages">
+<script>(function(){try{if(localStorage.getItem('gaza-market-dashboard-theme')==='dark'){document.body.classList.add('dark-mode');}}catch(e){}})();</script>
+
+  <div id="topnav-slot"></div>
+
+  <aside class="side-panel">
+    <div id="topbar-slot"></div>
+    <div id="sidebar-slot"></div>
+  </aside>
+
+  <div class="app-shell">
+    <main class="app-main">
+
+      <div class="app-content">
+
+        <div class="page-head">
+          <div>
+            <div class="page-title">الباقات</div>
+            <div class="page-subtitle" id="pkg-page-subtitle">اختر باقة مساحتك</div>
+          </div>
+        </div>
+
+        <section class="card pkg-current" aria-label="باقتك الحالية">
+          <div class="pkg-current-main">
+            <div class="pkg-current-icon" aria-hidden="true"><i data-lucide="layers" class="icon"></i></div>
+            <div>
+              <div class="pkg-current-cap">باقتك الحالية</div>
+              <div class="pkg-current-name" id="pkg-current-name">مجاني</div>
+            </div>
+          </div>
+          <span class="plan-chip" id="pkg-current-chip">مجاني</span>
+        </section>
+
+        <div class="pkg-grid" id="pkg-grid">
+
+          <article class="card pkg-card" aria-labelledby="pkg-free-name">
+            <div class="pkg-eyebrow">FREE</div>
+            <h2 class="pkg-name" id="pkg-free-name">مجاني</h2>
+            <p class="pkg-desc">لوحة تحكم ومعلومات أساسية لمساحتك</p>
+
+            <div class="pkg-price">
+              <span class="pkg-price-amount">0</span>
+              <span class="pkg-price-currency">₪</span>
+            </div>
+
+            <ul class="pkg-features">
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>صفحة خاصة بالـ Workspace على GazaMarket</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>لوحة تحكم لإدارة مساحتك</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>المعلومات الأساسية (الأسعار، الأوقات، الخدمات)</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>إدارة المشتركين</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>استقبال طلبات الاشتراك أونلاين</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>نظام حجز غرف الاجتماعات</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>نشر إعلانات غير محدودة</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>إشعارات تجديد الاشتراكات</span>
+              </li>
+              <li class="pkg-feature pkg-feature--off">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="x" class="icon"></i></span>
+                <span><span class="pkg-sr-only">غير متاح: </span>QR لتسجيل حضور الفعاليات</span>
+              </li>
+            </ul>
+
+            <button type="button" class="btn pkg-btn pkg-btn--current" disabled>
+              <i data-lucide="check" class="icon"></i> باقتك الحالية
+            </button>
+          </article>
+
+          <article class="card pkg-card pkg-card--featured" aria-labelledby="pkg-workspace-name">
+            <span class="pkg-badge">باقة المساحة</span>
+            <div class="pkg-eyebrow">WORKSPACE</div>
+            <h2 class="pkg-name" id="pkg-workspace-name">Workspace</h2>
+            <p class="pkg-desc">كل ما تحتاجه لإدارة مساحتك ومشتركيك</p>
+
+            <div class="pkg-price">
+              <span class="pkg-price-amount pkg-price-amount--accent">99</span>
+              <span class="pkg-price-currency">₪</span>
+              <span class="pkg-price-period">/ شهرين</span>
+            </div>
+
+            <ul class="pkg-features">
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>صفحة خاصة بالـ Workspace على GazaMarket</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>إدارة المشتركين (إضافة، تجديد، انتهاء الاشتراك)</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>استقبال طلبات الاشتراك أونلاين</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>نظام حجز غرف الاجتماعات</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>نشر عدد غير محدود من الإعلانات (فعاليات، ورش، وظائف، عروض)</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>لوحة تحكم: عدد المشتركين، الحجوزات، نسبة إشغال الغرف، مشاهدات الإعلانات</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>إشعارات لتجديد الاشتراكات</span>
+              </li>
+              <li class="pkg-feature">
+                <span class="pkg-feature-mark" aria-hidden="true"><i data-lucide="check" class="icon"></i></span>
+                <span>QR Code لتسجيل حضور الفعاليات</span>
+              </li>
+            </ul>
+
+            <button type="button" class="btn btn-primary pkg-btn" data-action="select-package" data-plan="workspace" aria-expanded="false" aria-controls="pkg-pay">
+              <span class="pkg-swap">
+                <span class="pkg-swap-item">اشترك في باقة المساحة</span>
+                <span class="pkg-swap-item pkg-swap-item--alt" aria-hidden="true"><i data-lucide="check" class="icon"></i> تم الاختيار</span>
+              </span>
+            </button>
+
+            <div class="pkg-pay" id="pkg-pay" role="region" aria-label="خطوات إتمام الاشتراك">
+              <div class="pkg-pay-inner">
+                <div class="pkg-pay-body">
+
+                  <div class="pkg-pay-box">
+                    <div class="pkg-pay-step">
+                      <span class="pkg-pay-step-no" aria-hidden="true">1</span>
+                      <span>حوّل المبلغ عبر بنك فلسطين (بأسم: كريم وائل ابو عويمر)</span>
+                    </div>
+                    <div class="pkg-pay-number-row">
+                      <span class="pkg-pay-number" data-bank-number>0592194533</span>
+                      <button type="button" class="btn btn-sm pkg-copy" data-action="copy-bank-number">
+                        <span class="pkg-swap">
+                          <span class="pkg-swap-item"><i data-lucide="copy" class="icon"></i> نسخ</span>
+                          <span class="pkg-swap-item pkg-swap-item--alt" aria-hidden="true"><i data-lucide="check" class="icon"></i> تم النسخ</span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="pkg-pay-box">
+                    <div class="pkg-pay-step">
+                      <span class="pkg-pay-step-no" aria-hidden="true">2</span>
+                      <span>أرسل إشعار التحويل للتأكيد</span>
+                    </div>
+                    <a class="btn pkg-wa-btn" href="https://wa.me/qr/JJQK3CTIZA5YJ1" target="_blank" rel="noopener" data-whatsapp="970567359920" data-message="السلام عليكم، قمت بتحويل مبلغ 99 ₪ لاشتراك باقة Workspace، وهذا إشعار التحويل.">
+                      <i data-lucide="message-circle" class="icon"></i> إرسال عبر واتساب
+                    </a>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <span class="pkg-sr-only" role="status" aria-live="polite" id="pkg-status"></span>
+          </article>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="profile-edit-slot"></div>
+  <div id="prices-edit-slot"></div>
+  <div id="services-edit-slot"></div>
+
+  <div id="mobile-nav-slot"></div>
+
+  <script src="../js/vendor/lucide.min.js" defer></script>
+  <script src="../js/add-store-api.js" defer></script>
+  <script src="../js/store-type-config.js" defer></script>
+  <script src="../js/dashboard/core.js" defer></script>
+  <script src="../js/dashboard/shell.js" defer></script>
+  <script src="../js/dashboard/page-runner.js" defer></script>
+  <script src="../js/dashboard/common.js" defer></script>
+  <script src="../js/dashboard/pages/packages.js" defer></script>
+</body>
+</html>

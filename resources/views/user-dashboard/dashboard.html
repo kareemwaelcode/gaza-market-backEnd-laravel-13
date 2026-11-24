@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>الرئيسية — سوق غزة</title>
+<script src="../js/gm-core.js" defer></script>
+<script src="auth/auth-api.js" defer></script>
+<script src="auth/auth-guard.js" defer></script>
+<link rel="stylesheet" href="../css/user-dashboard.css">
+</head>
+<body data-page="dashboard">
+<script>(function(){try{if(localStorage.getItem('gaza-market-dashboard-theme')==='dark'){document.body.classList.add('dark-mode');}}catch(e){}})();</script>
+
+  <div id="topnav-slot"></div>
+
+  <aside class="side-panel">
+    <div id="topbar-slot"></div>
+    <div id="sidebar-slot"></div>
+  </aside>
+
+  <div class="app-shell">
+    <main class="app-main">
+
+      <button class="mobile-menu-btn" data-action="open-sidebar" aria-label="فتح القائمة">
+        <i data-lucide="menu" class="icon"></i>
+      </button>
+
+      <div class="app-content">
+
+        <section class="hero hero--accent" style="margin-top: 4px;">
+          <div class="hero-welcome">
+            <div>
+              <div class="date-line-row">
+                <span class="plan-chip" id="hero-plan-chip">باقة …</span>
+                <span class="date-line" id="hero-date-line">جارِ تحميل التاريخ…</span>
+              </div>
+              <h2>أهلاً، <span id="hero-user-name"></span> 👋</h2>
+              <p id="hero-welcome-text" data-store-type-copy="heroWelcomeText">مساحتك جاهزة لبدء استقبال طلباتك وخدماتك من هنا.</p>
+              <div class="hero-status mt-12">
+                <span class="status-pill" id="hero-status-pill"><span class="dot"></span><span id="hero-status-text">مفتوح</span></span>
+                <span class="azan-pill">
+                  <i data-lucide="clock" class="icon"></i>
+                  <span id="hero-azan-text">جارِ حساب موعد الأذان…</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-side">
+            <div class="big-num js-visits-total">0</div>
+            <div class="cap">إجمالي الزوار</div>
+          </div>
+        </section>
+
+        <div class="status-row mobile-status-card">
+          <div class="status-text">
+            <div class="status-title js-open-status-title">مساحة مفتوحة</div>
+            <div class="status-sub js-open-status-sub">الزبائن يستطيعون الطلب الآن</div>
+          </div>
+          <div class="switch on" data-action="toggle-open" role="switch" aria-label="حالة المساحة"></div>
+        </div>
+
+        <div class="card card-pad mobile-plan-row">
+          <div class="mobile-plan-label">
+            <span class="text-muted">الباقة:</span>
+            <span class="plan-chip">مجاني</span>
+          </div>
+          <a href="packages.html" class="mobile-plan-upgrade">
+            <span>ترقية</span>
+            <i data-lucide="arrow-left" class="icon"></i>
+          </a>
+        </div>
+
+        <div class="quick-grid mobile-quick-grid" id="dashboard-quick-grid">
+          <div class="card quick-card" data-action="open-services-edit">
+            <div class="icon-wrap"><i data-lucide="wifi" class="icon"></i></div>
+            <div>
+              <div class="title">الخدمات المتاحة</div>
+              <div class="sub">واي فاي، كهرباء</div>
+            </div>
+          </div>
+          <div class="card quick-card" data-action="open-prices-edit">
+            <div class="icon-wrap"><i data-lucide="tag" class="icon"></i></div>
+            <div>
+              <div class="title">الأسعار والأوقات</div>
+              <div class="sub">أسعار، مواعيد</div>
+            </div>
+          </div>
+          <a href="subscription-requests.html" class="card quick-card" data-locked-feature="subscriptionRequests">
+            <div class="icon-wrap"><i data-lucide="thumbs-up" class="icon"></i></div>
+            <div>
+              <div class="title">طلبات الاشتراك</div>
+              <div class="sub">للموافقة أونلاين</div>
+            </div>
+          </a>
+          <a href="subscribers.html" class="card quick-card">
+            <div class="icon-wrap"><i data-lucide="users" class="icon"></i></div>
+            <div>
+              <div class="title">المشتركين</div>
+              <div class="sub">إضافة، تجديد</div>
+            </div>
+          </a>
+        </div>
+
+        <a href="ads.html" class="card quick-card mobile-ads-card">
+          <div class="icon-wrap"><i data-lucide="megaphone" class="icon"></i></div>
+          <div>
+            <div class="title">الإعلانات</div>
+            <div class="sub">فعاليات، ورش، وظائف، عروض</div>
+          </div>
+        </a>
+
+        <div class="grid-2 mt-20">
+          <div class="card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>من زرت مؤخراً؟</h3>
+                <div class="sub">ملخص سريع لنشاط <span data-store-type-copy="entityPossessive">مساحتك</span> اليوم</div>
+              </div>
+            </div>
+            <div class="stat-grid stat-grid--3" data-locked-feature="stats" data-lock-overlay>
+              <div class="stat-card stat-card--raised">
+                <div class="icon-wrap brand"><i data-lucide="eye" class="icon"></i></div>
+                <div>
+                  <div class="value js-visits-total">0</div>
+                  <div class="label">الإجمالي</div>
+                </div>
+              </div>
+              <div class="stat-card stat-card--raised">
+                <div class="icon-wrap blue"><i data-lucide="calendar-days" class="icon"></i></div>
+                <div>
+                  <div class="value js-visits-week">0</div>
+                  <div class="label">هذا الأسبوع</div>
+                </div>
+              </div>
+              <div class="stat-card stat-card--raised">
+                <div class="icon-wrap amber"><i data-lucide="calendar-check" class="icon"></i></div>
+                <div>
+                  <div class="value js-visits-today">0</div>
+                  <div class="label">زيارات اليوم</div>
+                </div>
+              </div>
+            </div>
+            <div class="notice">
+              <i data-lucide="info" class="icon"></i>
+              <span class="share-hint">شارك <span data-store-type-copy="entityPossessive">مساحتك</span> لبدء جذب الزوار — انسخ الرابط وأرسله عبر واتساب أو ضمّه في سيرتك الذاتية أو بروفايلك على السوشيال ميديا.</span>
+            </div>
+            <div class="share-tip" role="note">
+              <i data-lucide="lightbulb" class="icon share-tip-icon"></i>
+              <div class="share-tip-body">
+                <div class="share-tip-title">شارك <span data-store-type-copy="entityPossessive">مساحتك</span> لتبدأ بجذب الزوار</div>
+                <p class="share-tip-text">انسخ الرابط وأرسله للزبائن عبر واتساب أو ضعه في بايو حساباتك على السوشيال ميديا.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-pad" id="location-card">
+            <div class="card-header">
+              <div>
+                <h3>الموقع على الخريطة</h3>
+                <div class="sub">حدد موقع <span data-store-type-copy="entityPossessive">مساحتك</span> ليظهر للزوار القريبين</div>
+              </div>
+            </div>
+
+            <div class="map-box" id="location-empty">
+              <i data-lucide="map-pin" class="icon"></i>
+              <div class="title">لم تحدد موقعك بعد</div>
+              <div class="sub">حدد موقع <span data-store-type-copy="entityPossessive">مساحتك</span> ليظهر لزوار السوق القريبين منك</div>
+              <button class="btn btn-primary btn-sm mt-12" data-action="open-profile-edit">
+                <i data-lucide="map-pin" class="icon"></i> حدد الموقع الآن
+              </button>
+            </div>
+
+            <div id="location-filled" style="display:none">
+              <div class="map-box map-box--filled">
+                <i data-lucide="map-pin" class="icon"></i>
+              </div>
+              <div class="list-row" style="border-bottom:none;padding-top:12px;">
+                <div>
+                  <div class="title">موقع المساحة</div>
+                  <div class="sub">عرض على الخريطة</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" data-action="open-profile-edit">تغيير الموقع</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-desktop-shortcuts">
+          <div class="section-title">صفحات عامة</div>
+          <div class="quick-grid">
+            <div class="card quick-card quick-card--qr" data-action="open-qr" data-locked-feature="qrCode" role="button" tabindex="0">
+              <div class="icon-wrap"><i data-lucide="qr-code" class="icon"></i></div>
+              <div>
+                <div class="title">كود QR</div>
+                <div class="sub">احصل على كود QR لصفحتك</div>
+              </div>
+            </div>
+            <div class="card quick-card" data-locked-feature="shareWhatsapp">
+              <div class="icon-wrap"><i data-lucide="share-2" class="icon"></i></div>
+              <div>
+                <div class="title">شارك عبر واتساب</div>
+                <div class="sub">أرسل الرابط مباشرة للزبائن</div>
+              </div>
+            </div>
+            <div class="card quick-card" data-action="copy-public-link">
+              <div class="icon-wrap"><i data-lucide="copy" class="icon"></i></div>
+              <div>
+                <div class="title">نسخ الرابط</div>
+                <div class="sub">شارك رابط <span data-store-type-copy="entityPossessive">مساحتك</span> وشاركه</div>
+              </div>
+            </div>
+            <div class="card quick-card">
+              <div class="icon-wrap"><i data-lucide="external-link" class="icon"></i></div>
+              <div>
+                <div class="title">معاينة الصفحة</div>
+                <div class="sub">شاهد صفحتك كما يراها الزوار</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad mobile-public-page">
+          <div class="card-header"><h3>صفحتك العامة</h3></div>
+
+          <a href="#" class="pubrow">
+            <div class="pubrow-icon"><i data-lucide="eye" class="icon"></i></div>
+            <div class="pubrow-text">
+              <div class="pubrow-title" data-store-type-copy="previewLabel">معاينة صفحتي</div>
+              <div class="pubrow-sub">شاهدها كما يراها الزبائن</div>
+            </div>
+          </a>
+
+          <button type="button" class="pubrow" id="mobile-copy-link-btn" data-action="copy-public-link">
+            <div class="pubrow-icon"><i data-lucide="copy" class="icon"></i></div>
+            <div class="pubrow-text">
+              <div class="pubrow-title">نسخ الرابط</div>
+              <div class="pubrow-sub">وأرسله للزبائن</div>
+            </div>
+          </button>
+
+          <button type="button" class="pubrow pubrow--qr" data-action="open-qr" data-locked-feature="qrCode">
+            <div class="pubrow-icon"><i data-lucide="qr-code" class="icon"></i></div>
+            <div class="pubrow-text">
+              <div class="pubrow-title">كود QR</div>
+              <div class="pubrow-sub">يوجّه الزبائن إلى صفحتك</div>
+            </div>
+          </button>
+
+          <a href="#" class="pubrow pubrow--accent" id="mobile-whatsapp-share-btn" data-locked-feature="shareWhatsapp">
+            <div class="pubrow-icon"><i data-lucide="message-circle" class="icon"></i></div>
+            <div class="pubrow-text">
+              <div class="pubrow-title">شارك عبر واتساب</div>
+              <div class="pubrow-sub">أرسل الرابط مباشرة</div>
+            </div>
+          </a>
+        </div>
+
+        <div class="mobile-visits-stats">
+          <div class="section-title" style="margin-top:0;">من زار صفحتك؟</div>
+          <div class="stat-grid stat-grid--3" data-locked-feature="stats" data-lock-overlay>
+            <div class="stat-card stat-card--plain">
+              <div class="value js-visits-today">0</div>
+              <div class="label">زيارات اليوم</div>
+            </div>
+            <div class="stat-card stat-card--plain">
+              <div class="value js-visits-week">0</div>
+              <div class="label">هذا الأسبوع</div>
+            </div>
+            <div class="stat-card stat-card--plain">
+              <div class="value js-visits-total">0</div>
+              <div class="label">الإجمالي</div>
+            </div>
+          </div>
+          <div class="notice">
+            <i data-lucide="info" class="icon"></i>
+            <span class="share-hint">شارك <span data-store-type-copy="entityPossessive">مساحتك</span> لتبدأ بجذب الزوار — انسخ الرابط وأرسله للزبائن عبر واتساب أو ضعه في بايو حساباتك.</span>
+          </div>
+          <div class="share-tip" role="note">
+            <i data-lucide="lightbulb" class="icon share-tip-icon"></i>
+            <div class="share-tip-body">
+              <div class="share-tip-title">شارك <span data-store-type-copy="entityPossessive">مساحتك</span> لتبدأ بجذب الزوار</div>
+              <p class="share-tip-text">انسخ الرابط وأرسله للزبائن عبر واتساب أو ضعه في بايو حساباتك على السوشيال ميديا.</p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="ud-footer">
+          <p>سوق غزة لوحة تحكم المالك👑</p>
+        </footer>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="profile-edit-slot"></div>
+  <div id="prices-edit-slot"></div>
+  <div id="services-edit-slot"></div>
+
+  <div id="mobile-nav-slot"></div>
+
+  <script src="../js/vendor/lucide.min.js" defer></script>
+  <script src="../js/vendor/qrcode.js" defer></script>
+  <script src="../js/add-store-api.js" defer></script>
+  <script src="../js/store-type-config.js" defer></script>
+  <script src="../js/dashboard/core.js" defer></script>
+  <script src="../js/dashboard/shell.js" defer></script>
+  <script src="../js/dashboard/page-runner.js" defer></script>
+  <script src="../js/dashboard/common.js" defer></script>
+  <script src="../js/dashboard/pages/dashboard.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>المنيو — سوق غزة</title>
+<script src="../js/gm-core.js" defer></script>
+<script src="auth/auth-api.js" defer></script>
+<script src="auth/auth-guard.js" defer></script>
+<link rel="stylesheet" href="../css/user-dashboard.css">
+</head>
+<body data-page="menu">
+<script>(function(){try{if(localStorage.getItem('gaza-market-dashboard-theme')==='dark'){document.body.classList.add('dark-mode');}}catch(e){}})();</script>
+
+  <div id="topnav-slot"></div>
+
+  <aside class="side-panel">
+    <div id="topbar-slot"></div>
+    <div id="sidebar-slot"></div>
+  </aside>
+
+  <div class="app-shell">
+    <main class="app-main">
+
+      <button class="mobile-menu-btn" data-action="open-sidebar" aria-label="فتح القائمة">
+        <i data-lucide="menu" class="icon"></i>
+      </button>
+
+      <div class="app-content">
+
+        <div class="page-head">
+          <div>
+            <div class="breadcrumb">سوق غزة <span class="sep">/</span> <span class="current">المنيو</span></div>
+            <div class="page-title">المنيو</div>
+            <div class="page-subtitle" id="menu-usage-counter" style="display:none;"></div>
+          </div>
+          <div class="page-actions">
+            <button type="button" class="btn btn-ghost" data-action="open-menu-category-panel">
+              <i data-lucide="folder-plus" class="icon"></i> التصنيفات
+              <span class="btn-count" id="menu-cat-btn-count">0</span>
+            </button>
+            <button type="button" class="btn btn-primary" data-action="open-menu-item-add">
+              <i data-lucide="plus" class="icon"></i> إضافة صنف
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="card stat-card">
+            <div class="icon-wrap brand"><i data-lucide="layers" class="icon"></i></div>
+            <div><div class="value" id="menu-stat-total">0</div><div class="label">إجمالي الأصناف</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap blue"><i data-lucide="badge-check" class="icon"></i></div>
+            <div><div class="value" id="menu-stat-available">0</div><div class="label">أصناف متاحة</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap amber"><i data-lucide="folder" class="icon"></i></div>
+            <div><div class="value" id="menu-stat-categories">0</div><div class="label">التصنيفات</div></div>
+          </div>
+          <div class="card stat-card">
+            <div class="icon-wrap red"><i data-lucide="ban" class="icon"></i></div>
+            <div><div class="value" id="menu-stat-unavailable">0</div><div class="label">أصناف غير متاحة حالياً</div></div>
+          </div>
+        </div>
+
+        <div id="menu-data-wrap" style="display:none;">
+          <div class="card card-pad">
+            <div class="card-header menu-card-header">
+              <div>
+                <h3>أصناف المنيو</h3>
+                <div class="sub">الأصناف والأسعار التي يراها الزوار عند تصفح صفحتك</div>
+              </div>
+              <div class="menu-search">
+                <input type="search" id="menu-search-input" placeholder="ابحث عن صنف...">
+                <i data-lucide="search" class="icon"></i>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table menu-table">
+                <thead>
+                  <tr>
+                    <th>الصنف</th>
+                    <th>التصنيف</th>
+                    <th>السعر</th>
+                    <th>الحالة</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="menu-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad empty-state" id="menu-empty-state">
+          <i data-lucide="utensils" class="icon"></i>
+          <div class="title">لا توجد أصناف بعد</div>
+          <div class="sub">أضف أول صنف بمنيو نشاطك ليظهر للزوار</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="menu-category-slot"></div>
+  <div id="menu-item-edit-slot"></div>
+  <div id="services-edit-slot"></div>
+  <div id="mobile-nav-slot"></div>
+
+  <script src="../js/vendor/lucide.min.js" defer></script>
+  <script src="../js/add-store-api.js" defer></script>
+  <script src="../js/store-type-config.js" defer></script>
+  <script src="../js/dashboard/core.js" defer></script>
+  <script src="../js/dashboard/shell.js" defer></script>
+  <script src="../js/dashboard/page-runner.js" defer></script>
+  <script src="../js/dashboard/common.js" defer></script>
+  <script src="../js/dashboard/pages/dashboard-menu.js" defer></script>
+</body>
+</html>

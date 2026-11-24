@@ -1,0 +1,62 @@
+<div class="pep-scrim" id="sap-scrim" data-action="close-subscriber-add"></div>
+
+<aside class="pep-panel" id="sap-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">مشترك جديد</h3>
+      <div class="pep-subtitle">أضف مشتركاً جديداً لمساحتك</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-subscriber-add" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="field">
+      <label for="sap-name">الاسم</label>
+      <input type="text" id="sap-name" placeholder="اسم المشترك">
+    </div>
+
+    <div class="field">
+      <label for="sap-whatsapp">رقم الواتساب</label>
+      <div class="phone-input-row">
+        <button type="button" class="phone-cc-toggle" id="sap-country-code" data-value="970" aria-label="مفتاح الدولة +970 — اضغط للتبديل" title="اضغط للتبديل بين 970 و 972">
+          <span class="phone-cc-text" dir="ltr">+970</span>
+          <i data-lucide="arrow-left-right" class="icon"></i>
+        </button>
+        <input type="tel" id="sap-whatsapp" placeholder="592194533" inputmode="numeric" dir="ltr">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>المدة</label>
+      <div class="seg-group" id="sap-duration-group">
+        <button type="button" class="seg-btn" data-value="day">يومي</button>
+        <button type="button" class="seg-btn" data-value="week">أسبوعي</button>
+        <button type="button" class="seg-btn active" data-value="month">شهري</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="sap-amount">المبلغ (₪) — اختياري</label>
+      <input type="number" id="sap-amount" placeholder="0" min="0">
+    </div>
+
+    <div class="field">
+      <label for="sap-start-date">تاريخ البداية</label>
+      <input type="date" id="sap-start-date">
+    </div>
+
+    <div class="field" style="margin-bottom:0;">
+      <label for="sap-note">ملاحظة — اختياري</label>
+      <input type="text" id="sap-note" placeholder="ملاحظة">
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-subscriber-add">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="sap-save-btn">إضافة المشترك</button>
+  </div>
+</aside>

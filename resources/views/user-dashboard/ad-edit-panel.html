@@ -1,0 +1,64 @@
+<div class="pep-scrim" id="ade-scrim" data-action="close-ad-add"></div>
+
+<aside class="pep-panel" id="ade-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title" id="ade-title">إعلان جديد</h3>
+      <div class="pep-subtitle" data-store-type-copy="adsSubtitle">انشر فعالية أو ورشة أو وظيفة أو عرضاً لمساحتك</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-ad-add" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="field">
+      <label>النوع</label>
+      <div class="seg-group" id="ade-type-group">
+        <button type="button" class="seg-btn active" data-value="activity">فعالية</button>
+        <button type="button" class="seg-btn" data-value="workshop">ورشة</button>
+        <button type="button" class="seg-btn" data-value="job">وظيفة</button>
+        <button type="button" class="seg-btn" data-value="offer">عرض</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="ade-ad-title">العنوان</label>
+      <input type="text" id="ade-ad-title" placeholder="عنوان الإعلان">
+    </div>
+
+    <div class="field">
+      <label for="ade-details">التفاصيل — اختياري</label>
+      <textarea id="ade-details" placeholder="تفاصيل الإعلان"></textarea>
+    </div>
+
+    <div id="ade-offer-fields" style="display:none;">
+      <div class="field">
+        <label for="ade-price-before">السعر قبل العرض</label>
+        <input type="number" id="ade-price-before" min="0" step="any" inputmode="decimal" placeholder="5">
+      </div>
+
+      <div class="field">
+        <label for="ade-price-after">السعر بعد العرض</label>
+        <input type="number" id="ade-price-after" min="0" step="any" inputmode="decimal" placeholder="2">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="ade-date" id="ade-date-label">التاريخ — اختياري</label>
+      <input type="date" id="ade-date">
+    </div>
+
+    <div class="field" id="ade-link-field" style="margin-bottom:0;">
+      <label for="ade-link" id="ade-link-label">رابط — اختياري</label>
+      <input type="url" id="ade-link" placeholder="https://...">
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-ghost" data-action="close-ad-add">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="ade-save-btn">نشر الإعلان</button>
+  </div>
+</aside>

@@ -1,0 +1,76 @@
+<div class="pep-scrim" id="phe-scrim" data-action="close-prices-edit"></div>
+
+<aside class="pep-panel" id="phe-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">الأسعار والأوقات</h3>
+      <div class="pep-subtitle">عدّل أسعار المساحة ومواعيد العمل</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-prices-edit" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="section-title" style="margin-top:0;">الأسعار (بالشيكل)</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="phe-price-hour">سعر الساعة</label>
+        <input type="number" id="phe-price-hour" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="phe-price-half-day">نصف يوم</label>
+        <input type="number" id="phe-price-half-day" min="0" step="0.01" placeholder="0">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="phe-price-full-day">يوم كامل</label>
+        <input type="number" id="phe-price-full-day" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="phe-price-week">أسبوع</label>
+        <input type="number" id="phe-price-week" min="0" step="0.01" placeholder="0">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="phe-price-month">سعر الشهر</label>
+      <input type="number" id="phe-price-month" min="0" step="0.01" placeholder="0">
+    </div>
+
+    <div class="section-title">أوقات العمل</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="phe-open-time">يفتح الساعة</label>
+        <input type="time" id="phe-open-time">
+      </div>
+      <div class="field">
+        <label for="phe-close-time">يغلق الساعة</label>
+        <input type="time" id="phe-close-time">
+      </div>
+    </div>
+
+    <div class="section-title">المقاعد</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="phe-seats-total">إجمالي المقاعد</label>
+        <input type="number" id="phe-seats-total" min="0" step="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="phe-seats-available">المقاعد المتاحة</label>
+        <input type="number" id="phe-seats-available" min="0" step="1" placeholder="0">
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pep-footer">
+    <button type="button" class="btn btn-primary" id="phe-save-btn">حفظ التغييرات</button>
+  </div>
+</aside>

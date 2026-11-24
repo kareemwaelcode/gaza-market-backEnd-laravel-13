@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3o54scuLFSA2Ohs6oKpM60iCOJjwRLVPKqDg1Ot1xw8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>المواعيد — سوق غزة</title>
+<script src="../js/gm-core.js" defer></script>
+<script src="auth/auth-api.js" defer></script>
+<script src="auth/auth-guard.js" defer></script>
+<link rel="stylesheet" href="../css/user-dashboard.css">
+<style>
+.apt-stack { display: flex; flex-direction: column; gap: 16px; }
+.apt-stack > .card, .apt-stack > .stat-grid, .apt-stack > #apt-data-wrap { margin: 0; }
+
+.apt-hours-head { align-items: flex-start; }
+.apt-hours-head .btn { flex-shrink: 0; }
+.apt-sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; }
+.apt-sum-day {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--db-bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.apt-sum-day .d { font-size: 13px; font-weight: 700; }
+.apt-sum-day .t { font-size: 12.5px; color: var(--db-text-secondary); }
+.apt-sum-day.is-closed .d, .apt-sum-day.is-closed .t { color: var(--db-text-tertiary); }
+.apt-sum-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--db-text-secondary);
+}
+.apt-sum-slot .icon { width: 16px; height: 16px; flex-shrink: 0; }
+.apt-sum-slot b { color: var(--text); }
+
+.aph-days { display: flex; flex-direction: column; }
+.aph-day { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.aph-day:last-child { border-bottom: none; }
+.aph-day-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.aph-day-name { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin: 0; }
+.aph-day-name input { width: 18px; height: 18px; accent-color: var(--db-accent); cursor: pointer; margin: 0; }
+.aph-day-closed {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--db-text-tertiary);
+  background: var(--db-bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+.aph-day.is-closed .aph-day-closed { display: inline-block; }
+.aph-day.is-closed .aph-day-name { color: var(--db-text-tertiary); }
+.aph-day-times { display: flex; align-items: center; gap: 10px; }
+.aph-day-times span { color: var(--db-text-tertiary); }
+.aph-time {
+  flex: 1;
+  min-width: 0;
+  background: var(--db-bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  direction: ltr;
+  text-align: center;
+}
+.aph-time:focus { outline: none; border-color: var(--db-accent-soft-border); }
+.aph-time:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .apt-hours-head { flex-direction: column; align-items: stretch; }
+  .apt-hours-head .btn { width: 100%; justify-content: center; }
+  .apt-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .aph-time, #aph-slot { font-size: 16px; }
+}
+</style>
+</head>
+<body data-page="appointments">
+<script>(function(){try{if(localStorage.getItem('gaza-market-dashboard-theme')==='dark'){document.body.classList.add('dark-mode');}}catch(e){}})();</script>
+
+  <div id="topnav-slot"></div>
+
+  <aside class="side-panel">
+    <div id="topbar-slot"></div>
+    <div id="sidebar-slot"></div>
+  </aside>
+
+  <div class="app-shell">
+    <main class="app-main">
+
+      <button class="mobile-menu-btn" data-action="open-sidebar" aria-label="فتح القائمة">
+        <i data-lucide="menu" class="icon"></i>
+      </button>
+
+      <div class="app-content">
+
+        <div class="page-head">
+          <div>
+            <div class="breadcrumb">سوق غزة <span class="sep">/</span> <span class="current">المواعيد</span></div>
+            <div class="page-title">المواعيد</div>
+            <div class="page-subtitle">طلبات مواعيد المرضى الواصلة من صفحة عيادتك — أكّد أو ألغِ الطلب</div>
+            <div class="page-subtitle" id="apt-usage-counter" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="apt-stack">
+
+        <div class="card card-pad" id="apt-hours-card">
+          <div class="card-header apt-hours-head">
+            <div>
+              <h3>دوام العيادة والأوقات المتاحة</h3>
+              <div class="sub">أيام الدوام وساعاته ومدة الموعد الواحد</div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" data-action="open-apt-hours">
+              <i data-lucide="pencil" class="icon"></i> تعديل الدوام
+            </button>
+          </div>
+          <div class="apt-sum-grid" id="apt-hours-summary"></div>
+          <div class="apt-sum-slot" id="apt-hours-slot-line"></div>
+        </div>
+
+        <div class="stat-grid stat-grid--3">
+          <div class="stat-card stat-card--plain">
+            <div class="label">قيد الانتظار</div>
+            <div class="value" id="apt-stat-pending" style="color:#b7791f;">0</div>
+          </div>
+          <div class="stat-card stat-card--plain">
+            <div class="label">مؤكدة</div>
+            <div class="value" id="apt-stat-confirmed" style="color:var(--db-accent-text);">0</div>
+          </div>
+          <div class="stat-card stat-card--plain">
+            <div class="label">إجمالي</div>
+            <div class="value" id="apt-stat-total">0</div>
+          </div>
+        </div>
+
+        <div id="apt-data-wrap" style="display:none;">
+
+          <div class="card card-pad" id="apt-table-card">
+            <div class="card-header res-table-card-header">
+              <div>
+                <h3>طلبات المواعيد</h3>
+                <div class="sub">مواعيد المرضى الواصلة من صفحة عيادتك</div>
+              </div>
+              <div class="search-field res-search-field">
+                <i data-lucide="search" class="icon"></i>
+                <input type="text" id="apt-search-input" placeholder="ابحث باسم المريض..." autocomplete="off">
+                <button type="button" class="search-clear-btn" id="apt-search-clear" aria-label="مسح البحث" style="display:none;">
+                  <i data-lucide="x" class="icon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="table-wrap" id="apt-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>اسم المريض</th>
+                    <th>الواتساب</th>
+                    <th>موعد الحضور</th>
+                    <th>سبب الزيارة</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="apt-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sub-cards-wrap" id="apt-cards-wrap"></div>
+
+          <div class="card card-pad empty-state" id="apt-search-empty" style="display:none;">
+            <i data-lucide="search-x" class="icon"></i>
+            <div class="title">ولا نتيجة مطابقة</div>
+            <div class="sub">جرب اسم تاني أو امسح البحث</div>
+          </div>
+
+        </div>
+
+        <div class="card card-pad empty-state" id="apt-empty-state">
+          <i data-lucide="calendar-clock" class="icon"></i>
+          <div class="title">لا يوجد طلبات مواعيد حالياً</div>
+          <div class="sub">راح تظهر هون أي طلبات موعد توصلك من صفحة عيادتك</div>
+        </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="services-edit-slot"></div>
+  <div id="apt-hours-slot"></div>
+  <div id="mobile-nav-slot"></div>
+
+  <script src="../js/vendor/lucide.min.js" defer></script>
+  <script src="../js/add-store-api.js" defer></script>
+  <script src="../js/store-type-config.js" defer></script>
+  <script src="../js/dashboard/core.js" defer></script>
+  <script src="../js/dashboard/shell.js" defer></script>
+  <script src="../js/dashboard/page-runner.js" defer></script>
+  <script src="../js/dashboard/common.js" defer></script>
+  <script src="../js/clinic-appointments.js" defer></script>
+</body>
+</html>

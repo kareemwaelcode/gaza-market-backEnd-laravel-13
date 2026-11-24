@@ -1,0 +1,35 @@
+<div class="pep-scrim" id="mcp-scrim" data-action="close-menu-category-panel"></div>
+
+<aside class="pep-panel" id="mcp-panel">
+  <div class="pep-header">
+    <div>
+      <h3 class="pep-title">تصنيفات المنيو</h3>
+      <div class="pep-subtitle">نظّم أصناف منيوك ضمن تصنيفات</div>
+    </div>
+    <button type="button" class="icon-btn" data-action="close-menu-category-panel" aria-label="إغلاق">
+      <i data-lucide="x" class="icon"></i>
+    </button>
+  </div>
+
+  <div class="pep-body">
+
+    <div class="field" style="margin-bottom:18px;">
+      <label for="mcp-new-name">تصنيف جديد</label>
+      <div class="flex gap-8">
+        <input type="text" id="mcp-new-name" placeholder="مثال: أطباق رئيسية" style="flex:1;">
+        <button type="button" class="btn btn-primary btn-sm" id="mcp-add-btn">
+          <i data-lucide="plus" class="icon"></i> إضافة
+        </button>
+      </div>
+    </div>
+
+    <div id="mcp-list"></div>
+
+    <div class="empty-state" id="mcp-empty" style="display:none;padding:24px 4px;">
+      <i data-lucide="folder" class="icon"></i>
+      <div class="title">لا توجد تصنيفات بعد</div>
+      <div class="sub">أضف أول تصنيف لتنظيم أصناف منيوك</div>
+    </div>
+
+  </div>
+</aside>
