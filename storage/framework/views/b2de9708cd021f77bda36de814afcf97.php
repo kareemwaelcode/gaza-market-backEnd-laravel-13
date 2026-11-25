@@ -83,44 +83,28 @@
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-                <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle " style="cursor:pointer;">
-                  <span data-i18n="CentralGaza">Central Gaza</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/></svg>                </span>
-                <div class="sub-menu ps-3" style="display:none">
-                  <a class="dropdown-item" href="#" data-area="Nuseirat"      data-i18n="Nuseirat">Nuseirat</a>
-                  <a class="dropdown-item" href="#" data-area="Breij"         data-i18n="Breij">Breij</a>
-                  <a class="dropdown-item" href="#" data-area="Maghazi"       data-i18n="Maghazi">Maghazi</a>
-                  <a class="dropdown-item" href="#" data-area="Zawayda"       data-i18n="Zawayda">Zawayda</a>
-                  <a class="dropdown-item" href="#" data-area="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</a>
-                </div>
+    <?php $__currentLoopData = $regions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $region): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
+          style="cursor:pointer;">
+        <span><?php echo e($region->region_name_en); ?></span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"viewBox="0 0 24 24"fill="none" stroke="currentColor"stroke-width="2" stroke-linecap="round"stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/>
+        </svg>
+    </span>
+    <div class="sub-menu ps-3" style="display:none">
+        <?php $__currentLoopData = $areas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php if($area->region_id == $region->id): ?>
+                <a class="dropdown-item"href="#"data-area="<?php echo e($area->area_name_en); ?>">
+                    <?php echo e($area->area_name_en); ?>
+
+                </a>
+            <?php endif; ?>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    </div>
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </li>
               <li>
-                <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle" style="cursor:pointer;">
-                  <span data-i18n="SouthGaza">South Gaza</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/></svg>
-                </span>
-                <div class="sub-menu ps-3" style="display:none">
-                  <a class="dropdown-item" href="#" data-area="Khan Yunis"         data-i18n="KhanYunis">Khan Yunis</a>
-                  <a class="dropdown-item" href="#" data-area="Rafah"              data-i18n="Rafah">Rafah</a>
-                  <a class="dropdown-item" href="#" data-area="Mawasi Khan Yunis"  data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</a>
-                  <a class="dropdown-item" href="#" data-area="Mawasi al-Qarara"   data-i18n="MawasiQarara">Mawasi al-Qarara</a>
-                </div>
               </li>
               <li>
-                <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle" style="cursor:pointer;">
-                  <span data-i18n="NorthGaza">North Gaza</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/></svg>
-                </span>
-                <div class="sub-menu ps-3" style="display:none">
-                  <a class="dropdown-item" href="#" data-area="Alrimal"       data-i18n="Alrimal">Al-Rimal</a>
-                  <a class="dropdown-item" href="#" data-area="Alshaati"      data-i18n="Alshaati">Al-Shaati</a>
-                  <a class="dropdown-item" href="#" data-area="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</a>
-                  <a class="dropdown-item" href="#" data-area="Saftawi"       data-i18n="Saftawi">Saftawi</a>
-                  <a class="dropdown-item" href="#" data-area="Beit Hanoun"   data-i18n="BeitHanoun">Beit Hanoun</a>
-                  <a class="dropdown-item" href="#" data-area="Beit Lahia"    data-i18n="BeitLahia">Beit Lahia</a>
-                  <a class="dropdown-item" href="#" data-area="Tal Al-Hawa"   data-i18n="TalHawa">Tal Al-Hawa</a>
-                  <a class="dropdown-item" href="#" data-area="Jabalia"       data-i18n="Jabalia">Jabalia</a>
-                </div>
               </li>
             </ul>
           </li>

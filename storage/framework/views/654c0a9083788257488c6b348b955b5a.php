@@ -90,10 +90,7 @@
 </span>
   </div>
 </section>
-
-
 <?php $__env->stopSection(); ?>
-
 
 <?php $__env->startSection('scripts'); ?>
 

@@ -1,17 +1,9 @@
 const CACHE_PREFIX = 'gm-';
-const CACHE_VERSION = 'gm-v36';
+const CACHE_VERSION = 'gm-v37';
 const SCOPE = self.registration.scope;
 
 const PRECACHE = [
-  'index.html',
-  'home.html',
-  'places.html',
-  'menu.html',
-  'profile.html',
-  'add-store.html',
-  'guide.html',
-  'market.html',
-  'market-details.html',
+  'index',
   'css/vendor/bootstrap.min.css',
   'css/main.css',
   'css/prices.css',
@@ -46,7 +38,7 @@ const PRECACHE = [
   'assets/fonts/cairo-latin-600-normal.woff2',
   'assets/fonts/cairo-latin-700-normal.woff2',
   'assets/img/logo.gazamarket.png',
-  'assets/img/place-placeholder.svg.webp',
+  'assets/img/shop-placeholder.svg.webp',
   'assets/img/ps.svg',
   'assets/img/us.svg'
 ];
@@ -135,7 +127,7 @@ async function cleanResponse(response) {
 
 async function precacheAll() {
   const cache = await caches.open(CACHE_VERSION);
-  await Promise.all(
+  const results = await Promise.allSettled(
     PRECACHE.map(async (path) => {
       const url = new URL(path, SCOPE).href;
       const response = await fetch(new Request(url, { cache: 'reload' }));
@@ -143,6 +135,9 @@ async function precacheAll() {
       await cache.put(url, await cleanResponse(response));
     })
   );
+  results.forEach((result) => {
+    if (result.status === 'rejected') console.warn(result.reason && result.reason.message);
+  });
 }
 
 self.addEventListener('install', (event) => {
@@ -191,7 +186,7 @@ async function handleNavigation(request) {
       const dashboard = await cache.match(new URL('dashboard-users/dashboard.html', SCOPE).href);
       if (dashboard) return dashboard;
     }
-    const fallback = await cache.match(new URL('index.html', SCOPE).href);
+    const fallback = await cache.match(new URL('index', SCOPE).href);
     if (fallback) return fallback;
     return Response.error();
   } finally {
