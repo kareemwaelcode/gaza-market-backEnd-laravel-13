@@ -61,7 +61,7 @@ class AuthController extends Controller
         }
 
         try {
-            $this->otp->request($phone, $purpose, $eligible, $meta);
+            $this->otp->request($phone, $purpose, $eligible, $meta, $request->otpDestination());
         } catch (OtpThrottledException $e) {
             return $this->failure('THROTTLED', 429, [
                 'reason' => $e->reason,

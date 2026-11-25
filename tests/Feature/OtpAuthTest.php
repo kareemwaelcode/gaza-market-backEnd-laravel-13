@@ -199,9 +199,9 @@ class OtpAuthTest extends TestCase
             // المدخل => [المخزّن بقاعدة البيانات, رقم الإرسال E.164]
             '0597379047' => ['0597379047', '+970597379047'],
             '+970567883165' => ['0567883165', '+970567883165'],
-            '++972592194533' => ['972592194533', '+972592194533'],
-            '972567883164' => ['972567883164', '+972567883164'],
-            '00972599145431' => ['972599145431', '+972599145431'],
+            '++972592194533' => ['0592194533', '+972592194533'],
+            '972567883164' => ['0567883164', '+972567883164'],
+            '00972599145431' => ['0599145431', '+972599145431'],
             '00970592000111' => ['0592000111', '+970592000111'],
         ];
 
@@ -234,13 +234,90 @@ class OtpAuthTest extends TestCase
         $this->assertSame(1, User::where('user_phone', 'like', '%597379047')->count());
     }
 
-    public function test_972_number_is_a_separate_account_from_the_local_number(): void
+    public function test_972_number_is_the_same_account_and_the_code_goes_to_the_typed_format(): void
+    {
+        $user = $this->makeUser(['user_phone' => '0592194533']);
+
+        $cases = [
+            '972592194533' => '+972592194533',
+            '+972592194533' => '+972592194533',
+            '00972592194533' => '+972592194533',
+            '970592194533' => '+970592194533',
+            '+970592194533' => '+970592194533',
+            '0592194533' => '+970592194533',
+        ];
+
+        foreach ($cases as $input => $to) {
+            $input = (string) $input;
+            Cache::flush();
+
+            $this->requestOtp('login', $input)->assertStatus(202);
+            $this->assertSame($to, end($this->sender->sent)['to'], "الوجهة لـ {$input}");
+
+            $this->verifyOtp('login', $this->sender->lastCode(), $input)
+                ->assertOk()
+                ->assertJsonPath('data.id', $user->id);
+        }
+
+        $this->assertSame(1, User::where('user_phone', 'like', '%592194533')->count());
+    }
+
+    public function test_a_code_requested_in_one_phone_format_verifies_in_another(): void
+    {
+        $user = $this->makeUser(['user_phone' => '0592194533']);
+
+        $this->requestOtp('login', '+972592194533')->assertStatus(202);
+
+        $this->verifyOtp('login', $this->sender->lastCode(), '0592194533')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id);
+    }
+
+    public function test_the_job_carries_the_typed_destination_only_for_972(): void
+    {
+        Queue::fake();
+        $this->makeUser(['user_phone' => '0592194533']);
+
+        $this->requestOtp('login', '+972592194533')->assertStatus(202);
+        Queue::assertPushed(SendOtpMessage::class, fn (SendOtpMessage $job) => $job->phone === '0592194533' && $job->destination === '+972592194533');
+
+        Cache::flush();
+        $this->requestOtp('login', '+970592194533')->assertStatus(202);
+        Queue::assertPushed(SendOtpMessage::class, fn (SendOtpMessage $job) => $job->phone === '0592194533' && $job->destination === null);
+    }
+
+    public function test_all_phone_formats_share_the_same_cooldown(): void
     {
         $this->makeUser(['user_phone' => '0592194533']);
 
-        $this->requestOtp('login', '972592194533')->assertStatus(202);
+        $this->requestOtp('login', '0592194533')->assertStatus(202);
 
-        $this->assertSame([], $this->sender->sent, 'رقم 972 مختلف عن المحلي، فما في حساب مؤهل');
+        foreach (['+970592194533', '970592194533', '972592194533', '+972592194533'] as $input) {
+            $this->requestOtp('login', $input)->assertStatus(429)->assertJsonPath('reason', 'cooldown');
+        }
+
+        $this->assertCount(1, $this->sender->sent);
+    }
+
+    public function test_all_phone_formats_share_the_same_daily_limit(): void
+    {
+        config(['otp.daily_limit' => 2, 'otp.resend_cooldown' => 0]);
+        $this->makeUser(['user_phone' => '0592194533']);
+
+        $this->requestOtp('login', '0592194533')->assertStatus(202);
+        $this->requestOtp('login', '+972592194533')->assertStatus(202);
+        $this->requestOtp('login', '+970592194533')->assertStatus(429)->assertJsonPath('reason', 'daily_limit');
+
+        $this->assertCount(2, $this->sender->sent);
+    }
+
+    public function test_registering_with_a_972_number_is_refused_when_the_local_number_exists(): void
+    {
+        $this->makeUser(['user_phone' => '0592194533']);
+
+        $this->requestOtp('register', '+972592194533', ['full_name' => 'Test User'])->assertStatus(409);
+
+        $this->assertSame([], $this->sender->sent);
     }
 
     public function test_allowed_list_accepts_the_test_numbers_in_any_format(): void

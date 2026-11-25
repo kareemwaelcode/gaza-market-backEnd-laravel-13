@@ -26,6 +26,7 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
         public string $purpose,
         public string $code,
         public int $issuedAt,
+        public ?string $destination = null,
     ) {}
 
     public function retryUntil(): DateTimeInterface
@@ -39,8 +40,8 @@ class SendOtpMessage implements ShouldBeEncrypted, ShouldQueue
             return;
         }
 
-        // الأرقام تُتحقق بالـ regex (05[69]) قبل الوصول هنا، والتحويل الدولي نفسه المستخدم برسائل القبول.
-        $to = SendPlaceStatusMessage::toE164($this->phone);
+        // الهوية دائماً 05[69]، والوجهة تتبع الصيغة المكتوبة (+972 أو +970) بنفس تحويل رسائل القبول.
+        $to = SendPlaceStatusMessage::toE164($this->destination ?? $this->phone);
 
         if ($to === null) {
             Log::warning('OTP message skipped: invalid phone number.', ['purpose' => $this->purpose]);

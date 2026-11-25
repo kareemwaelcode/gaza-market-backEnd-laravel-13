@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\Cache;
 class OtpService
 {
 
-    // @param  array<string, mixed>  $meta 
+    // @param  array<string, mixed>  $meta
+    // @param  string|null  $destination  وجهة الواتساب بالصيغة المكتوبة (+972...)؛ null = الافتراضي من الرقم
     // @throws OtpThrottledException
 
-    public function request(string $phone, string $purpose, bool $eligible, array $meta = []): void
+    public function request(string $phone, string $purpose, bool $eligible, array $meta = [], ?string $destination = null): void
     {
-    $this->withLock($phone, function () use ($phone, $purpose, $eligible, $meta) {
+    $this->withLock($phone, function () use ($phone, $purpose, $eligible, $meta, $destination) {
         $this->enforceLimits($phone, $purpose);
 
         if (! $eligible) {
@@ -33,7 +34,7 @@ class OtpService
             'meta' => $meta,
         ], (int) config('otp.ttl'));
 
-        SendOtpMessage::dispatch($phone, $purpose, $code, $issuedAt);
+        SendOtpMessage::dispatch($phone, $purpose, $code, $issuedAt, $destination);
     });
     }
 
