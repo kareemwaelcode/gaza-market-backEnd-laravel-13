@@ -1,0 +1,1484 @@
+@extends('gazamarket.master')
+
+@section('title', 'Title')
+
+@section('styles')
+
+@endsection
+
+
+@section('content')
+
+@endsection
+
+
+@section('scripts')
+
+@endsection
+
+<div class="modal fade" id="additionModal" tabindex="-1" aria-labelledby="additionModalLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content addition-modal-content">
+      <div class="addition-modal-header">
+        <button type="button" class="addition-close-btn" data-bs-dismiss="modal" aria-label="Close dialog">
+          <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-x"/></svg>
+        </button>
+        <div class="addition-modal-title-wrap">
+          <h5 class="addition-modal-title" id="additionModalLabel" data-i18n="addition.title">New addition</h5>
+          <p class="addition-modal-subtitle" data-i18n="addition.subtitle">Share new information with the community.</p>
+        </div>
+      </div>
+      <div class="addition-modal-body">
+        <div class="addition-option" data-action="add-price" role="button" tabindex="0">
+          <div class="addition-option-icon" aria-hidden="true">
+            <svg width="20" height="20" aria-hidden="true" focusable="false"><use href="#gm-i-tag"/></svg>
+          </div>
+          <div class="addition-option-text">
+            <h6 data-i18n="addition.priceTitle">Product price</h6>
+            <span data-i18n="addition.priceDesc">Did you spot a price at a store? Report it and help others.</span>
+            <em data-i18n="addition.priceExample">Example: 1 kg sugar at Abu Khalid = ₪8</em>
+          </div>
+        </div>
+        <div class="addition-option" data-action="add-new-product" role="button" tabindex="0">
+          <div class="addition-option-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-plus-icon lucide-circle-plus"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+          </div>
+          <div class="addition-option-text">
+            <h6 data-i18n="addition.newProductTitle">New product</h6>
+            <span data-i18n="addition.newProductDesc">Product not on the list? Suggest it and add the first price.</span>
+            <em data-i18n="addition.newProductExample">Example: Sheikh Qasim olive oil is priced at 25₪.</em>
+          </div>
+        </div>
+        <div class="addition-option" data-action="add-listing" role="button" tabindex="0">
+          <div class="addition-option-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-bag-icon lucide-shopping-bag"><path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/></svg>
+          </div>
+          <div class="addition-option-text">
+            <h6 data-i18n="addition.listingTitle">Buying and selling</h6>
+            <span data-i18n="addition.listingDesc">List your products for sale or find everything you need—whether new or used—in the marketplace.</span>
+            <em data-i18n="addition.listingExample">Example: Buying or selling furniture, clothing, electronics, and more.</em>
+          </div>
+        </div>
+        <div class="addition-option" data-action="add-store" data-link="add-store.html" role="button" tabindex="0">
+          <div class="addition-option-icon" aria-hidden="true">
+            <svg width="20" height="20" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+          </div>
+          <div class="addition-option-text">
+            <h6 data-i18n="addition.storeTitle">New Place</h6>
+            <span data-i18n="addition.storeDesc">Do you own a place, restaurant, or café? Register it so it appears to people and you can reach more customers.</span>
+            <em data-i18n="addition.storeExample">Example: Al-Sa'ada Shaf'out Restaurant – Nuseirat</em>
+          </div>
+        </div>
+        <div class="addition-note" role="note">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-icon lucide-heart addition-note-icon"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>
+          <p data-i18n="addition.note">This community lives through people like you. Thank you.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addPriceModal" tabindex="-1" aria-labelledby="addPriceModalLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content add-price-modal-content">
+      <div class="add-price-modal-header">
+        <button type="button" class="addition-close-btn" data-bs-dismiss="modal" aria-label="Close dialog">
+          <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-x"/></svg>
+        </button>
+        <h5 class="add-price-modal-title" id="addPriceModalLabel" data-i18n="addPrice.title">Add price</h5>
+      </div>
+
+      <div class="npw-progress" data-progress role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1">
+        <div class="npw-progress-track">
+          <div class="npw-progress-fill" data-progress-fill style="width:0%"></div>
+        </div>
+        <div class="npw-progress-dots" data-progress-dots>
+          <span class="npw-dot active" data-step="1"></span>
+          <span class="npw-dot" data-step="2"></span>
+          <span class="npw-dot" data-step="3"></span>
+          <span class="npw-dot" data-step="4"></span>
+          <span class="npw-dot" data-step="5"></span>
+          <span class="npw-dot" data-step="6"></span>
+        </div>
+        <span class="npw-step-count" data-step-count>1 / 6</span>
+      </div>
+
+      <div class="add-price-modal-body gm-form-body" data-step-body>
+        <section class="gm-form-card gm-step-active" data-step="1">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-tag"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addPrice.cardProductTitle">What is the product?</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardProductSub">Search or choose from the list</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <div class="add-price-search-wrap">
+              <input type="text" class="add-price-input" id="productSearch" name="product" autocomplete="off"
+                data-i18n-placeholder="addPrice.productPlaceholder" placeholder="Search for a product..." />
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="add-price-search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <span class="npw-field-err" id="productSearchErr" data-i18n="addPrice.errRequired">This field is required</span>
+          </div>
+        </section>
+        <section class="gm-form-card" data-step="2">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" id="addPriceRegionTitle" data-i18n="addPrice.cardRegionTitle">Choose the region</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardRegionSub">Where did you find this price?</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <div class="npw-region-grid" id="addPriceRegionGrid" role="group" aria-labelledby="addPriceRegionTitle">
+              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
+              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
+              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
+              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
+              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
+              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
+              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
+              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
+              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
+              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
+              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
+              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+            </div>
+            <select class="npw-visually-hidden-select" id="regionSelect" name="region" tabindex="-1" aria-hidden="true">
+              <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>
+              <option value="Alrimal" data-i18n="Alrimal">Al-Rimal</option>
+              <option value="Alshaati" data-i18n="Alshaati">Al-Shaati</option>
+              <option value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</option>
+              <option value="Saftawi" data-i18n="Saftawi">Saftawi</option>
+              <option value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</option>
+              <option value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</option>
+              <option value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</option>
+              <option value="Jabalia" data-i18n="Jabalia">Jabalia</option>
+              <option value="Nuseirat" data-i18n="Nuseirat">Nuseirat</option>
+              <option value="Breij" data-i18n="Breij">Breij</option>
+              <option value="Maghazi" data-i18n="Maghazi">Maghazi</option>
+              <option value="Zawayda" data-i18n="Zawayda">Zawayda</option>
+              <option value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</option>
+              <option value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</option>
+              <option value="Rafah" data-i18n="Rafah">Rafah</option>
+              <option value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</option>
+              <option value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</option>
+            </select>
+            <span class="gm-field-err" id="addPriceRegionErr" data-i18n="addPrice.errRegionRequired">Please select a region</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="3">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">₪</span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addPrice.cardPriceOnlyTitle">How much is the price?</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardPriceOnlySub">Enter the current price in shekels.</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <div class="npw-price-display" id="priceDisplayBox">
+              <input type="number" class="npw-price-big-input" id="priceInput" name="price"
+                placeholder="0" min="0" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
+              <span class="npw-price-currency" aria-hidden="true">₪</span>
+            </div>
+
+            <span class="npw-price-hint" data-i18n="addPrice.quickPriceHint">Or choose a quick price.</span>
+            <div class="npw-quick-price-row" id="quickPriceRow" role="group" aria-label="Quick price selection">
+              <button type="button" class="npw-quick-price-btn" data-price="50">50₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="30">30₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="25">25₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="20">20₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="15">15₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="10">10₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="5">5₪</button>
+            </div>
+
+            <span class="npw-field-err" id="priceInputErr" data-i18n="addPrice.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="4">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title">
+                <span data-i18n="addPrice.storeName">From which place?</span>
+              </h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardStoreSub">Write down the name of the place where you saw the price.</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <label class="add-price-label" for="storeName" data-i18n="addPrice.storeName">From which place?</label>
+            <input type="text" class="add-price-input" id="storeName" name="storeName"
+              data-i18n-placeholder="addPrice.storeNamePlaceholder" placeholder="Example: Obada Al-Hajj Supermarket, Abu Muhammad Grocery Store..." />
+          </div>
+
+          <div class="gm-form-row">
+            <div class="add-price-field">
+              <label class="add-price-label" for="storeAddress">
+                <span data-i18n="addPrice.storeAddress">Store Address</span>
+                <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+              </label>
+              <input type="text" class="add-price-input" id="storeAddress" name="storeAddress"
+                data-i18n-placeholder="addPrice.storeAddressPlaceholder" placeholder="Example: Near Al-Razi Medical Complex" />
+            </div>
+            <div class="add-price-field">
+              <label class="add-price-label" for="storePhone">
+                <span data-i18n="addPrice.phone">Store Phone</span>
+                <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+              </label>
+              <input type="tel" class="add-price-input" id="storePhone" name="storePhone" autocomplete="tel"
+                data-i18n-placeholder="addPrice.phonePlaceholder" placeholder="Example: 0591234567" />
+            </div>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="5">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title">
+                <span data-i18n="addPrice.receipt">Receipt Photo</span>
+                <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+              </h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardReceiptSub">Helps us verify faster</p>
+            </div>
+          </div>
+
+          <div class="add-price-upload" id="uploadArea" role="button" tabindex="0" aria-label="Upload receipt photo">
+            <input type="file" id="receiptImage" name="receiptImage" accept="image/jpeg,image/png,image/webp" hidden />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round" class="add-price-upload-icon" data-upload-icon><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+            <p data-upload-filename data-i18n="addPrice.uploadText">Tap to upload photo</p>
+            <span data-i18n="addPrice.uploadHint">JPG, PNG up to 5MB</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="6">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addPrice.reviewTitle">Review your details</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.reviewSub">Make sure everything is correct before submitting</p>
+            </div>
+          </div>
+
+          <div class="npw-review-list" id="addPriceReviewList">
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addPrice.reviewProduct">Product</span>
+              <span class="npw-review-value" data-review="product">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addPrice.reviewRegion">Region</span>
+              <span class="npw-review-value" data-review="region">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addPrice.reviewPrice">Price</span>
+              <span class="npw-review-value" data-review="price">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addPrice.reviewStore">Store</span>
+              <span class="npw-review-value" data-review="store">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addPrice.reviewImage">Receipt Photo</span>
+              <span class="npw-review-value" data-review="image">—</span>
+            </div>
+          </div>
+          <p class="npw-thanks-note" data-i18n="addPrice.thanksNote">Your contribution helps the people of Gaza know real prices. Thank you.</p>
+        </section>
+
+      </div>
+
+      <div class="npw-footer">
+        <div class="npw-nav">
+          <button type="button" class="add-price-cancel-btn npw-back-btn" data-step-back disabled>
+            <svg class="npw-back-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            <span data-i18n="addPrice.back">Back</span>
+          </button>
+          <button type="button" class="add-price-submit-btn gm-submit-btn npw-next-btn" id="submitPriceBtn"
+            data-step-next
+            data-label-next="Next" data-label-submit="Submit Price"
+            data-i18n-label-next="addPrice.next" data-i18n-label-submit="addPrice.submit">
+            <span class="gm-btn-label" data-i18n="addPrice.next">Next</span>
+            <span class="gm-btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <p class="add-price-note" data-i18n="addPrice.note">WhatsApp verification will be required upon sending.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addListingModal" tabindex="-1" aria-labelledby="addListingModalLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content add-listing-modal-content">
+      <div class="add-listing-modal-header">
+        <button type="button" class="addition-close-btn" data-bs-dismiss="modal" aria-label="Close dialog">
+          <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-x"/></svg>
+        </button>
+        <h5 class="add-listing-modal-title" id="addListingModalLabel" data-i18n="addListing.title">Announcement</h5>
+      </div>
+
+      <div class="npw-progress" data-progress role="progressbar" aria-valuemin="1" aria-valuemax="9" aria-valuenow="1">
+        <div class="npw-progress-track">
+          <div class="npw-progress-fill" data-progress-fill style="width:0%"></div>
+        </div>
+        <div class="npw-progress-dots" data-progress-dots>
+          <span class="npw-dot active" data-step="1"></span>
+          <span class="npw-dot" data-step="2"></span>
+          <span class="npw-dot" data-step="3"></span>
+          <span class="npw-dot" data-step="4"></span>
+          <span class="npw-dot" data-step="5"></span>
+          <span class="npw-dot" data-step="6"></span>
+          <span class="npw-dot" data-step="7"></span>
+          <span class="npw-dot" data-step="8"></span>
+          <span class="npw-dot" data-step="9"></span>
+        </div>
+        <span class="npw-step-count" data-step-count>1 / 9</span>
+      </div>
+
+      <div class="add-listing-modal-body gm-form-body" data-step-body>
+        <section class="gm-form-card gm-step-active" data-step="1">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-shopping-bag"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardTitleTitle">Product Name</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardTitleSub">What is the item you want to advertise?</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" for="listingProductName" data-i18n="addListing.adTitle">Ad Name</label>
+            <input type="text" class="add-listing-input" id="listingProductName" name="listingProductName"
+              data-i18n-placeholder="addListing.adTitlePlaceholder" placeholder="Examples: iPhone 13 Pro, apartment for rent, office desk, bicycle..." />
+            <span class="gm-field-err" id="listingProductNameErr" data-i18n="addListing.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="2">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-megaphone-icon lucide-megaphone"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14"/><path d="M8 6v8"/></svg></span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardCategoryTitle">Ad Category</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardCategorySub">Select the appropriate category.</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" id="listingCategoryLabel" data-i18n="addListing.adType">Category</label>
+            <div class="npw-region-grid" id="listingCategoryGrid" role="group" aria-labelledby="listingCategoryLabel">
+              <button type="button" class="npw-region-btn" data-value="electronics" data-i18n="addListing.electronics">Electronics</button>
+              <button type="button" class="npw-region-btn" data-value="clothing" data-i18n="addListing.clothing">Clothing</button>
+              <button type="button" class="npw-region-btn" data-value="furniture" data-i18n="addListing.furniture">Furniture</button>
+              <button type="button" class="npw-region-btn" data-value="food" data-i18n="addListing.food">Food</button>
+              <button type="button" class="npw-region-btn" data-value="books" data-i18n="addListing.books">Books</button>
+              <button type="button" class="npw-region-btn" data-value="tools" data-i18n="addListing.tools">Tools</button>
+              <button type="button" class="npw-region-btn" data-value="toys" data-i18n="addListing.toys">Toys</button>
+              <button type="button" class="npw-region-btn" data-value="other" data-i18n="addListing.other">Other</button>
+            </div>
+            <span class="gm-field-err" id="listingCategoryErr" data-i18n="addListing.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="3">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-check-icon lucide-star-check"><path d="m19.06 12.501 2.78-2.707a.53.53 0 0 0-.294-.905l-5.166-.755a2.1 2.1 0 0 1-1.595-1.16l-2.31-4.68a.53.53 0 0 0-.95.001L9.216 6.974a2.1 2.1 0 0 1-1.597 1.16l-5.165.755a.53.53 0 0 0-.294.906l3.736 3.637a2.1 2.1 0 0 1 .611 1.879l-.88 5.139a.53.53 0 0 0 .769.56l4.617-2.428.027-.014"/><path d="m15 18 2 2 4-4"/></svg></span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardConditionTitle">Condition of the goods?</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardConditionSub">Select the product condition.</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" data-i18n="addListing.condition">Condition</label>
+            <div class="add-listing-condition-group" id="listingConditionGroup" role="group" aria-label="Item condition">
+              <button type="button" class="condition-btn active" data-value="new" aria-pressed="true">
+                <span class="condition-icon" aria-hidden="true"></span>
+                <span data-i18n="addListing.new">New</span>
+              </button>
+              <button type="button" class="condition-btn" data-value="used" aria-pressed="false">
+                <span class="condition-icon" aria-hidden="true"></span>
+                <span data-i18n="addListing.used">Used</span>
+              </button>
+              <button type="button" class="condition-btn" data-value="urgent" aria-pressed="false">
+                <span class="condition-icon" aria-hidden="true"></span>
+                <span data-i18n="addListing.urgent">Urgent</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="4">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-message-square-text"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardDescTitle">Write a description</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardDescSub">Write a short, clear description of the item</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" for="listingDescription" data-i18n="addListing.description">Description</label>
+            <textarea class="add-listing-input add-listing-textarea" id="listingDescription" name="listingDescription"
+              rows="4" data-i18n-placeholder="addListing.descriptionPlaceholder" placeholder="Describe the item..."></textarea>
+            <span class="gm-field-err" id="listingDescriptionErr" data-i18n="addListing.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="5">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">₪</span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardPriceTitle">Price</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardPriceIfAnySub">Write the price in shekels.</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" for="listingPrice">
+              <span data-i18n="addListing.price">Price</span>
+            </label>
+            <input type="number" class="add-listing-input" id="listingPrice" name="listingPrice"
+              placeholder="100" min="0" step="0.01" aria-label="Price in New Israeli Shekel" />
+          </div>
+
+          <div class="add-listing-field">
+            <div class="add-listing-toggle-row">
+              <label class="add-listing-label" for="listingNegotiable" data-i18n="addListing.negotiable">Negotiable</label>
+              <label class="add-listing-toggle" aria-label="Toggle negotiable">
+                <input type="checkbox" id="listingNegotiable" name="listingNegotiable" role="switch" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="6">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.photos">Product image</h6>
+              <p class="gm-form-card-subtitle">
+                <span data-i18n="addListing.photosSub">Add up to</span>
+                <span class="gm-image-count" id="listingImageCount">0/3</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="gm-image-grid" id="listingImageGrid">
+            <button type="button" class="gm-image-add-tile" id="listingImageAddTile" aria-label="Add photo">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+              <span data-i18n="addListing.addPhoto">Add Photo</span>
+            </button>
+            <input type="file" id="listingImages" name="listingImages" accept="image/jpeg,image/png,image/webp" multiple hidden />
+          </div>
+
+          <p class="gm-image-hint" data-i18n="addListing.uploadHint">Up to 3 photos, JPG or PNG, max 5MB each</p>
+          <span class="gm-field-err" id="listingImagesErr"></span>
+        </section>
+
+        <section class="gm-form-card" data-step="7">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" id="listingRegionTitle" data-i18n="addListing.cardRegionTitle">Choose the region</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardRegionSub">Where is the item located?</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <div class="npw-region-grid" id="listingRegionGrid" role="group" aria-labelledby="listingRegionTitle">
+              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
+              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
+              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
+              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
+              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
+              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
+              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
+              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
+              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
+              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
+              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
+              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+            </div>
+            <span class="gm-field-err" id="listingRegionErr" data-i18n="addListing.errRegionRequired">Please select a region</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="8">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone-call-icon lucide-phone-call"><path d="M13 2a9 9 0 0 1 9 9"/><path d="M13 6a5 5 0 0 1 5 5"/><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardPhoneTitle">Mobile phone number</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardPhoneSub">Buyers will use this number to contact you</p>
+            </div>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" for="listingPhone" data-i18n="addListing.phone">Phone Number</label>
+            <input type="tel" class="add-listing-input" id="listingPhone" name="listingPhone" autocomplete="tel"
+              data-i18n-placeholder="addListing.phonePlaceholder" placeholder="05XX XXX XXX" />
+            <span class="gm-field-err" id="listingPhoneErr" data-i18n="addListing.errRequired">This field is required</span>
+          </div>
+
+          <div class="add-listing-field">
+            <label class="add-listing-label" for="listingWhatsapp" data-i18n="addListing.whatsapp">WhatsApp Number</label>
+            <input type="tel" class="add-listing-input" id="listingWhatsapp" name="listingWhatsapp" autocomplete="tel"
+              data-i18n-placeholder="addListing.whatsappPlaceholder" placeholder="+972 5XX XXX XXX" />
+            <span class="gm-field-err" id="listingWhatsappErr" data-i18n="addListing.errPhoneInvalid">Enter a valid phone number</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="9">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="addListing.cardContactTitle">Review &amp; Submit</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addListing.cardContactSub">Make sure everything is correct before submitting</p>
+            </div>
+          </div>
+
+          <div class="npw-review-list" id="addListingReviewList">
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewTitle">Title</span>
+              <span class="npw-review-value" data-review="title">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewType">Type / Condition</span>
+              <span class="npw-review-value" data-review="type">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewPrice">Price</span>
+              <span class="npw-review-value" data-review="price">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewImages">Photos</span>
+              <span class="npw-review-value" data-review="images">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewRegion">Region</span>
+              <span class="npw-review-value" data-review="region">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.reviewPhone">Phone</span>
+              <span class="npw-review-value" data-review="phone">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="addListing.whatsapp">WhatsApp Number</span>
+              <span class="npw-review-value" data-review="whatsapp">—</span>
+            </div>
+          </div>
+          <p class="npw-thanks-note" data-i18n="addListing.thanksNote">Your ad will be reviewed within 24 hours. Once approved, it will appear in the market for everyone.</p>
+          <span class="gm-field-err" id="listingSubmitErr" role="alert"></span>
+        </section>
+
+      </div>
+
+      <div class="npw-footer">
+        <div class="npw-nav">
+          <button type="button" class="add-price-cancel-btn npw-back-btn" data-step-back disabled>
+            <svg class="npw-back-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            <span data-i18n="addPrice.back">Back</span>
+          </button>
+          <button type="button" class="add-listing-submit-btn gm-submit-btn npw-next-btn" id="submitListingBtn"
+            data-step-next
+            data-label-next="Next" data-label-submit="Submit for Review"
+            data-i18n-label-next="addListing.next" data-i18n-label-submit="addListing.submit">
+            <span class="gm-btn-label" data-i18n="addListing.next">Next</span>
+            <span class="gm-btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <p class="add-price-note" data-i18n="addPrice.note">Verification will be done via WhatsApp after submission</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addNewProductModal" tabindex="-1" aria-labelledby="addNewProductModalLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content npw-modal-content">
+
+      <div class="npw-header">
+        <button type="button" class="addition-close-btn npw-close-btn" data-bs-dismiss="modal" aria-label="Close dialog">
+          <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-x"/></svg>
+        </button>
+        <div class="npw-title-wrap">
+          <h5 class="npw-title" id="addNewProductModalLabel" data-i18n="npw.title">Suggest a New Product</h5>
+          <p class="npw-subtitle" data-i18n="npw.subtitle">Fill in the product details step by step</p>
+        </div>
+      </div>
+
+      <div class="npw-progress" data-progress role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1">
+        <div class="npw-progress-track">
+          <div class="npw-progress-fill" data-progress-fill style="width:0%"></div>
+        </div>
+        <div class="npw-progress-dots" data-progress-dots>
+          <span class="npw-dot active" data-step="1"></span>
+          <span class="npw-dot" data-step="2"></span>
+          <span class="npw-dot" data-step="3"></span>
+          <span class="npw-dot" data-step="4"></span>
+          <span class="npw-dot" data-step="5"></span>
+          <span class="npw-dot" data-step="6"></span>
+          <span class="npw-dot" data-step="7"></span>
+        </div>
+        <span class="npw-step-count" data-step-count>1 / 7</span>
+      </div>
+
+      <div class="npw-body gm-form-body" id="npwBody" data-step-body>
+
+        <section class="gm-form-card gm-step-active" data-step="1">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.cardNameTitle">Product Name</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.cardNameSub">Enter the name of the product you want to suggest</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <label class="add-price-label" for="npwProductName" data-i18n="npw.productName">Product Name</label>
+            <input type="text" class="add-price-input" id="npwProductName"
+              data-i18n-placeholder="npw.productNamePlaceholder" placeholder="Example: Sheikh Qasim Olive Oil, Al Marai Milk, Zuhaiman Coffee" autocomplete="off" />
+            <span class="npw-field-err" id="npwProductNameErr" data-i18n="npw.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="2">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-locate-fixed-icon lucide-locate-fixed"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.cardCategoryTitle">What is its classification?</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.cardCategorySub">Choose the most suitable category for the product</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <label class="add-price-label" data-i18n="npw.category">Category</label>
+            <div class="npw-category-grid" id="npwCategoryGrid">
+              <button type="button" class="npw-category-btn" data-value="grains-flour" data-i18n="npw.catGrainsFlour">Grains &amp; Flour</button>
+              <button type="button" class="npw-category-btn" data-value="oils" data-i18n="npw.catOils">Oils</button>
+              <button type="button" class="npw-category-btn" data-value="sugars" data-i18n="npw.catSugars">Sugars</button>
+              <button type="button" class="npw-category-btn" data-value="legumes" data-i18n="npw.catLegumes">Legumes</button>
+              <button type="button" class="npw-category-btn" data-value="beverages" data-i18n="npw.catBeverages">Beverages</button>
+              <button type="button" class="npw-category-btn" data-value="dairy-products" data-i18n="npw.catDairyProducts">Dairy Products</button>
+              <button type="button" class="npw-category-btn" data-value="vegetables" data-i18n="npw.catVegetables">Vegetables</button>
+              <button type="button" class="npw-category-btn" data-value="fruits" data-i18n="npw.catFruits">Fruits</button>
+              <button type="button" class="npw-category-btn" data-value="meat-poultry" data-i18n="npw.catMeatPoultry">Meat &amp; Poultry</button>
+              <button type="button" class="npw-category-btn" data-value="canned-goods" data-i18n="npw.catCannedGoods">Canned Goods</button>
+              <button type="button" class="npw-category-btn" data-value="spices-seasonings" data-i18n="npw.catSpicesSeasonings">Spices &amp; Seasonings</button>
+              <button type="button" class="npw-category-btn" data-value="bread-bakery" data-i18n="npw.catBreadBakery">Bread &amp; Bakery</button>
+              <button type="button" class="npw-category-btn" data-value="rice-pasta" data-i18n="npw.catRicePasta">Rice &amp; Pasta</button>
+              <button type="button" class="npw-category-btn" data-value="fuel-combustibles" data-i18n="npw.catFuelCombustibles">Fuel &amp; Combustibles</button>
+              <button type="button" class="npw-category-btn" data-value="oils-grease" data-i18n="npw.catOilsGrease">Oils &amp; Grease</button>
+              <button type="button" class="npw-category-btn" data-value="sugar-salt" data-i18n="npw.catSugarSalt">Sugar &amp; Salt</button>
+              <button type="button" class="npw-category-btn" data-value="legumes-canned" data-i18n="npw.catLegumesCanned">Legumes &amp; Canned Goods</button>
+              <button type="button" class="npw-category-btn" data-value="fresh-vegetables" data-i18n="npw.catFreshVegetables">Fresh Vegetables</button>
+              <button type="button" class="npw-category-btn" data-value="fish-seafood" data-i18n="npw.catFishSeafood">Fish &amp; Seafood</button>
+              <button type="button" class="npw-category-btn" data-value="eggs-dairy-cheese" data-i18n="npw.catEggsDairyCheese">Eggs, Dairy &amp; Cheese</button>
+              <button type="button" class="npw-category-btn" data-value="water-juices" data-i18n="npw.catWaterJuices">Water &amp; Juices</button>
+              <button type="button" class="npw-category-btn" data-value="tea-coffee" data-i18n="npw.catTeaCoffee">Tea &amp; Coffee</button>
+              <button type="button" class="npw-category-btn" data-value="soft-drinks" data-i18n="npw.catSoftDrinks">Soft Drinks</button>
+              <button type="button" class="npw-category-btn" data-value="cleaning-supplies" data-i18n="npw.catCleaningSupplies">Cleaning Supplies</button>
+              <button type="button" class="npw-category-btn" data-value="household-tools" data-i18n="npw.catHouseholdTools">Household Tools</button>
+              <button type="button" class="npw-category-btn" data-value="personal-care" data-i18n="npw.catPersonalCare">Personal Care</button>
+              <button type="button" class="npw-category-btn" data-value="diapers-baby" data-i18n="npw.catDiapersBaby">Diapers &amp; Baby Supplies</button>
+              <button type="button" class="npw-category-btn" data-value="medicine-medical" data-i18n="npw.catMedicineMedical">Medicine &amp; Medical Supplies</button>
+              <button type="button" class="npw-category-btn" data-value="tissues-paper" data-i18n="npw.catTissuesPaper">Tissues &amp; Paper</button>
+              <button type="button" class="npw-category-btn" data-value="cooking-gas" data-i18n="npw.catCookingGas">Cooking Gas</button>
+              <button type="button" class="npw-category-btn" data-value="batteries-generators" data-i18n="npw.catBatteriesGenerators">Batteries &amp; Generators</button>
+              <button type="button" class="npw-category-btn" data-value="animal-feed" data-i18n="npw.catAnimalFeed">Animal Feed</button>
+              <button type="button" class="npw-category-btn" data-value="seeds-agriculture" data-i18n="npw.catSeedsAgriculture">Seeds &amp; Agriculture</button>
+              <button type="button" class="npw-category-btn" data-value="other-products" data-i18n="npw.catOtherProducts">Other Products</button>
+            </div>
+            <span class="npw-field-err" id="npwCategoryErr" data-i18n="npw.errCategoryRequired">Please select a category</span>
+          </div>
+        </section>
+        <section class="gm-form-card" data-step="3">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-weight-tilde-icon lucide-weight-tilde"><path d="M6.5 8a2 2 0 0 0-1.906 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8z"/><path d="M7.999 15a2.5 2.5 0 0 1 4 0 2.5 2.5 0 0 0 4 0"/><circle cx="12" cy="5" r="3"/></svg></span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.cardUnitTitle">Unit &amp; Quantity</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.cardUnitSub">Specify the unit of measurement and the quantity.</p>
+            </div>
+          </div>
+
+          <div class="gm-form-row">
+            <div class="add-price-field">
+              <label class="add-price-label" for="npwQuantity" data-i18n="npw.quantity">Quantity</label>
+              <input type="number" class="add-price-input" id="npwQuantity"
+                placeholder="250" min="0" step="0.01" inputmode="decimal"
+                data-i18n-placeholder="npw.quantityPlaceholder" />
+              <span class="npw-field-err" id="npwQuantityErr" data-i18n="npw.errRequired">This field is required</span>
+            </div>
+
+            <div class="add-price-field">
+              <label class="add-price-label" id="npwUnitLabel" data-i18n="npw.unit">Unit</label>
+              <div class="npw-select-wrap" data-gm-custom-select data-hidden-select="npwUnitSelect">
+                <button type="button"
+                  class="npw-custom-select-trigger"
+                  id="npwUnitTrigger"
+                  data-select-trigger
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-labelledby="npwUnitLabel">
+                  <span class="npw-custom-select-trigger-text placeholder" data-select-trigger-text data-i18n="npw.unitPlaceholder">kg</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="npw-select-chevron" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+
+                <div class="npw-custom-select-panel" data-select-panel role="listbox" aria-labelledby="npwUnitLabel">
+                  <div class="npw-custom-select-option" role="option" data-value="g" data-i18n="npw.unitGram">gram</div>
+                  <div class="npw-custom-select-option" role="option" data-value="kg" data-i18n="npw.unitKg">kg</div>
+                  <div class="npw-custom-select-option" role="option" data-value="l" data-i18n="npw.unitLiter">Liter</div>
+                  <div class="npw-custom-select-option" role="option" data-value="ml" data-i18n="npw.unitMilli">Milliliter</div>
+                  <div class="npw-custom-select-option" role="option" data-value="piece" data-i18n="npw.unitPiece">piece</div>
+                  <div class="npw-custom-select-option" role="option" data-value="pack" data-i18n="npw.unitPack">Pack</div>
+                  <div class="npw-custom-select-option" role="option" data-value="box" data-i18n="npw.unitBox">Box</div>
+                  <div class="npw-custom-select-option" role="option" data-value="sack" data-i18n="npw.unitSack">sack</div>
+                </div>
+
+                <select class="npw-visually-hidden-select" id="npwUnitSelect" name="unit" tabindex="-1" aria-hidden="true">
+                  <option value="" disabled selected data-i18n="npw.unitPlaceholder">kg</option>
+                  <option value="kg" data-i18n="npw.unitKg">Kilogram (kg)</option>
+                  <option value="g" data-i18n="npw.unitG">Gram (g)</option>
+                  <option value="l" data-i18n="npw.unitL">Liter (l)</option>
+                  <option value="ml" data-i18n="npw.unitMl">Milliliter (ml)</option>
+                  <option value="piece" data-i18n="npw.unitPiece">Piece</option>
+                  <option value="pack" data-i18n="npw.unitPack">Pack</option>
+                  <option value="box" data-i18n="npw.unitBox">Box</option>
+                  <option value="sack" data-i18n="npw.unitSack">Sack</option>
+                </select>
+              </div>
+              <span class="npw-field-err" id="npwUnitErr" data-select-err data-i18n="npw.errUnitRequired">Please select a unit</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="4">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">₪</span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.cardPriceTitle">What's the price?</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.cardPriceSub">Enter the price in shekels</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <label class="add-price-label" for="npwPrice" data-i18n="addPrice.price">Price</label>
+
+            <div class="npw-price-display" id="npwPriceDisplayBox">
+              <input type="number" class="npw-price-big-input" id="npwPrice" name="price"
+                placeholder="0" min="0" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
+              <span class="npw-price-currency" aria-hidden="true">₪</span>
+            </div>
+
+            <span class="npw-price-hint" data-i18n="addPrice.quickPriceHint">Or pick a quick price</span>
+            <div class="npw-quick-price-row" id="npwQuickPriceRow" role="group" aria-label="Quick price selection">
+              <button type="button" class="npw-quick-price-btn" data-price="50">50₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="30">30₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="25">25₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="20">20₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="15">15₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="10">10₪</button>
+              <button type="button" class="npw-quick-price-btn" data-price="5">5₪</button>
+            </div>
+
+            <span class="npw-field-err" id="npwPriceErr" data-i18n="addPrice.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="5">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.cardStoreTitle">Store Name</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.cardStoreSub">Which store or place did you see this price at?</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <label class="add-price-label" for="npwStoreName" data-i18n="addPrice.storeName">Store Name</label>
+            <input type="text" class="add-price-input" id="npwStoreName"
+              data-i18n-placeholder="addPrice.storeNamePlaceholder" placeholder="Example: Abu Ahmed Grocery" autocomplete="off" />
+            <span class="npw-field-err" id="npwStoreNameErr" data-i18n="npw.errRequired">This field is required</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="6">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" id="npwRegionTitle" data-i18n="addPrice.cardRegionTitle">Choose the region</h6>
+              <p class="gm-form-card-subtitle" data-i18n="addPrice.cardRegionSub">Where did you find this price?</p>
+            </div>
+          </div>
+
+          <div class="add-price-field">
+            <div class="npw-region-grid" id="npwRegionGrid" role="group" aria-labelledby="npwRegionTitle">
+              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
+              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
+              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
+              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
+              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
+              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
+              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
+              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
+              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
+              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
+              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
+              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
+              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
+              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+            </div>
+            <select class="npw-visually-hidden-select" id="npwRegionSelect" name="region" tabindex="-1" aria-hidden="true">
+              <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>
+              <option value="Alrimal" data-i18n="Alrimal">Al-Rimal</option>
+              <option value="Alshaati" data-i18n="Alshaati">Al-Shaati</option>
+              <option value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</option>
+              <option value="Saftawi" data-i18n="Saftawi">Saftawi</option>
+              <option value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</option>
+              <option value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</option>
+              <option value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</option>
+              <option value="Jabalia" data-i18n="Jabalia">Jabalia</option>
+              <option value="Nuseirat" data-i18n="Nuseirat">Nuseirat</option>
+              <option value="Breij" data-i18n="Breij">Breij</option>
+              <option value="Maghazi" data-i18n="Maghazi">Maghazi</option>
+              <option value="Zawayda" data-i18n="Zawayda">Zawayda</option>
+              <option value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</option>
+              <option value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</option>
+              <option value="Rafah" data-i18n="Rafah">Rafah</option>
+              <option value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</option>
+              <option value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</option>
+            </select>
+            <span class="gm-field-err" id="npwRegionErr" data-i18n="addPrice.errRegionRequired">Please select a region</span>
+          </div>
+        </section>
+
+        <section class="gm-form-card" data-step="7">
+          <div class="gm-form-card-header">
+            <span class="gm-form-card-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            <div>
+              <h6 class="gm-form-card-title" data-i18n="npw.reviewTitle">Review your details</h6>
+              <p class="gm-form-card-subtitle" data-i18n="npw.reviewSub">Make sure everything is correct before submitting</p>
+            </div>
+          </div>
+
+          <div class="npw-review-list" id="npwReviewList">
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewName">Product Name</span>
+              <span class="npw-review-value" data-review="name">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewCategory">Category</span>
+              <span class="npw-review-value" data-review="category">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewUnit">Unit &amp; Quantity</span>
+              <span class="npw-review-value" data-review="unit">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewPrice">Price</span>
+              <span class="npw-review-value" data-review="price">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewStore">Store</span>
+              <span class="npw-review-value" data-review="store">—</span>
+            </div>
+            <div class="npw-review-row">
+              <span class="npw-review-label" data-i18n="npw.reviewRegion">Region</span>
+              <span class="npw-review-value" data-review="region">—</span>
+            </div>
+          </div>
+
+          <div class="npw-extra-details" id="npwExtraDetails">
+            <p class="npw-extra-details-title" data-i18n="npw.extraDetailsTitle">Additional details (optional)</p>
+
+            <div class="gm-form-row">
+              <div class="add-price-field">
+                <label class="add-price-label" for="npwStoreAddress">
+                  <span data-i18n="addPrice.storeAddress">Store Address</span>
+                  <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+                </label>
+                <input type="text" class="add-price-input" id="npwStoreAddress"
+                  data-i18n-placeholder="addPrice.storeAddressPlaceholder" placeholder="Example: near the mosque" />
+              </div>
+              <div class="add-price-field">
+                <label class="add-price-label" for="npwStorePhone">
+                  <span data-i18n="addPrice.phone">Store Phone</span>
+                  <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+                </label>
+                <input type="tel" class="add-price-input" id="npwStorePhone" autocomplete="tel"
+                  data-i18n-placeholder="addPrice.phonePlaceholder" placeholder="05XX XXX XXX" />
+              </div>
+            </div>
+
+            <div class="add-price-field">
+              <label class="add-price-label">
+                <span data-i18n="addPrice.receipt">Receipt Photo</span>
+                <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
+              </label>
+              <div class="add-price-upload" id="npwUploadArea" role="button" tabindex="0" aria-label="Upload product photo">
+                <input type="file" id="npwProductImage" accept="image/jpeg,image/png,image/webp" hidden />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round" class="add-price-upload-icon" data-upload-icon><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+                <p data-upload-filename data-i18n="npw.uploadText">Tap to upload receipt photo</p>
+                <span data-i18n="addPrice.uploadHint">JPG, PNG up to 5MB</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="npw-thanks-note" data-i18n="npw.thanksNote">Your contribution helps the people of Gaza know real prices. Thank you.</p>
+        </section>
+      </div>
+
+      <div class="npw-footer">
+        <div class="npw-nav">
+          <button type="button" class="add-price-cancel-btn npw-back-btn" data-step-back disabled>
+            <svg class="npw-back-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            <span data-i18n="addPrice.back">Back</span>
+          </button>
+          <button type="button" class="add-price-submit-btn gm-submit-btn npw-next-btn" id="npwSubmitBtn"
+            data-step-next
+            data-label-next="Next" data-label-submit="Submit"
+            data-i18n-label-next="npw.next" data-i18n-label-submit="npw.submit">
+            <span class="gm-btn-label" data-i18n="npw.next">Next</span>
+            <span class="gm-btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <p class="add-price-note npw-whatsapp-note" data-i18n="addPrice.note">
+          Verification will be done via WhatsApp after submission
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+ 
+<div class="auth-overlay" id="authOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-modal" id="authModal"
+    data-title-register="Create a new account"
+    data-sub-register="Enter your details to create your account"
+    data-title-otp="Enter Activation Code"
+    data-sub-otp="Check your WhatsApp messages"
+    data-title-success-login="Welcome back!"
+    data-sub-success-login="Nice to see you again in Gaza Market 👋"
+    data-title-success-register="Congratulations! 🎉"
+    data-sub-success-register="Your account is ready in Gaza Market"
+    data-err-otp-incomplete="Complete the 6-digit code entry"
+    data-err-otp-wrong="The code is incorrect, please check and try again">
+    <button class="auth-close" type="button" id="authClose" aria-label="Close">
+      <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-x"/></svg>
+    </button>
+    <div class="auth-header">
+      <div class="auth-logo-wrap">
+        <img src="assets/img/logo.gazamarket.png" alt="Gaza Market" class="auth-logo" />
+      </div>
+      <h2 class="auth-title fs-22 fw-700" id="authTitle">Welcome back!</h2>
+      <p class="auth-sub m-0 fs-13" id="authSub">Enter your phone number to continue</p>
+    </div>
+
+    <div class="auth-tabs" id="authTabs" role="tablist">
+      <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-tab="login" data-i18n="authTabLogin">Login</button>
+      <button class="auth-tab" type="button" role="tab" aria-selected="false" data-tab="register" data-i18n="authTabRegister">Register</button>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-panel" id="panelPhone" role="tabpanel">
+        <div class="auth-field">
+          <label class="auth-label" for="phoneInput">
+            <span data-i18n="authLabelPhone">Phone Number</span>
+            <span class="auth-req" aria-hidden="true">*</span>
+          </label>
+          <div class="auth-phone-row">
+            <input class="auth-input auth-input--phone" id="phoneInput"
+              type="tel" inputmode="numeric" maxlength="12"
+              placeholder="972597******" autocomplete="tel"
+              aria-required="true" aria-describedby="phoneErr" />
+          </div>
+          <span class="auth-hint" id="phoneHint" data-i18n="authPhoneHint">Enter the number starting with the country code (972 or 970) without the + sign, e.g. 972597******</span>
+          <span class="auth-err" id="phoneErr" role="alert" aria-live="polite">
+            <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-circle-alert"/></svg>
+            <span data-i18n="authErrPhone">Enter a valid phone number</span>
+          </span>
+        </div>
+
+        <div class="auth-field auth-register-only" id="nameField" style="display:none">
+          <label class="auth-label" for="nameInput">
+            <span data-i18n="authLabelName">Full Name</span>
+            <span class="auth-req" aria-hidden="true">*</span>
+          </label>
+          <input class="auth-input" id="nameInput" type="text"
+            placeholder="John Doe" autocomplete="name"
+            aria-required="true" aria-describedby="nameErr" />
+          <span class="auth-err" id="nameErr" role="alert" aria-live="polite">
+            <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-circle-alert"/></svg>
+          </span>
+        </div>
+
+        <div class="auth-wa-note">
+          <span class="auth-wa-icon"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-whatsapp"/></svg></span>
+          <p>
+            <span class="fs-12" data-i18n="authWaNote">You will receive the activation code via</span>
+            <strong class="fs-14">WhatsApp</strong>
+          </p>
+        </div>
+
+        <button class="auth-btn" type="button" id="sendCodeBtn">
+          <span class="auth-btn-text" data-i18n="authBtnSend">Send Activation Code</span>
+          <svg class="auth-btn-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-arrow-right"/></svg>
+          <span class="auth-btn-loader" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+
+      <div class="auth-panel auth-panel--hidden" id="panelOtp" role="tabpanel">
+        <div class="auth-otp-info">
+          <svg class="auth-otp-wa" width="24" height="24" aria-hidden="true" focusable="false"><use href="#gm-i-whatsapp"/></svg>
+          <div>
+            <p class="auth-otp-info-title" data-i18n="authOtpTitle">Activation code sent</p>
+            <p class="auth-otp-info-sub">
+              <span data-i18n="authOtpSub">to the number</span>
+              <span id="phoneMask" dir="ltr">—</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="auth-otp-grid" id="otpGrid" dir="ltr" role="group" aria-label="Enter 6-digit code">
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+          <input class="auth-otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+        </div>
+        <span class="auth-err" id="otpErr" role="alert" aria-live="polite"></span>
+
+        <button class="auth-btn" type="button" id="verifyBtn">
+          <span class="auth-btn-text" data-i18n="authBtnVerify">Verify Code</span>
+          <svg class="auth-btn-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-check"/></svg>
+          <span class="auth-btn-loader" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+
+        <div class="auth-resend">
+          <span class="auth-resend-text" id="resendText">
+            <span data-i18n="authResendAfter">Resend after</span>
+            <span id="resendTimer">60</span>s
+          </span>
+          <button class="auth-resend-btn" type="button" id="resendBtn" disabled aria-disabled="true">
+            <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-whatsapp"/></svg>
+            <span data-i18n="authResendBtn">Resend Code</span>
+          </button>
+          <button class="auth-back-link" type="button" id="otpBackBtn">
+            <svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#gm-i-arrow-left"/></svg>
+            <span data-i18n="authChangeNum">Change Number</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-panel auth-panel--hidden" id="panelSuccess" role="tabpanel">
+        <div class="auth-success">
+          <div class="auth-success-anim" aria-hidden="true">
+            <div class="auth-success-ring"></div>
+            <div class="auth-success-circle"><svg width="35" height="35" aria-hidden="true" focusable="false"><use href="#gm-i-check"/></svg></div>
+          </div>
+          <h3 class="auth-success-title" id="successTitle"></h3>
+          <p class="auth-success-desc" id="successDesc"></p>
+          <button class="auth-btn auth-btn--green auth-success-btn" type="button" id="successCloseBtn">
+            <span data-i18n="authBtnStart">Start Browsing</span>
+            <svg width="18" height="18" aria-hidden="true" focusable="false"><use href="#gm-i-arrow-right"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-dots" id="authDots" aria-hidden="true">
+      <span class="auth-dot auth-dot--active"></span>
+      <span class="auth-dot"></span>
+    </div>
+  </div>
+</div>
+
+<div class="profile-page-layout">
+  <div class="row g-3 align-items-start">
+
+    <div class="col-12 col-lg-2 sidebar-col sidebar-col--left order-2 order-lg-1">
+      <div class="surface mb-card">
+        <div class="surface__title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/></svg>
+          <span data-i18n="sidebar.menu">Menu</span>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Sidebar navigation">
+          <a href="profile.html" class="sidebar-nav__link sidebar-nav__link--profile is-current active" aria-current="page">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-pen-icon lucide-user-round-pen Profile-edit"><path d="M2 21a8 8 0 0 1 10.821-7.487"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="8" r="5"/></svg>           
+          <span data-i18n="sidebar.profile">Profile</span>
+          </a>
+          <a href="home.html" class="sidebar-nav__link sidebar-nav__link--home">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span data-i18n="sidebar.home">Home</span>
+          </a>
+          <a href="places.html" class="sidebar-nav__link sidebar-nav__link--places" aria-disabled="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/></svg>
+            <span data-i18n="sidebar.places">Places</span>
+          </a>
+          <a href="market.html" class="sidebar-nav__link sidebar-nav__link--market" aria-disabled="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span data-i18n="sidebar.market">Market</span>
+          </a>
+          <a href="#" class="sidebar-nav__link sidebar-nav__link--messages" aria-disabled="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bike-icon lucide-bike"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>       
+              <span data-i18n="bottomNav.delivery">Delivery</span>
+            <span class="sidebar-nav__badge" aria-label="Delivery service, coming soon" data-i18n="sidebar.soon">soon</span>
+          </a>
+        </nav>
+      </div>
+
+       <div class="help-card mb-card">
+        <div class="help-card__title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="help-users" aria-hidden="true">
+            <path d="M18 21a8 8 0 0 0-16 0"/>
+            <circle cx="10" cy="8" r="5"/>
+            <path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/>
+          </svg>
+        </div>
+                  <span data-i18n="help.title">How Can You Help?</span>
+
+        <p class="help-card__desc" data-i18n="help.desc">
+          Help update local market prices! Add the prices you find to help others know the cost of basic food staples in the area.
+        </p>
+        <a class="btn btn-primary help-user" href="guide.html" data-i18n="help.guideLink">Your guide to adding a new price</a>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-10 order-1 order-lg-2">
+      <div class="profile-card">
+        <div class="profile-card__head">
+          <h2 data-i18n="profile.title">Profile</h2>
+          <button class="btn-edit" id="editProfileBtn" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-pen-icon lucide-user-pen"><path d="M11.5 15H7a4 4 0 0 0-4 4v2"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="7" r="4"/></svg>
+            <span data-i18n="profile.editBtn">Edit Profile</span>
+          </button>
+        </div>
+
+        <hr class="pf-hr">
+
+        <div class="profile-card__body">
+          <div class="pf-identity">
+            <div class="avatar-wrap" id="avatarWrap">
+              <div class="avatar" id="avatar"></div>
+              <div class="avatar-edit-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="upload-status" id="uploadStatus"></div>
+            <h1 class="user-name" id="userName"></h1>
+            <div class="user-phone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="phone-coll"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
+              <span id="userPhone"></span>
+            </div>
+          </div>
+
+          <div class="pf-details">
+            <div class="pf-stats-grid">
+              <div class="stat-tile">
+                <div class="stat-tile__icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-icon lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div>
+                  <div class="stat-tile__value" id="userRegion" data-value="">—</div>
+                  <div class="stat-tile__label" data-i18n="stats.region">Region</div>
+                </div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__icon stat-tile__icon--points">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-plus-icon lucide-star-plus"><path d="M11.013 18.582 6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16l2.309-4.679a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904L20 11.5"/><path d="M15 18h6"/><path d="M18 15v6"/></svg>
+                </div>
+                <div>
+                  <div class="stat-tile__value" id="userPoints">0</div>
+                  <div class="stat-tile__label" data-i18n="stats.points">Points</div>
+                </div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-handshake-icon lucide-heart-handshake"><path d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"/></svg>
+                </div>
+                <div>
+                  <div class="stat-tile__value" id="userContributions">0</div>
+                  <div class="stat-tile__label" data-i18n="stats.contributions">Contributions</div>
+                </div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-heart-icon lucide-calendar-heart"><path d="M12.127 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.125"/><path d="M14.62 18.8A2.25 2.25 0 1 1 18 15.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/></svg>
+                </div>
+                <div>
+                  <div class="stat-tile__value" id="userJoinDate">—</div>
+                  <div class="stat-tile__label" data-i18n="stats.memberSince">Member Since</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pf-settings">
+              <div class="pf-settings__title" data-i18n="settings.title">Settings</div>
+              <div class="pf-settings__list">
+
+                <div class="pf-settings-row pf-settings-static" id="settingsNotificationsRow">
+                  <div class="pf-settings-label">
+                    <span data-i18n="settings.notifications">Notifications</span>
+                  </div>
+                  <div class="pf-settings-value">
+                    <span class="pf-settings-badge" data-i18n="settings.soon">Soon</span>
+                  </div>
+                </div>
+
+                <div class="pf-settings-row pf-settings-static" id="settingsSoundsRow">
+                  <div class="pf-settings-label">
+                    <span id="settingsSoundsLabel" data-i18n="settings.appSounds">App Sounds</span>
+                  </div>
+                  <div class="pf-settings-value">
+                    <label class="pf-settings-toggle">
+                      <input type="checkbox" id="settingsSoundsToggle" name="settingsSoundsToggle" role="switch" aria-labelledby="settingsSoundsLabel" />
+                      <span class="pf-settings-toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="pf-settings-row pf-settings-danger" id="settingsLogoutRow"
+                    data-i18n-confirm-title="confirmLogout.title"
+                    data-confirm-title="Log Out"
+                    data-i18n-confirm-message="confirmLogout.message"
+                    data-confirm-message="Are you sure you want to log out of your account?"
+                    data-i18n-confirm-action="confirmLogout.action"
+                    data-confirm-action="Log Out">
+                  <div class="pf-settings-label">
+                    <span data-i18n="settings.logout">Log out</span>
+                  </div>
+                  <div class="pf-settings-value">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left-icon lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                  </div>
+                </div>
+
+                <div class="pf-settings-row pf-settings-danger" id="settingsDeleteAccountRow"
+                    data-i18n-confirm-title="confirmDelete.title"
+                    data-confirm-title="Delete Account"
+                    data-i18n-confirm-message="confirmDelete.message"
+                    data-confirm-message="Are you sure you want to permanently delete your account? This action cannot be undone."
+                    data-i18n-confirm-action="confirmDelete.action"
+                    data-confirm-action="Delete Account">
+                  <div class="pf-settings-label">
+                    <span data-i18n="settings.deleteAccount">Delete my account</span>
+                  </div>
+                  <div class="pf-settings-value">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left-icon lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<nav class="bottom-nav" aria-label="Mobile navigation">
+  <a href="home.html" class="bottom-nav__link bottom-nav__link--home">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    <span data-i18n="sidebar.home">Home</span>
+  </a>
+  <a href="places.html" class="bottom-nav__link bottom-nav__link--places" aria-disabled="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/></svg>
+    <span data-i18n="sidebar.places">Places</span>
+  </a>
+
+  <button type="button" class="bottom-nav__add" data-bs-toggle="modal" data-bs-target="#additionModal" aria-label="Add">
+    <svg width="22" height="22" aria-hidden="true" focusable="false"><use href="#gm-i-plus"/></svg>
+  </button>
+
+  <a href="market.html" class="bottom-nav__link bottom-nav__link--market" aria-disabled="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+    <span data-i18n="sidebar.market">Market</span>
+  </a>
+  <a href="profile.html" class="bottom-nav__link bottom-nav__link--profile active" aria-current="page">
+    <svg width="20" height="20" aria-hidden="true" focusable="false"><use href="#gm-i-user"/></svg>
+    <span data-i18n="sidebar.profile">Profile</span>
+  </a>
+</nav>
+
+<div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h2 class="modal-title" id="editModalTitle" data-i18n="editModal.title">Edit Profile</h2>
+      <button class="modal-close" id="modalCloseBtn" type="button" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-avatar-wrap" id="modalAvatarWrap">
+        <div class="avatar" id="modalAvatar"></div>
+        <div class="avatar-edit-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+        </div>
+      </div>
+      <input type="file" id="modalAvatarInput" accept="image/png, image/jpeg, image/webp" style="display:none;">
+      <p class="upload-status" id="modalStatus" role="alert" aria-live="polite"></p>
+
+      <div class="modal-form-group">
+        <label class="modal-label" for="modalName" data-i18n="editModal.fullName">Full Name</label>
+        <input class="modal-input" type="text" id="modalName" data-i18n-placeholder="editModal.fullNamePlaceholder" placeholder="Enter your full name">
+      </div>
+
+      <div class="modal-form-group">
+        <label class="modal-label" for="modalPhone" data-i18n="editModal.phone">Phone Number</label>
+        <input class="modal-input" type="tel" id="modalPhone" dir="ltr" placeholder="05XX XXX XXX" data-i18n-placeholder="addListing.phonePlaceholder">
+      </div>
+
+      <div class="modal-form-group">
+        <label class="modal-label" data-i18n="editModal.region">Region</label>
+        <div class="region-picker" id="regionPicker">
+          <input type="hidden" id="modalRegion" value="">
+
+          <button type="button" class="region-current" id="regionCurrentBtn">
+            <svg class="gm-region-pin" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="#gm-i-map-pin"/></svg>
+            <span id="regionCurrentText" class="placeholder" data-i18n="editModal.regionPlaceholder">Choose your region</span>
+            <svg class="region-toggle-icon" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="#gm-i-chevron-down"/></svg>
+          </button>
+
+          <div class="region-dropdown" id="regionDropdown">
+
+            <div class="region-zone" data-zone="central">
+              <button type="button" class="region-zone-header">
+                <span data-i18n="CentralGaza">Central Gaza</span>
+                <svg class="zone-arrow" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="#gm-i-chevron-left"/></svg>
+              </button>
+              <div class="region-zone-list">
+                <button type="button" class="region-option" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
+                <button type="button" class="region-option" data-value="Breij" data-i18n="Breij">Breij</button>
+                <button type="button" class="region-option" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
+                <button type="button" class="region-option" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
+                <button type="button" class="region-option" data-value="DeirBalah" data-i18n="DeirBalah">Deir al-Balah</button>
+              </div>
+            </div>
+
+            <div class="region-zone" data-zone="south">
+              <button type="button" class="region-zone-header">
+                <span data-i18n="SouthGaza">South Gaza</span>
+                <svg class="zone-arrow" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="#gm-i-chevron-left"/></svg>
+              </button>
+              <div class="region-zone-list">
+                <button type="button" class="region-option" data-value="KhanYunis" data-i18n="KhanYunis">Khan Yunis</button>
+                <button type="button" class="region-option" data-value="Rafah" data-i18n="Rafah">Rafah</button>
+                <button type="button" class="region-option" data-value="MawasiKhanYunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
+                <button type="button" class="region-option" data-value="MawasiQarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+              </div>
+            </div>
+
+            <div class="region-zone" data-zone="north">
+              <button type="button" class="region-zone-header">
+                <span data-i18n="NorthGaza">North Gaza</span>
+                <svg class="zone-arrow" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="#gm-i-chevron-left"/></svg>
+              </button>
+              <div class="region-zone-list">
+                <button type="button" class="region-option" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
+                <button type="button" class="region-option" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
+                <button type="button" class="region-option" data-value="SheikhRadwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
+                <button type="button" class="region-option" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
+                <button type="button" class="region-option" data-value="BeitHanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
+                <button type="button" class="region-option" data-value="BeitLahia" data-i18n="BeitLahia">Beit Lahia</button>
+                <button type="button" class="region-option" data-value="TalHawa" data-i18n="TalHawa">Tal Al-Hawa</button>
+                <button type="button" class="region-option" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modalCancelBtn" type="button" data-i18n="editModal.cancel">Cancel</button>
+      <button class="btn-save" id="modalSaveBtn" type="button" data-i18n="editModal.save">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal-box confirm-box">
+    <div class="modal-header">
+      <h2 class="modal-title" id="confirmTitle"></h2>
+      <button class="modal-close" id="confirmCloseBtn" type="button" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="confirm-message" id="confirmMessage"></p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="confirmCancelBtn" type="button" data-i18n="confirmModal.cancel">Cancel</button>
+      <button class="btn-save btn-danger" id="confirmActionBtn" type="button"></button>
+    </div>
+  </div>
+</div>
+@endsection
+
+
+@section('scripts')
+<script src="{{ asset('gazamarket/js/profile.js') }}" defer></script>
+
+@endsection

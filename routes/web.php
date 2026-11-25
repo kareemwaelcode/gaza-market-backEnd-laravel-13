@@ -40,6 +40,7 @@ use App\Http\Controllers\StoreCategoryGroupController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Website\HomeController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
@@ -131,9 +132,14 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
     Route::resource('permissions', PermissionController::class);
     Route::post('permissions_update/{id}', [PermissionController::class, 'update'])->name('permissions_update');
     Route::resource('roles.permissions', RolePermissionController::class);
-
-    
 });
+
+
+Route::prefix('gazamarket/')->group(function() {
+    Route::get('index' , [HomeController::class, 'index'])->name('gazamarket.index');
+});
+
+
 
 Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class])
     ->group(function () {
