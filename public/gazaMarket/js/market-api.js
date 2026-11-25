@@ -5,7 +5,7 @@ API_BASE: "/api",
 TIMEOUT_MS: 15000,
 UPLOAD_TIMEOUT_MS: 60000,
 CREDENTIALS: "same-origin",
-CSRF_URL: "/sanctum/csrf-cookie",
+CSRF_URL: "/api/auth/me",
 };
 
 const CONFIG = Object.assign({}, DEFAULTS, window.GM_CONFIG || {});

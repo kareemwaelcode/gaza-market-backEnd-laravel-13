@@ -55,11 +55,13 @@
         return fetch(API_BASE + path, init);
       })
       .then(
-        (response) =>
-          response.json().then(
-            (payload) => ({ status: response.status, payload: payload }),
-            () => ({ status: response.status, payload: {} })
-          ),
+        (response) => {
+          const retryHeader = Number(response.headers.get("Retry-After")) || 0;
+          return response.json().then(
+            (payload) => ({ status: response.status, payload: payload, retryAfterHeader: retryHeader }),
+            () => ({ status: response.status, payload: {}, retryAfterHeader: retryHeader })
+          );
+        },
         () => ({ status: 0, payload: {} })
       )
       .then((result) => {
@@ -99,7 +101,7 @@
       code: code,
       status: res.status,
       data: body,
-      retryAfter: Number(body.retry_after) || 0,
+      retryAfter: Number(body.retry_after) || res.retryAfterHeader || 0,
       errors: body.errors || null,
     };
   }
@@ -301,12 +303,17 @@
   }
 
   function performLogout() {
-    clearUser();
-    renderLoggedOut();
-
-    document.dispatchEvent(new CustomEvent("gmUserLoggedOut"));
-
-    session.logout();
+    return session.logout().then((res) => {
+      if (!res.ok) {
+        const msg = typeof i18n !== "undefined" && typeof i18n.t === "function" ? i18n.t("authErrNetwork") : "";
+        window.alert(msg && msg !== "authErrNetwork" ? msg : "Connection problem. Please try again.");
+        return false;
+      }
+      clearUser();
+      renderLoggedOut();
+      document.dispatchEvent(new CustomEvent("gmUserLoggedOut"));
+      return true;
+    });
   }
 
   function render() {

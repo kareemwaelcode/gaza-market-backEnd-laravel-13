@@ -583,6 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let mode        = "login";
     let phone       = "";
     let resendTimer = null;
+    let wrongCount  = 0;
 
     const showErr  = el => el?.classList.add("show");
     const clearErr = el => el?.classList.remove("show");
@@ -775,12 +776,17 @@ document.addEventListener("DOMContentLoaded", () => {
             nameInput?.focus();
             return;
           }
+          if (res.code === "ACCOUNT_EXISTS") {
+            setMode("login");
+            if (phoneInput) phoneInput.value = phone;
+          }
           setPhoneErrKey(errorKeyFor(res, "phone"));
           showErr(phoneErr);
           return;
         }
 
         if (phoneMask) phoneMask.textContent = maskPhone(phone);
+        wrongCount = 0;
         showPanel("otp");
         startResendTimer(res.data.resendAfter);
         setTimeout(() => otpBoxes[0]?.focus(), 100);
@@ -879,6 +885,18 @@ document.addEventListener("DOMContentLoaded", () => {
         setLoading(verifyBtn, false);
 
         if (!res.ok) {
+          if (res.code === "INVALID_CODE") {
+            wrongCount++;
+            if (wrongCount >= 5) {
+              wrongCount = 0;
+              showOtpError(translate("authErrOtpBurned"));
+              if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+              if (resendText) resendText.style.display = "none";
+              if (resendBtn) { resendBtn.removeAttribute("disabled"); resendBtn.style.display = "flex"; }
+              otpBoxes.forEach(b => { if (b) { b.value = ""; b.classList.remove("filled"); } });
+              return;
+            }
+          }
           showOtpError(translate(errorKeyFor(res, "otp")));
           if (res.code === "INVALID_CODE" || res.code === "VALIDATION") {
             otpBoxes.forEach(b => {
@@ -945,6 +963,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return;
           }
+          wrongCount = 0;
           startResendTimer(res.data.resendAfter);
           otpBoxes.forEach(b => { if (b) { b.value = ""; b.classList.remove("filled"); } });
           clearErr(otpErr);

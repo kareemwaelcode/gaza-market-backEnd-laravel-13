@@ -2,7 +2,7 @@
 (function () {
 const DEFAULTS = {
 API_BASE: "/api",
-CSRF_URL: "/sanctum/csrf-cookie",
+CSRF_URL: "/api/auth/me",
 TIMEOUT_MS: 30000,
 };
 
