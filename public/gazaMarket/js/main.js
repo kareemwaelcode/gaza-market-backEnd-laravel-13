@@ -12,6 +12,11 @@ const TRANSLATIONS = {
     authSuccessRegisterSub:   "مرحباً بك في المنصة",
     authErrOtpIncomplete:     "أدخل الرمز كاملاً (6 أرقام)",
     authErrOtpWrong:          "الرمز غير صحيح، حاول مجدداً",
+    authErrOtpWrongLogin:     "الرمز غير صحيح أو الرقم غير مسجّل",
+    authErrAccountExists:     "هذا الرقم مسجّل مسبقاً، سجّل دخولك",
+    authErrThrottled:         "محاولات كثيرة، حاول بعد قليل",
+    authErrServer:            "حدث خطأ، حاول مجدداً",
+    authErrNetwork:           "تعذّر الاتصال، تحقق من الإنترنت",
     regionSelectError:             "يرجى اختيار منطقة قبل المتابعة",
     "addPrice.title":              "إضافة سعر",
     "addPrice.product":            "المنتج",
@@ -60,6 +65,11 @@ const TRANSLATIONS = {
     authSuccessRegisterSub:   "Welcome to the platform",
     authErrOtpIncomplete:     "Please enter the full 6-digit code",
     authErrOtpWrong:          "Incorrect code, please try again",
+    authErrOtpWrongLogin:     "Incorrect code or the number is not registered",
+    authErrAccountExists:     "This number is already registered, please log in",
+    authErrThrottled:         "Too many attempts, please try again shortly",
+    authErrServer:            "Something went wrong, please try again",
+    authErrNetwork:           "Connection failed, check your internet",
     regionSelectError:             "Please select a region before continuing",
     "addPrice.title":              "Add Price",
     "addPrice.product":            "Product",
@@ -573,7 +583,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let mode        = "login";
     let phone       = "";
     let resendTimer = null;
-    const DEMO_OTP  = "123456";
 
     const showErr  = el => el?.classList.add("show");
     const clearErr = el => el?.classList.remove("show");
@@ -585,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function isValidPhone(p) {
-      return /^(972|970)5\d{8}$/.test(p);
+      return /^(972|970)5[69]\d{7}$/.test(p);
     }
 
     function maskPhone(p) {
@@ -700,15 +709,36 @@ document.addEventListener("DOMContentLoaded", () => {
       span.textContent = translate(key);
     }
 
+    function purposeOf() {
+      return mode === "register" ? "register" : "login";
+    }
+
+    function errorKeyFor(res, context) {
+      switch (res.code) {
+        case "ACCOUNT_EXISTS": return "authErrAccountExists";
+        case "THROTTLED":
+        case "RATE_LIMITED":   return "authErrThrottled";
+        case "NETWORK":        return "authErrNetwork";
+        case "INVALID_CODE":   return mode === "register" ? "authErrOtpWrong" : "authErrOtpWrongLogin";
+        case "VALIDATION":     return context === "otp" ? "authErrOtpIncomplete" : "authErrPhone";
+        default:               return "authErrServer";
+      }
+    }
+
+    function requestCode() {
+      const session = window.GMSession;
+      if (!session) return Promise.resolve({ ok: false, code: "SERVER" });
+      return session.requestOtp({
+        phone: phone,
+        purpose: purposeOf(),
+        fullName: nameInput?.value?.trim() || "",
+      });
+    }
+
     function handleSendCode() {
       clearErr(phoneErr);
       clearErr(nameErr);
       setPhoneErrKey("authErrPhone");
-      if (!window.GM_ENV.isMockAllowed()) {
-        setPhoneErrKey("authErrUnavailable");
-        showErr(phoneErr);
-        return;
-      }
       const rawPhone = phoneInput?.value?.replace(/\s/g, "") || "";
       let valid = true;
 
@@ -735,13 +765,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       phone = rawPhone;
       setLoading(sendCodeBtn, true);
-      setTimeout(() => {
+      requestCode().then(res => {
         setLoading(sendCodeBtn, false);
+
+        if (!res.ok) {
+          if (res.code === "VALIDATION" && res.errors && res.errors.full_name) {
+            showErr(nameErr);
+            nameInput?.classList.add("invalid");
+            nameInput?.focus();
+            return;
+          }
+          setPhoneErrKey(errorKeyFor(res, "phone"));
+          showErr(phoneErr);
+          return;
+        }
+
         if (phoneMask) phoneMask.textContent = maskPhone(phone);
         showPanel("otp");
-        startResendTimer();
+        startResendTimer(res.data.resendAfter);
         setTimeout(() => otpBoxes[0]?.focus(), 100);
-      }, 1400);
+      });
     }
 
     if (sendCodeBtn) sendCodeBtn.addEventListener("click", handleSendCode);
@@ -795,66 +838,77 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    function persistSessionUser(user) {
+      try {
+        const existingUser     = JSON.parse(localStorage.getItem(window.GM_STORAGE_KEYS.user) || "null");
+        const sameUser         = existingUser && existingUser.phone === user.phone ? existingUser : null;
+        const rawRegion        = gmGetSelectedArea();
+        const normalizedRegion = gmNormalizeRegionKey(rawRegion);
+
+        localStorage.setItem(
+          window.GM_STORAGE_KEYS.user,
+          JSON.stringify({
+            ...sameUser,
+            id:        user.id,
+            name:      user.name || user.phone,
+            phone:     user.phone,
+            avatar:    user.avatar || sameUser?.avatar || "",
+            region:    normalizedRegion || sameUser?.region || "",
+            createdAt: sameUser?.createdAt || new Date().toISOString(),
+          })
+        );
+        window.AuthUI?.refresh();
+
+        document.dispatchEvent(new CustomEvent("gmUserLoggedIn", {
+          detail: { phone: user.phone, mode },
+        }));
+      } catch (err) {
+        console.warn("Failed to persist user / refresh navbar:", err);
+      }
+    }
+
     function handleVerify() {
       clearErr(otpErr);
       const entered = [...otpBoxes].map(b => b?.value || "").join("");
-      if (!window.GM_ENV.isMockAllowed()) { showOtpError(translate("authErrUnavailable")); return; }
+      const session = window.GMSession;
+      if (!session) { showOtpError(translate("authErrServer")); return; }
       if (entered.length < 6) { showOtpError(translate("authErrOtpIncomplete")); return; }
 
       setLoading(verifyBtn, true);
-      setTimeout(() => {
+      session.verifyOtp({ phone: phone, purpose: purposeOf(), code: entered }).then(res => {
         setLoading(verifyBtn, false);
-        if (entered === DEMO_OTP) {
-          if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
-          if (successTitle) successTitle.textContent = mode === "register"
-            ? translate("authSuccessRegisterTitle")
-            : translate("authSuccessLoginTitle");
-          if (successDesc) successDesc.textContent = mode === "register"
-            ? translate("authSuccessRegisterSub")
-            : translate("authSuccessLoginSub");
 
-          try {
-            const existingUser     = JSON.parse(localStorage.getItem(window.GM_STORAGE_KEYS.user) || "null");
-            const rawRegion        = gmGetSelectedArea();
-            const normalizedRegion = gmNormalizeRegionKey(rawRegion);
-
-            localStorage.setItem(
-              window.GM_STORAGE_KEYS.user,
-              JSON.stringify({
-                ...existingUser,
-                name:   nameInput?.value?.trim() || phone,
-                phone:  phone,
-                region: normalizedRegion || existingUser?.region || "",
-                createdAt: existingUser?.createdAt || new Date().toISOString(),
-              })
-            );
-            window.AuthUI?.refresh();
-
-            document.dispatchEvent(new CustomEvent("gmUserLoggedIn", {
-              detail: { phone, mode },
-            }));
-          } catch (err) {
-            console.warn("Failed to persist user / refresh navbar:", err);
+        if (!res.ok) {
+          showOtpError(translate(errorKeyFor(res, "otp")));
+          if (res.code === "INVALID_CODE" || res.code === "VALIDATION") {
+            otpBoxes.forEach(b => {
+              if (b) {
+                b.classList.add("invalid");
+                b.addEventListener("animationend", () => b.classList.remove("invalid"), { once: true });
+              }
+            });
+            otpBoxes[0]?.focus();
           }
-
-          showPanel("success");
-        } else {
-          showOtpError(translate("authErrOtpWrong"));
-          otpBoxes.forEach(b => {
-            if (b) {
-              b.classList.add("invalid");
-              b.addEventListener("animationend", () => b.classList.remove("invalid"), { once: true });
-            }
-          });
-          otpBoxes[0]?.focus();
+          return;
         }
-      }, 1200);
+
+        if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+        if (successTitle) successTitle.textContent = mode === "register"
+          ? translate("authSuccessRegisterTitle")
+          : translate("authSuccessLoginTitle");
+        if (successDesc) successDesc.textContent = mode === "register"
+          ? translate("authSuccessRegisterSub")
+          : translate("authSuccessLoginSub");
+
+        persistSessionUser(res.data.user);
+        showPanel("success");
+      });
     }
 
     if (verifyBtn) verifyBtn.addEventListener("click", handleVerify);
 
-    function startResendTimer() {
-      let seconds   = 60;
+    function startResendTimer(total) {
+      let seconds   = Number(total) > 0 ? Math.ceil(Number(total)) : 60;
       const timerEl = document.getElementById("resendTimer");
 
       if (resendText) resendText.style.display = "block";
@@ -881,14 +935,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (resendBtn) {
       resendBtn.addEventListener("click", () => {
         resendBtn.style.display = "none";
-        setLoading(sendCodeBtn, true);
-        setTimeout(() => {
-          setLoading(sendCodeBtn, false);
-          startResendTimer();
+        requestCode().then(res => {
+          if (!res.ok) {
+            showOtpError(translate(errorKeyFor(res, "phone")));
+            if (res.retryAfter > 0) {
+              startResendTimer(res.retryAfter);
+            } else {
+              resendBtn.style.display = "flex";
+            }
+            return;
+          }
+          startResendTimer(res.data.resendAfter);
           otpBoxes.forEach(b => { if (b) { b.value = ""; b.classList.remove("filled"); } });
           clearErr(otpErr);
           otpBoxes[0]?.focus();
-        }, 1000);
+        });
       });
     }
 
