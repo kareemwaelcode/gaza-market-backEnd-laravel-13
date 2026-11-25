@@ -326,55 +326,42 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
   const labelText = document.getElementById("areaLabelText");
   if (!toggleEl || !labelText) return;
 
-  const STORAGE_KEY = "selectedAreaKey";
+  const AREA_ITEMS = ".dropdown-menu:not(.places-menu) .dropdown-item[data-area]";
 
-  function setAreaLabel(areaName, areaKey) {
+  function itemName(item) {
+    const lang = document.documentElement.dir === "rtl" ? "ar" : "en";
+    return item.getAttribute(`data-name-${lang}`) || item.textContent?.trim() || "";
+  }
+
+  function setAreaLabel(areaName) {
     labelText.textContent = areaName || "";
-    if (areaKey) labelText.setAttribute("data-i18n", areaKey);
+    labelText.removeAttribute("data-i18n");
   }
 
   function restoreSelection() {
     const gmArea      = gmGetSelectedArea();
     const gmAreaLabel = localStorage.getItem(GM_REGION_LABEL_KEY);
+    if (!gmArea) return;
 
-    if (gmArea) {
-      let matchingItem =
-        document.querySelector(`.dropdown-menu:not(.places-menu) .dropdown-item[data-area="${CSS.escape(gmArea)}"]`) ||
-        document.querySelector(`.dropdown-menu:not(.places-menu) .dropdown-item[data-i18n="${CSS.escape(gmArea)}"]`);
-
-      document.querySelectorAll(".dropdown-menu:not(.places-menu) .dropdown-item[data-i18n]").forEach(item => {
-        item.classList.remove("area-selected");
-      });
-
-      if (matchingItem) {
-        matchingItem.classList.add("area-selected");
-        const areaKey = matchingItem.getAttribute("data-i18n") || "";
-        setAreaLabel(matchingItem.textContent?.trim() || gmAreaLabel || "", areaKey);
-        if (areaKey) localStorage.setItem(STORAGE_KEY, areaKey);
-      } else {
-        setAreaLabel(gmAreaLabel || gmArea, "");
-      }
-      return;
-    }
-
-    const savedKey = localStorage.getItem(STORAGE_KEY);
-    if (!savedKey) return;
-
-    document.querySelectorAll(".dropdown-menu:not(.places-menu) .dropdown-item[data-i18n]").forEach(item => {
+    document.querySelectorAll(AREA_ITEMS).forEach(item => {
       item.classList.remove("area-selected");
-      if (item.getAttribute("data-i18n") === savedKey) {
-        item.classList.add("area-selected");
-        setAreaLabel(item.textContent?.trim() || "", savedKey);
-      }
     });
+
+    const matchingItem = document.querySelector(`${AREA_ITEMS}[data-area="${CSS.escape(gmArea)}"]`);
+
+    if (matchingItem) {
+      matchingItem.classList.add("area-selected");
+      setAreaLabel(itemName(matchingItem));
+    } else {
+      setAreaLabel(gmAreaLabel || gmArea);
+    }
   }
 
   restoreSelection();
   document.addEventListener("languageChanged", restoreSelection);
-
   document.addEventListener("gmRegionChanged", restoreSelection);
 
-  document.querySelectorAll(".dropdown-menu:not(.places-menu) .dropdown-item[data-i18n]").forEach(item => {
+  document.querySelectorAll(AREA_ITEMS).forEach(item => {
     item.addEventListener("click", function (e) {
       e.preventDefault();
 
@@ -382,16 +369,14 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
         .forEach(el => el.classList.remove("area-selected"));
 
       this.classList.add("area-selected");
-      const areaName = this.textContent?.trim() || "";
-      const areaKey  = this.getAttribute("data-i18n") || "";
-      setAreaLabel(areaName, areaKey);
-      if (areaKey) localStorage.setItem(STORAGE_KEY, areaKey);
+      const areaName = itemName(this);
+      setAreaLabel(areaName);
 
-      const rawArea = this.dataset.area || areaKey;
+      const rawArea = this.dataset.area;
       if (rawArea) {
         gmSaveSelectedArea(rawArea, areaName, "");
         gmSyncUserRegion(rawArea);
-        const url = new URL(window.location.href);
+        const url = new URL(this.href, window.location.href);
         url.searchParams.set("area", rawArea);
         window.location.href = url.toString();
         return;
@@ -408,7 +393,7 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
         }
       }
 
-      window.selectedArea = areaKey;
+      window.selectedArea = rawArea || "";
     });
   });
 })();

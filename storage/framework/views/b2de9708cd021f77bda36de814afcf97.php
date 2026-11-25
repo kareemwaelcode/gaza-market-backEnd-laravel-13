@@ -86,17 +86,15 @@
     <?php $__currentLoopData = $regions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $region): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
     <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
           style="cursor:pointer;">
-        <span><?php echo e($region->region_name_en); ?></span>
+        <span data-name-ar="<?php echo e($region->region_name_ar); ?>" data-name-en="<?php echo e($region->region_name_en); ?>"><?php echo e($region->region_name_ar); ?></span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"viewBox="0 0 24 24"fill="none" stroke="currentColor"stroke-width="2" stroke-linecap="round"stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/>
         </svg>
     </span>
     <div class="sub-menu ps-3" style="display:none">
         <?php $__currentLoopData = $areas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <?php if($area->region_id == $region->id): ?>
-                <a class="dropdown-item"href="#"data-area="<?php echo e($area->area_name_en); ?>">
-                    <?php echo e($area->area_name_en); ?>
-
-                </a>
+                <a class="dropdown-item" href="<?php echo e(route('gazamarket.home', ['area' => $area->area_name_en])); ?>" data-area="<?php echo e($area->area_name_en); ?>"
+                   data-name-ar="<?php echo e($area->area_name_ar); ?>" data-name-en="<?php echo e($area->area_name_en); ?>"><?php echo e($area->area_name_ar); ?></a>
             <?php endif; ?>
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>

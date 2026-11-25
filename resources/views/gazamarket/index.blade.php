@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <a href="home.html" class="start-btn" id="startBtn" data-i18n="regionStartBtn">
+    <a href="{{ route('gazamarket.home') }}" class="start-btn" id="startBtn" data-i18n="regionStartBtn">
       Start browsing prices in your area
     </a>
     <span class="region-error-msg" id="regionErrorMsg" role="alert" aria-live="polite">
@@ -95,4 +95,3 @@
 @section('scripts')
 
 @endsection
-

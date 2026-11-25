@@ -137,6 +137,7 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
 
 Route::prefix('gazamarket/')->group(function() {
     Route::get('index' , [HomeController::class, 'index'])->name('gazamarket.index');
+    Route::get('home' , [HomeController::class, 'home'])->name('gazamarket.home');
 });
 
 

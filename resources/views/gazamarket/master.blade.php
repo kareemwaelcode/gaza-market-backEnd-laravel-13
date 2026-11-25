@@ -86,16 +86,15 @@
     @foreach($regions as $region)
     <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
           style="cursor:pointer;">
-        <span>{{ $region->region_name_en }}</span>
+        <span data-name-ar="{{ $region->region_name_ar }}" data-name-en="{{ $region->region_name_en }}">{{ $region->region_name_ar }}</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"viewBox="0 0 24 24"fill="none" stroke="currentColor"stroke-width="2" stroke-linecap="round"stroke-linejoin="round" class="lucide lucide-chevron-right-icon lucide-chevron-right arrow"><path d="m9 18 6-6-6-6"/>
         </svg>
     </span>
     <div class="sub-menu ps-3" style="display:none">
         @foreach($areas as $area)
             @if($area->region_id == $region->id)
-                <a class="dropdown-item"href="#"data-area="{{ $area->area_name_en }}">
-                    {{ $area->area_name_en }}
-                </a>
+                <a class="dropdown-item" href="{{ route('gazamarket.home', ['area' => $area->area_name_en]) }}" data-area="{{ $area->area_name_en }}"
+                   data-name-ar="{{ $area->area_name_ar }}" data-name-en="{{ $area->area_name_en }}">{{ $area->area_name_ar }}</a>
             @endif
         @endforeach
     </div>

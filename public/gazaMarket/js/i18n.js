@@ -196,6 +196,10 @@ const i18n = (() => {
       }
     });
 
+    document.querySelectorAll("[data-name-ar][data-name-en]").forEach((el) => {
+      el.textContent = el.getAttribute(currentLang === "ar" ? "data-name-ar" : "data-name-en");
+    });
+
     document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
       el.placeholder = t(el.getAttribute("data-i18n-ph"));
     });
@@ -250,6 +254,8 @@ const i18n = (() => {
 
     applyDirectionFixes(isRtl);
     _applyAuthModal();
+
+    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang: currentLang } }));
   }
 
   function applyDirectionFixes(isRtl) {

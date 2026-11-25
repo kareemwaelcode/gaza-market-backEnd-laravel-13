@@ -14,4 +14,10 @@ class HomeController extends Controller
         $areas = Area::orderBy('created_at', 'desc')->get();
         return response()->view('gazamarket.index' , compact('regions', 'areas'));
     }
+
+    public function home (Request $request) {
+        $regions = Regions::orderBy('created_at', 'desc')->get();
+        $areas = Area::orderBy('created_at', 'desc')->get();
+        return response()->view('gazamarket.home' , compact('regions', 'areas'));
+    }
 }

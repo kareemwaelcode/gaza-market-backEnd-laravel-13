@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <a href="home.html" class="start-btn" id="startBtn" data-i18n="regionStartBtn">
+    <a href="<?php echo e(route('gazamarket.home')); ?>" class="start-btn" id="startBtn" data-i18n="regionStartBtn">
       Start browsing prices in your area
     </a>
     <span class="region-error-msg" id="regionErrorMsg" role="alert" aria-live="polite">
@@ -95,6 +95,4 @@
 <?php $__env->startSection('scripts'); ?>
 
 <?php $__env->stopSection(); ?>
-
-
 <?php echo $__env->make('gazamarket.master', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\wamp64\www\gaza-market\resources\views/gazamarket/index.blade.php ENDPATH**/ ?>
