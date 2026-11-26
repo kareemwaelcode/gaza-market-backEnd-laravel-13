@@ -2047,6 +2047,49 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(categoryErr, categoryGrid);
     });
 
+    // الأزرار الثابتة بالـ HTML احتياطية فقط؛ أول ما تتحمّل تصنيفات الجدول (الفعّالة) بتنبني الشبكة منها
+    function renderListingCategories() {
+      const market = window.GMMarket;
+      const opts = market && typeof market.options === "function" ? market.options() : null;
+      if (!categoryGrid || !opts || !opts.ready || !opts.categories.length) return;
+
+      const lang = document.documentElement.lang?.startsWith("en") ? "en" : "ar";
+      const keep = selectedCategory;
+
+      categoryGrid.replaceChildren(
+        ...opts.categories.map((c) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "npw-region-btn";
+          b.dataset.value = c.slug;
+          b.setAttribute("aria-pressed", "false");
+          b.textContent = market.categoryName(c.slug, lang) || c.slug;
+          return b;
+        })
+      );
+
+      const keepBtn = keep
+        ? Array.from(categoryGrid.querySelectorAll(".npw-region-btn")).find((b) => b.dataset.value === keep)
+        : null;
+      if (keepBtn) {
+        keepBtn.classList.add("active");
+        keepBtn.setAttribute("aria-pressed", "true");
+        selectedCategoryLabel = keepBtn.textContent?.trim() || "";
+      } else if (keep) {
+        // التصنيف المختار انشال/تعطّل من الـ CMS
+        selectedCategory = null;
+        selectedCategoryLabel = "";
+      }
+    }
+
+    renderListingCategories();
+    document.addEventListener("gmMarketOptionsReady", renderListingCategories);
+    document.addEventListener("languageChanged", renderListingCategories);
+    modalEl.addEventListener("show.bs.modal", () => {
+      const market = window.GMMarket;
+      if (market && typeof market.loadOptions === "function") market.loadOptions().then(renderListingCategories);
+    });
+
     let selectedRegion = null;
     let selectedRegionLabel = "";
 

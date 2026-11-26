@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Listing;
+use App\Services\PointService;
 use App\Support\ApiCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -83,15 +85,24 @@ class ListingController extends Controller implements HasMiddleware
     {
         $listing = Listing::findOrFail($id);
 
-        // تحديث شرطي بعملية وحدة: آمن لو ضغط أدمنين بنفس اللحظة
-        $updated = Listing::whereKey($listing->id)
-            ->whereIn('listing_status', [Listing::STATUS_PENDING, Listing::STATUS_REJECTED])
-            ->update([
-                'listing_status' => Listing::STATUS_APPROVED,
-                'listing_published_at' => now(),
-                'listing_rejection_reason' => null,
-                'updated_at' => now(),
-            ]);
+        // تحديث شرطي بعملية وحدة: آمن لو ضغط أدمنين بنفس اللحظة. منح النقاط بنفس الـ transaction: لو فشل بيتراجع الاعتماد
+        // (القاعدة add_listing غير موجودة/معطّلة = ما في منح. وإعادة الاعتماد بعد رفض ما بتمنح مرتين: القيد الفريد بجدول النقاط)
+        $updated = DB::transaction(function () use ($listing) {
+            $rows = Listing::whereKey($listing->id)
+                ->whereIn('listing_status', [Listing::STATUS_PENDING, Listing::STATUS_REJECTED])
+                ->update([
+                    'listing_status' => Listing::STATUS_APPROVED,
+                    'listing_published_at' => now(),
+                    'listing_rejection_reason' => null,
+                    'updated_at' => now(),
+                ]);
+
+            if ($rows) {
+                app(PointService::class)->award((int) $listing->user_id, 'add_listing', 'listing', (int) $listing->id);
+            }
+
+            return $rows;
+        });
 
         if (! $updated) {
             return response()->json([

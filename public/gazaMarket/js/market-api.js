@@ -331,6 +331,29 @@ if (!item) throw GMMarketError("invalid_response", "Invalid listing response");
 return item;
 }
 
+// ردّ الإضافة/التعديل من الباك إند مختصر ({ id, status, images })، فبنكمّل باقي الحقول من اللي أرسله المستخدم
+function normalizeWritten(json, value) {
+const body = json && json.data && typeof json.data === "object" && !Array.isArray(json.data) ? json.data : null;
+if (!body) throw GMMarketError("invalid_response", "Invalid listing response");
+const user = currentUser();
+const base = {
+    title: value.title,
+    category: value.category,
+    condition: value.condition,
+    description: value.description,
+    price: value.price,
+    is_negotiable: value.negotiable,
+    region: areaSlugOfCode(value.region),
+    phone: value.phone,
+    whatsapp: value.whatsapp,
+    seller_name: user ? user.name : "",
+    is_owner: true,
+};
+const item = normalizeItem(Object.assign(base, body));
+if (!item) throw GMMarketError("invalid_response", "Invalid listing response");
+return item;
+}
+
 function normalizeList(json) {
 if (!json || !Array.isArray(json.data)) throw GMMarketError("invalid_response", "Invalid listings response");
 return json.data.map(normalizeItem).filter(Boolean);
@@ -461,9 +484,14 @@ form.append("listing_is_negotiable", value.negotiable ? "1" : "0");
 form.append("area_id", String(ids.areaId));
 form.append("listing_phone", value.phone);
 if (value.whatsapp) form.append("listing_whatsapp", value.whatsapp);
-// الصور المحتفظ بها (keep_images) مش مدعومة بالباك إند بعد؛ بنبعت الملفات الجديدة فقط
+// بالتعديل: الصور الحالية اللي بدّه يحتفظ فيها (روابطها زي ما رجّعها الباك إند) + الملفات الجديدة.
+// الباك إند بيحذف الصور الحالية اللي مش بالـ keep_images
 value.images.forEach((item) => {
-    if (typeof item !== "string") form.append("images[]", item, item.name);
+    if (typeof item === "string") {
+    if (method) form.append("keep_images[]", item);
+    } else {
+    form.append("images[]", item, item.name);
+    }
 });
 return form;
 }
@@ -499,8 +527,26 @@ function apiFetchMine() {
 return request("GET", "/market/mine");
 }
 
-function apiFetchOne(id) {
-return request("GET", "/market/" + encodeURIComponent(id));
+// الـ endpoint العام بيرجّع المنشور (approved) فقط. لو الإعلان معلّق (pending) بنجرّب معاينة المالك
+// (/market/mine/{id}، بتتطلب تسجيل دخول وبترجّع إعلانات المستخدم نفسه فقط). أي فشل غير 404 بيتمرّر زي ما هو.
+async function apiFetchOne(id) {
+const path = encodeURIComponent(id);
+try {
+    return await request("GET", "/market/" + path);
+} catch (err) {
+    if (!err || err.code !== "not_found") throw err;
+    let own;
+    try {
+    own = await request("GET", "/market/mine/" + path);
+    } catch (ownErr) {
+    // غير مسجّل دخول (401) أو مش إعلانه (404): للزائر الإعلان ببساطة مش موجود
+    if (ownErr && (ownErr.code === "unauthorized" || ownErr.code === "not_found" || ownErr.code === "forbidden")) throw err;
+    throw ownErr;
+    }
+    const body = own && own.data && typeof own.data === "object" ? own.data : null;
+    if (!body) throw err;
+    return { data: Object.assign({}, body, { is_owner: true }) };
+}
 }
 
 function apiFetchSimilar(id, limit) {
@@ -523,8 +569,9 @@ function apiMarkSold(id) {
 return request("POST", "/market/" + encodeURIComponent(id) + "/sold", {});
 }
 
+// الباك إند: POST للحفظ وDELETE لإلغائه (بيرجّعوا { data: { listing_id, saved } })
 function apiSetSaved(id, saved) {
-return request("PUT", "/market/" + encodeURIComponent(id) + "/save", { saved: !!saved });
+return request(saved ? "POST" : "DELETE", "/market/" + encodeURIComponent(id) + "/save");
 }
 
 const MOCK_BASE_TIME = Math.floor(Date.now() / 60000) * 60000;
@@ -999,8 +1046,8 @@ async function create(payload) {
 await loadOptions();
 const check = validate(payload);
 throwIfInvalid(check);
-const json = USE_MOCK ? await mockCreate(check.value) : await apiCreate(check.value);
-return normalizeSingle(json);
+if (USE_MOCK) return normalizeSingle(await mockCreate(check.value));
+return normalizeWritten(await apiCreate(check.value), check.value);
 }
 
 async function update(id, payload) {
@@ -1008,8 +1055,8 @@ await loadOptions();
 const cleaned = cleanId(id);
 const check = validate(payload);
 throwIfInvalid(check);
-const json = USE_MOCK ? await mockUpdate(cleaned, check.value) : await apiUpdate(cleaned, check.value);
-return normalizeSingle(json);
+if (USE_MOCK) return normalizeSingle(await mockUpdate(cleaned, check.value));
+return normalizeWritten(await apiUpdate(cleaned, check.value), check.value);
 }
 
 async function remove(id) {

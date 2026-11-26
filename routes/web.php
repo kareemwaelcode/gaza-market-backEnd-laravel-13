@@ -148,6 +148,11 @@ Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, Pr
             ->middleware('throttle:market-feed')
             ->name('market.index');
 
+        Route::get('api/market/{listing}/similar', [ApiMarketController::class, 'similar'])
+            ->where('listing', '[0-9]{1,18}')
+            ->middleware('throttle:market-detail')
+            ->name('market.similar');
+
         Route::get('api/market/{listing}', [ApiMarketController::class, 'show'])
             ->where('listing', '[0-9]{1,18}')
             ->middleware('throttle:market-detail')

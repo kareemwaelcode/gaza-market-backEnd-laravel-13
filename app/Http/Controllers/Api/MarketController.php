@@ -18,6 +18,10 @@ class MarketController extends Controller
 
     private const MAX_PER_PAGE = 50;
 
+    private const SIMILAR_DEFAULT = 8;
+
+    private const SIMILAR_MAX = 24;
+
     public function index(Request $request): JsonResponse
     {
         $validator = validator($request->query(), [
@@ -73,6 +77,87 @@ class MarketController extends Controller
         return response()->json(['data' => $payload]);
     }
 
+    // إعلانات مشابهة: نفس التصنيف (المعتمدة فقط)، ونفس المنطقة أولاً ثم الأحدث. بدون ترقيم، حد أقصى SIMILAR_MAX
+    public function similar(Request $request, int $listing): JsonResponse
+    {
+        $validator = validator($request->query(), [
+            'limit' => ['nullable', 'integer', 'min:1', 'max:'.self::SIMILAR_MAX],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'icon' => 'error',
+                'title' => $validator->getMessageBag()->first(),
+            ], 400);
+        }
+
+        $limit = (int) ($request->query('limit') ?: self::SIMILAR_DEFAULT);
+
+        $payload = ApiCache::remember(
+            [ApiCache::MARKET],
+            'similar:'.$listing.':'.$limit,
+            (int) config('prices.cache.market_detail_ttl'),
+            fn () => $this->similarPayload($listing, $limit),
+            fn ($value) => $value === false,
+        );
+
+        if ($payload === false) {
+            return response()->json(['icon' => 'error', 'title' => 'Listing not found'], 404);
+        }
+
+        return response()->json(['data' => $payload]);
+    }
+
+    private function similarPayload(int $id, int $limit): array|false
+    {
+        $base = Listing::query()->approved()->select(['id', 'listing_category_id', 'area_id'])->find($id);
+
+        if ($base === null) {
+            return false;
+        }
+
+        return Listing::query()
+            ->approved()
+            ->where('listing_category_id', $base->listing_category_id)
+            ->whereKeyNot($base->id)
+            ->with([
+                'area:id,area_slug,area_name_en,area_name_ar',
+                'category:id,listing_category_slug,listing_category_name_en,listing_category_name_ar',
+                'images' => fn ($q) => $q->where('listing_image_sort_order', 1),
+            ])
+            // نفس المنطقة أولاً (قيمة الربط مربوطة كـ binding، مش مركّبة من مدخل المستخدم)
+            ->orderByRaw('CASE WHEN area_id = ? THEN 0 ELSE 1 END', [$base->area_id])
+            ->latestPublished()
+            ->limit($limit)
+            ->get()
+            ->map(fn (Listing $listing) => $this->cardPayload($listing))
+            ->values()
+            ->all();
+    }
+
+    private function cardPayload(Listing $listing): array
+    {
+        return [
+            'id' => $listing->id,
+            'title' => $listing->listing_title,
+            'condition' => $listing->listing_condition,
+            'price' => $listing->listing_price,
+            'is_negotiable' => $listing->listing_is_negotiable,
+            'region' => $listing->area?->area_slug,
+            'area' => $listing->area ? [
+                'name_ar' => $listing->area->area_name_ar,
+                'name_en' => $listing->area->area_name_en,
+            ] : null,
+            'category' => $listing->category ? [
+                'slug' => $listing->category->listing_category_slug,
+                'name_ar' => $listing->category->listing_category_name_ar,
+                'name_en' => $listing->category->listing_category_name_en,
+            ] : null,
+            'cover' => $listing->images->first()?->url,
+            'published_at' => $listing->listing_published_at?->toJSON(),
+        ];
+    }
+
     private function feedPayload(?string $region, ?string $category, ?string $condition, int $limit): array
     {
         $areaId = null;
@@ -103,25 +188,7 @@ class MarketController extends Controller
             ->latestPublished()
             ->simplePaginate($limit);
 
-        $items = $page->getCollection()->map(fn (Listing $listing) => [
-            'id' => $listing->id,
-            'title' => $listing->listing_title,
-            'condition' => $listing->listing_condition,
-            'price' => $listing->listing_price,
-            'is_negotiable' => $listing->listing_is_negotiable,
-            'region' => $listing->area?->area_slug,
-            'area' => $listing->area ? [
-                'name_ar' => $listing->area->area_name_ar,
-                'name_en' => $listing->area->area_name_en,
-            ] : null,
-            'category' => $listing->category ? [
-                'slug' => $listing->category->listing_category_slug,
-                'name_ar' => $listing->category->listing_category_name_ar,
-                'name_en' => $listing->category->listing_category_name_en,
-            ] : null,
-            'cover' => $listing->images->first()?->url,
-            'published_at' => $listing->listing_published_at?->toJSON(),
-        ])->values();
+        $items = $page->getCollection()->map(fn (Listing $listing) => $this->cardPayload($listing))->values();
 
         return [
             'data' => $items->all(),

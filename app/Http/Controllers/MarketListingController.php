@@ -88,8 +88,13 @@ class MarketListingController extends Controller
         $prepared = [];
         $processor = app(ImageProcessor::class);
 
+        // keep_images موجود بالطلب = الصور الحالية اللي بتضل (والباقي بينحذف). غير موجود = السلوك القديم:
+        // صور جديدة بتستبدل الكل، وبدون صور ما بيتغير شي
+        $keepUrls = $request->has('keep_images') ? array_values((array) $request->input('keep_images')) : null;
+        $touchesImages = $request->hasFile('images') || $keepUrls !== null;
+
         try {
-            if ($request->hasFile('images')) {
+            if ($touchesImages) {
                 // فحص سريع بدون قفل: ما منعالج صور (ثقيل) لطلب أصلًا مرفوض
                 $status = Listing::query()->where('user_id', $user->id)->whereKey($listing)->value('listing_status');
 
@@ -102,10 +107,12 @@ class MarketListingController extends Controller
                 }
 
                 // المعالجة الثقيلة قبل الـ transaction والقفل، مش جوّاهم
-                $prepared = $this->prepareImages($processor, $request->file('images'));
+                if ($request->hasFile('images')) {
+                    $prepared = $this->prepareImages($processor, $request->file('images'));
+                }
             }
 
-            $result = DB::transaction(function () use ($request, $user, $listing, $processor, $prepared, &$storedPaths, &$oldPaths, &$outcome) {
+            $result = DB::transaction(function () use ($request, $user, $listing, $processor, $prepared, $keepUrls, $touchesImages, &$storedPaths, &$oldPaths, &$outcome) {
                 $model = Listing::query()
                     ->where('user_id', $user->id)
                     ->whereKey($listing)
@@ -124,19 +131,49 @@ class MarketListingController extends Controller
                     return null;
                 }
 
-                $model->fill($request->safe()->except(['images', 'listing_is_negotiable']));
+                $existing = $touchesImages
+                    ? $model->images()->orderBy('listing_image_sort_order')->orderBy('id')->get()
+                    : collect();
+
+                // الصور اللي بتضل: بتطابق روابط الصور الحالية فقط (أي رابط غريب بيتجاهل)
+                $kept = $keepUrls === null
+                    ? collect()
+                    : $existing->filter(fn (ListingImage $image) => in_array($image->url, $keepUrls, true))->values();
+
+                if ($touchesImages && ($kept->count() + count($prepared) < 1 || $kept->count() + count($prepared) > 3)) {
+                    $outcome = 'images';
+
+                    return null;
+                }
+
+                $model->fill($request->safe()->except(['images', 'keep_images', 'listing_is_negotiable']));
                 $model->listing_is_negotiable = $request->boolean('listing_is_negotiable');
                 $model->save();
 
-                if ($request->hasFile('images')) {
-                    $oldPaths = $model->images()->get()
-                        ->filter(fn ($image) => $image->isLocalFile())
+                if ($touchesImages) {
+                    $removed = $existing->reject(fn (ListingImage $image) => $kept->contains('id', $image->id));
+
+                    $oldPaths = $removed
+                        ->filter(fn (ListingImage $image) => $image->isLocalFile())
                         ->pluck('listing_image_path')
                         ->all();
 
-                    ListingImage::where('listing_id', $model->id)->delete();
+                    if ($removed->isNotEmpty()) {
+                        ListingImage::where('listing_id', $model->id)->whereIn('id', $removed->pluck('id'))->delete();
+                    }
 
-                    foreach ($prepared as $index => $processed) {
+                    // ترقيم تصاعدي 1..n: الغلاف (رتبة 1) لازم يضل موجود، والقيد الفريد (listing_id, sort_order) ما بيتعارض
+                    // لأن كل رتبة جديدة <= القديمة وبالترتيب التصاعدي
+                    foreach ($kept as $position => $image) {
+                        if ($image->listing_image_sort_order !== $position + 1) {
+                            $image->listing_image_sort_order = $position + 1;
+                            $image->save();
+                        }
+                    }
+
+                    foreach ($prepared as $position => $processed) {
+                        $index = $kept->count() + $position;
+
                         $path = $processor->publish($processed, "listings/{$model->id}", 'public');
 
                         if ($path === false) {
@@ -169,6 +206,10 @@ class MarketListingController extends Controller
 
         if ($outcome === 'locked') {
             return $this->conflict('Only listings under review can be edited');
+        }
+
+        if ($outcome === 'images') {
+            return response()->json(['icon' => 'error', 'title' => 'A listing needs between 1 and 3 photos'], 400);
         }
 
         if ($oldPaths) {

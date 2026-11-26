@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use App\Models\Listing;
 use App\Models\ListingCategory;
+use App\Services\PointService;
 use App\Support\ApiCache;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -61,14 +63,23 @@ class ListingController extends Controller
     {
         $listing = Listing::findOrFail($id);
 
-        $updated = Listing::whereKey($listing->id)
-            ->whereIn('listing_status', [Listing::STATUS_PENDING, Listing::STATUS_REJECTED])
-            ->update([
-                'listing_status' => Listing::STATUS_APPROVED,
-                'listing_published_at' => now(),
-                'listing_rejection_reason' => null,
-                'updated_at' => now(),
-            ]);
+        // منح النقاط (add_listing) بنفس الـ transaction، زي مسار الـ API. التكرار ممنوع بالقيد الفريد بجدول النقاط
+        $updated = DB::transaction(function () use ($listing) {
+            $rows = Listing::whereKey($listing->id)
+                ->whereIn('listing_status', [Listing::STATUS_PENDING, Listing::STATUS_REJECTED])
+                ->update([
+                    'listing_status' => Listing::STATUS_APPROVED,
+                    'listing_published_at' => now(),
+                    'listing_rejection_reason' => null,
+                    'updated_at' => now(),
+                ]);
+
+            if ($rows) {
+                app(PointService::class)->award((int) $listing->user_id, 'add_listing', 'listing', (int) $listing->id);
+            }
+
+            return $rows;
+        });
 
         if (! $updated) {
             return response()->json(['icon' => 'error', 'title' => 'Only pending or rejected listings can be approved'], 409);

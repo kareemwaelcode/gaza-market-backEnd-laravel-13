@@ -31,7 +31,6 @@ const moreLabel = document.getElementById('marketMoreLabel');
 const tabsGroup = document.getElementById('marketTabs');
 const filtersBar = document.getElementById('marketFilters');
 const tabs = Array.from(document.querySelectorAll('[data-market-tab]'));
-const categoryItems = Array.from(document.querySelectorAll('[data-market-category]'));
 const conditionItems = Array.from(document.querySelectorAll('[data-market-condition]'));
 
 const DETAILS_PAGE = 'market-details.html';
@@ -113,6 +112,41 @@ else action();
 
 function isCategory(code) {
 return !!api && api.categories.indexOf(code) !== -1;
+}
+
+function categoryItems() {
+return Array.from(document.querySelectorAll('[data-market-category]'));
+}
+
+// الاسم من جدول listing_categories لما تتحمّل الخيارات، وإلا من ترجمات الواجهة الثابتة
+function categoryName(slug) {
+const name = api && typeof api.categoryName === 'function' ? api.categoryName(slug, currentLang()) : null;
+if (name) return name;
+return CATEGORY_KEYS[slug] ? t(CATEGORY_KEYS[slug]) : slug;
+}
+
+// قائمة التصنيفات من الـ API (الفعّالة فقط)؛ لو ما تحمّلت بتضل القائمة الثابتة بالـ HTML
+function renderCategoryMenu() {
+const opts = api && typeof api.options === 'function' ? api.options() : null;
+if (!opts || !opts.ready || !opts.categories.length || !categoryBtn) return;
+const menu = categoryBtn.parentNode.querySelector('.dropdown-menu');
+if (!menu) return;
+const allItem = menu.querySelector('[data-market-category="all"]');
+if (!allItem) return;
+const frag = document.createDocumentFragment();
+frag.appendChild(allItem.parentNode);
+opts.categories.forEach(function (c) {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dropdown-item';
+    btn.dataset.marketCategory = c.slug;
+    btn.textContent = categoryName(c.slug);
+    li.appendChild(btn);
+    frag.appendChild(li);
+});
+menu.replaceChildren(frag);
+if (state.category !== 'all' && !isCategory(state.category)) state.category = 'all';
 }
 
 function isCondition(code) {
@@ -319,7 +353,7 @@ const item = itemOf.get(col);
 if (!item) return;
 
 paintTexts(col);
-col.querySelector('[data-role="cat"]').textContent = t(CATEGORY_KEYS[item.category] || CATEGORY_KEYS.other);
+col.querySelector('[data-role="cat"]').textContent = categoryName(item.category);
 
 const amount = col.querySelector('[data-role="amount"]');
 if (item.price === null) {
@@ -654,7 +688,7 @@ tabs.forEach(function (tab) {
     tab.setAttribute('aria-pressed', on ? 'true' : 'false');
 });
 
-categoryItems.forEach(function (item) {
+categoryItems().forEach(function (item) {
     const on = item.dataset.marketCategory === state.category;
     item.classList.toggle('is-active', on);
     if (on) item.setAttribute('aria-current', 'true');
@@ -683,7 +717,7 @@ if (regionMenu) {
 
 const categoryActive = state.category !== 'all';
 categoryBtn.classList.toggle('is-active', categoryActive);
-categoryLabel.textContent = categoryActive ? t(CATEGORY_KEYS[state.category]) : t('market.filterCategory');
+categoryLabel.textContent = categoryActive ? categoryName(state.category) : t('market.filterCategory');
 
 const conditionActive = state.condition !== 'all';
 conditionBtn.classList.toggle('is-active', conditionActive);
@@ -831,6 +865,7 @@ const lang = currentLang();
 if (lang === lastLang) return;
 lastLang = lang;
 renderRegionMenu();
+renderCategoryMenu();
 Array.prototype.forEach.call(list.children, paintCard);
 syncFilterUI();
 if (panel === 'empty' || panel === 'error' || panel === 'login') showPanel(panel);
@@ -840,9 +875,14 @@ paintMore();
 
 function boot() {
 renderRegionMenu();
-readUrl();
-syncFilterUI();
-reload();
+// نستنى تصنيفات الجدول قبل قراءة الـ URL عشان ?category=slug لتصنيف جديد يتعرّف؛ لو فشل التحميل بنكمل بالقائمة الثابتة
+const ready = api && typeof api.loadOptions === 'function' ? api.loadOptions().catch(function () { return false; }) : Promise.resolve(false);
+ready.then(function () {
+    renderCategoryMenu();
+    readUrl();
+    syncFilterUI();
+    reload();
+});
 }
 
 if (document.readyState === 'complete') boot();
