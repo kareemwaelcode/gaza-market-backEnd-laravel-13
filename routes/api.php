@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CategoryGroupController;
 use App\Http\Controllers\Api\HeroSectionController;
 use App\Http\Controllers\Api\ListingCategoryController;
+use App\Http\Controllers\Api\ListingCategoryOptionsController;
 use App\Http\Controllers\Api\ListingController;
 use App\Http\Controllers\Api\NavigationItemController;
 use App\Http\Controllers\Api\PlaceVisitController;
@@ -32,6 +33,8 @@ Route::middleware('throttle:lookups')->group(function () {
     Route::apiResource('category-groups', CategoryGroupController::class);
     Route::apiResource('store-category-groups', StoreCategoryGroupController::class);
     Route::apiResource('store-categories', StoreCategoryController::class);
+    // تصنيفات الإعلانات الفعّالة لشاشة الإضافة وفلتر السوق (قبل apiResource حتى لا تلتقطها show/{id})
+    Route::get('listing-categories/options', ListingCategoryOptionsController::class);
     Route::apiResource('listing-categories', ListingCategoryController::class);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('navigation-items', NavigationItemController::class);

@@ -16,7 +16,14 @@ const STORE_KEY = "gm_mock_market_v1";
 const SAVED_KEY = "gm_mock_market_saved_v1";
 const USER_KEY = (window.GM_STORAGE_KEYS && window.GM_STORAGE_KEYS.user) || "user";
 
-const CATEGORIES = Object.freeze(["electronics", "clothing", "furniture", "food", "books", "tools", "toys", "other"]);
+// قائمة احتياطية فقط؛ بعد تحميل الخيارات تُستبدل (في نفس المصفوفة) بتصنيفات جدول listing_categories
+const CATEGORIES = ["electronics", "clothing", "furniture", "food", "books", "tools", "toys", "other"];
+const PHONE_RE = /^05[69]\d{7}$/;
+const WHATSAPP_RE = /^\+\d{3}[1-9]\d{6,10}$/;
+
+// خيارات الفورم من الباك إند: listing_categories (الفعّالة) + areas. فيها الـ ids اللي بيتحقق منها StoreListingRequest
+const options = { ready: false, categories: [], areas: [] };
+let optionsPromise = null;
 const CONDITIONS = Object.freeze(["new", "used", "urgent"]);
 const STATUSES = Object.freeze(["pending", "approved"]);
 
@@ -33,7 +40,7 @@ const SIMILAR_MAX = 24;
 
 const LIMITS = Object.freeze({
 title: 100,
-description: 1500,
+description: 1000,
 priceMax: 100000000,
 phoneMin: 9,
 phoneMax: 15,
@@ -57,7 +64,8 @@ function codeFromStatus(status) {
 if (status === 401 || status === 419) return "unauthorized";
 if (status === 403) return "forbidden";
 if (status === 404) return "not_found";
-if (status === 422) return "validation";
+if (status === 400 || status === 422) return "validation";
+if (status === 409) return "conflict";
 if (status === 429) return "rate_limited";
 return "server";
 }
@@ -131,8 +139,11 @@ return (text.charAt(0) === "+" ? "+" : "") + text.replace(/\D/g, "");
 }
 
 function phoneValid(value) {
-const digits = value.replace(/\D/g, "");
-return digits.length >= LIMITS.phoneMin && digits.length <= LIMITS.phoneMax;
+return PHONE_RE.test(value);
+}
+
+function whatsappValid(value) {
+return WHATSAPP_RE.test(value);
 }
 
 function cleanPrice(value) {
@@ -144,6 +155,7 @@ return { value: Math.round(num * 100) / 100, valid: true };
 
 function resolveRegion(raw) {
 if (raw === null || raw === undefined || raw === "") return null;
+if (typeof raw === "string" && options.areas.some((a) => a.code === raw)) return raw;
 if (window.GMRegions && typeof window.GMRegions.normalize === "function") return window.GMRegions.normalize(raw);
 return typeof raw === "string" && CODE_RE.test(raw) ? raw : null;
 }
@@ -199,6 +211,8 @@ else if (description.length > LIMITS.description) errors.description = "too_long
 
 const price = cleanPrice(src.price);
 if (!price.valid) errors.price = "invalid";
+else if (price.value === null) errors.price = "required";
+else if (price.value < 1) errors.price = "invalid";
 
 const region = resolveRegion(src.region);
 if (!region) errors.region = src.region ? "invalid" : "required";
@@ -208,7 +222,7 @@ if (!phone) errors.phone = "required";
 else if (!phoneValid(phone)) errors.phone = "invalid";
 
 const whatsapp = cleanPhone(src.whatsapp);
-if (whatsapp && !phoneValid(whatsapp)) errors.whatsapp = "invalid";
+if (whatsapp && !whatsappValid(whatsapp)) errors.whatsapp = "invalid";
 
 const images = Array.isArray(src.images) ? src.images : [];
 if (images.length > MAX_IMAGES) {
@@ -246,35 +260,62 @@ return {
 };
 }
 
+function categorySlugOf(raw) {
+if (raw && typeof raw === "object") return typeof raw.slug === "string" ? raw.slug : "";
+return typeof raw === "string" ? raw : "";
+}
+
+function regionCodeOf(slug, area) {
+const hit = options.areas.find((a) => a.slug === slug);
+if (hit && hit.code) return hit.code;
+const norm = window.GMRegions && typeof window.GMRegions.normalize === "function" ? window.GMRegions.normalize : null;
+if (norm) {
+    const code = norm(slug) || (area && (norm(area.name_en) || norm(area.name_ar)));
+    if (code) return code;
+}
+return typeof slug === "string" ? slug : "";
+}
+
+// بيقبل شكل الباك إند (id, is_negotiable, category{slug}, cover, published_at, seller_name) وشكل الواجهة القديم (listing_id, negotiable...)
 function normalizeItem(raw) {
-if (!raw || raw.listing_id === undefined || raw.listing_id === null || raw.listing_id === "") return null;
+if (!raw) return null;
+const rawId = raw.listing_id !== undefined && raw.listing_id !== null && raw.listing_id !== "" ? raw.listing_id : raw.id;
+if (rawId === undefined || rawId === null || rawId === "") return null;
 
 const title = cleanTitle(raw.title);
 if (!title) return null;
 
-const status = STATUSES.indexOf(raw.status) === -1 ? null : raw.status;
+// الـ endpoints العامة ما بترجّع status لأنها approved فقط
+const rawStatus = raw.status === undefined || raw.status === null ? "approved" : raw.status;
+const status = STATUSES.indexOf(rawStatus) === -1 ? null : rawStatus;
 if (!status) return null;
 
 const price = Number(raw.price);
 const seller = raw.seller && typeof raw.seller === "object" ? raw.seller : {};
+const sellerName = typeof seller.name === "string" ? seller.name : (typeof raw.seller_name === "string" ? raw.seller_name : "");
+const category = categorySlugOf(raw.category);
+const images = Array.isArray(raw.images) ? raw.images : (raw.cover ? [raw.cover] : []);
+const negotiable = raw.negotiable !== undefined ? raw.negotiable : raw.is_negotiable;
+const approvedAt = raw.approved_at !== undefined ? raw.approved_at : raw.published_at;
+const rawRegion = typeof raw.region === "string" ? raw.region : "";
 
 return {
-    listing_id: String(raw.listing_id),
+    listing_id: String(rawId),
     title: title,
-    category: CATEGORIES.indexOf(raw.category) === -1 ? "other" : raw.category,
+    category: category || "other",
     condition: CONDITIONS.indexOf(raw.condition) === -1 ? "new" : raw.condition,
     description: cleanDescription(raw.description),
     price: raw.price === null || raw.price === undefined || raw.price === "" || !isFinite(price) || price < 0 ? null : price,
-    negotiable: !!raw.negotiable,
-    region: typeof raw.region === "string" ? raw.region : "",
+    negotiable: !!negotiable,
+    region: rawRegion ? regionCodeOf(rawRegion, raw.area) : "",
     phone: typeof raw.phone === "string" ? raw.phone : "",
     whatsapp: typeof raw.whatsapp === "string" ? raw.whatsapp : "",
-    images: Array.isArray(raw.images) ? raw.images.map(safeUrl).filter(Boolean).slice(0, MAX_IMAGES) : [],
+    images: images.map(safeUrl).filter(Boolean).slice(0, MAX_IMAGES),
     status: status,
     created_at: toIso(raw.created_at),
-    approved_at: toIso(raw.approved_at),
+    approved_at: toIso(approvedAt),
     seller: {
-    name: typeof seller.name === "string" ? seller.name.trim() : "",
+    name: sellerName.trim(),
     avatar: safeUrl(seller.avatar),
     member_since: toIso(seller.member_since),
     },
@@ -298,8 +339,10 @@ return json.data.map(normalizeItem).filter(Boolean);
 function normalizePage(json) {
 const items = normalizeList(json);
 const meta = json.meta && typeof json.meta === "object" ? json.meta : {};
-const nextCursor = json.next_cursor || meta.next_cursor || null;
 const hasMoreFlag = json.has_more !== undefined ? json.has_more : meta.has_more;
+// الباك إند بيرجّع current_page + has_more (page-based)؛ بنحوّلها لـ "cursor" = رقم الصفحة التالية
+const pageNo = Number(meta.current_page);
+const nextCursor = json.next_cursor || meta.next_cursor || (hasMoreFlag && isFinite(pageNo) && pageNo >= 1 ? String(pageNo + 1) : null);
 const rawTotal = json.total !== undefined ? json.total : meta.total;
 const total = rawTotal === undefined || rawTotal === null || rawTotal === "" ? NaN : Number(rawTotal);
 
@@ -397,7 +440,7 @@ try {
 }
 
 if (!res.ok) {
-    const message = json && typeof json.message === "string" ? json.message : "HTTP " + res.status;
+    const message = json && typeof json.message === "string" ? json.message : (json && typeof json.title === "string" ? json.title : "HTTP " + res.status);
     throw GMMarketError(codeFromStatus(res.status), message, res.status, json && json.errors);
 }
 
@@ -405,33 +448,49 @@ if (json === null) throw GMMarketError("invalid_response", "Empty or invalid JSO
 return json;
 }
 
-function buildFormData(value, method) {
+// أسماء الحقول والـ ids زي ما بيتوقعها StoreListingRequest / UpdateListingRequest
+function buildFormData(value, method, ids) {
 const form = new FormData();
 if (method) form.append("_method", method);
-form.append("title", value.title);
-form.append("category", value.category);
-form.append("condition", value.condition);
-form.append("description", value.description);
-if (value.price !== null) form.append("price", String(value.price));
-form.append("negotiable", value.negotiable ? "1" : "0");
-form.append("region", value.region);
-form.append("phone", value.phone);
-if (value.whatsapp) form.append("whatsapp", value.whatsapp);
+form.append("listing_title", value.title);
+form.append("listing_category_id", String(ids.categoryId));
+form.append("listing_condition", value.condition);
+form.append("listing_description", value.description);
+if (value.price !== null) form.append("listing_price", String(value.price));
+form.append("listing_is_negotiable", value.negotiable ? "1" : "0");
+form.append("area_id", String(ids.areaId));
+form.append("listing_phone", value.phone);
+if (value.whatsapp) form.append("listing_whatsapp", value.whatsapp);
+// الصور المحتفظ بها (keep_images) مش مدعومة بالباك إند بعد؛ بنبعت الملفات الجديدة فقط
 value.images.forEach((item) => {
-    if (typeof item === "string") form.append("keep_images[]", item);
-    else form.append("images[]", item, item.name);
+    if (typeof item !== "string") form.append("images[]", item, item.name);
 });
 return form;
 }
 
+function resolveIds(value) {
+const category = options.categories.find((c) => c.slug === value.category);
+const area = options.areas.find((a) => a.code === value.region);
+const errors = {};
+if (!category) errors.category = "invalid";
+if (!area) errors.region = "invalid";
+if (Object.keys(errors).length) throw GMMarketError("validation", "Unknown category or area", 422, errors);
+return { categoryId: category.id, areaId: area.id };
+}
+
+function areaSlugOfCode(code) {
+const hit = options.areas.find((a) => a.code === code);
+return hit ? hit.slug : code;
+}
+
 function apiFetchPage(p) {
 const query = new URLSearchParams();
-if (p.region) query.set("region", p.region);
+if (p.region) query.set("region", areaSlugOfCode(p.region));
 if (p.category) query.set("category", p.category);
 if (p.condition) query.set("condition", p.condition);
 if (p.q) query.set("q", p.q);
 if (p.saved) query.set("saved", "1");
-if (p.cursor) query.set("cursor", p.cursor);
+if (p.cursor) query.set("page", p.cursor);
 query.set("limit", String(p.limit));
 return request("GET", "/market?" + query.toString());
 }
@@ -449,11 +508,11 @@ return request("GET", "/market/" + encodeURIComponent(id) + "/similar?limit=" + 
 }
 
 function apiCreate(value) {
-return request("POST", "/market", buildFormData(value, null));
+return request("POST", "/market", buildFormData(value, null, resolveIds(value)));
 }
 
 function apiUpdate(id, value) {
-return request("POST", "/market/" + encodeURIComponent(id), buildFormData(value, "PUT"));
+return request("POST", "/market/" + encodeURIComponent(id), buildFormData(value, "PATCH", resolveIds(value)));
 }
 
 function apiRemove(id) {
@@ -839,22 +898,91 @@ function devList() {
 return loadUserRows().map((row) => ({ listing_id: row.listing_id, title: row.title, status: row.status }));
 }
 
+function codeOfArea(area) {
+const norm = window.GMRegions && typeof window.GMRegions.normalize === "function" ? window.GMRegions.normalize : null;
+const matched = norm ? (norm(area.slug) || norm(area.name_en) || norm(area.name_ar)) : null;
+return matched || area.slug;
+}
+
+function sanitizeOptions(categories, areas) {
+const cats = (Array.isArray(categories) ? categories : [])
+    .filter((c) => c && Number.isInteger(c.id) && typeof c.slug === "string" && c.slug)
+    .map((c) => ({ id: c.id, slug: c.slug, name_en: String(c.name_en || ""), name_ar: String(c.name_ar || "") }));
+const seen = new Set();
+const rows = [];
+(Array.isArray(areas) ? areas : []).forEach((a) => {
+    if (!a || !Number.isInteger(a.id) || typeof a.slug !== "string" || !a.slug) return;
+    const row = { id: a.id, slug: a.slug, name_en: String(a.name_en || ""), name_ar: String(a.name_ar || ""), code: "" };
+    row.code = codeOfArea(row);
+    if (seen.has(row.code)) return;
+    seen.add(row.code);
+    rows.push(row);
+});
+return { cats: cats, rows: rows };
+}
+
+function loadOptions() {
+if (USE_MOCK) return Promise.resolve(false);
+if (options.ready) return Promise.resolve(true);
+if (optionsPromise) return optionsPromise;
+optionsPromise = Promise.all([
+    request("GET", "/listing-categories/options"),
+    request("GET", "/product-options"),
+]).then((results) => {
+    const cats = results[0] && results[0].data ? results[0].data.categories : null;
+    const areas = results[1] && results[1].data ? results[1].data.areas : null;
+    const clean = sanitizeOptions(cats, areas);
+    if (!clean.cats.length || !clean.rows.length) return false;
+    options.categories = clean.cats;
+    options.areas = clean.rows;
+    CATEGORIES.splice(0, CATEGORIES.length, ...clean.cats.map((c) => c.slug));
+    options.ready = true;
+    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
+    return true;
+}).catch(() => false).then((ok) => {
+    optionsPromise = null;
+    return ok;
+});
+return optionsPromise;
+}
+
+function getOptions() {
+return {
+    ready: options.ready,
+    categories: options.categories.map((c) => Object.assign({}, c)),
+    areas: options.areas.map((a) => Object.assign({}, a)),
+};
+}
+
+function categoryName(slug, lang) {
+const hit = options.categories.find((c) => c.slug === slug);
+if (!hit) return null;
+return (lang === "en" ? hit.name_en : hit.name_ar) || hit.name_en || hit.name_ar || null;
+}
+
+function isKnownRegion(code) {
+return typeof code === "string" && options.areas.some((a) => a.code === code);
+}
+
 function throwIfInvalid(check) {
 if (!check.valid) throw GMMarketError("validation", "Invalid listing", 422, check.errors);
 }
 
 async function fetchPage(params) {
+await loadOptions();
 const p = cleanParams(params);
 const json = USE_MOCK ? await mockFetchPage(p) : await apiFetchPage(p);
 return normalizePage(json);
 }
 
 async function fetchMine() {
+await loadOptions();
 const json = USE_MOCK ? await mockFetchMine() : await apiFetchMine();
 return normalizeList(json);
 }
 
 async function fetchOne(id) {
+await loadOptions();
 const cleaned = cleanId(id);
 const json = USE_MOCK ? await mockFetchOne(cleaned) : await apiFetchOne(cleaned);
 return normalizeSingle(json);
@@ -868,6 +996,7 @@ return normalizeList(json);
 }
 
 async function create(payload) {
+await loadOptions();
 const check = validate(payload);
 throwIfInvalid(check);
 const json = USE_MOCK ? await mockCreate(check.value) : await apiCreate(check.value);
@@ -875,6 +1004,7 @@ return normalizeSingle(json);
 }
 
 async function update(id, payload) {
+await loadOptions();
 const cleaned = cleanId(id);
 const check = validate(payload);
 throwIfInvalid(check);
@@ -910,6 +1040,10 @@ maxImages: MAX_IMAGES,
 maxImageBytes: MAX_IMAGE_BYTES,
 imageTypes: IMAGE_TYPES,
 limits: LIMITS,
+loadOptions: loadOptions,
+options: getOptions,
+categoryName: categoryName,
+isKnownRegion: isKnownRegion,
 validate: validate,
 fetchPage: fetchPage,
 fetchMine: fetchMine,
