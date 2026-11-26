@@ -77,3 +77,8 @@ git add .
 git commit -m "Update project"
 git push
 
+
+
+php artisan cache:clear
+php artisan config:clear
+php artisan queue:work --tries=1
