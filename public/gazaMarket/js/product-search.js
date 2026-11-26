@@ -2,7 +2,6 @@
 (function () {
 var CONFIG = Object.assign({ API_BASE: '/api', TIMEOUT_MS: 15000, CREDENTIALS: 'same-origin' }, window.GM_CONFIG || {});
 var API_BASE = String(CONFIG.API_BASE).replace(/\/+$/, '');
-var USE_MOCK = !!(window.GM_ENV && window.GM_ENV.isMockAllowed());
 
 var DELAY_MS = 350;
 var MIN_CHARS = 2;   // نفس حد الباك إند (min:2)
@@ -12,12 +11,6 @@ var MAX_ITEMS = 8;
 var TARGETS = [
 { selector: 'input.search-input', pickFills: false },
 { selector: '#productSearch', pickFills: true },
-];
-
-var MOCK_ROWS = [
-{ id: 1, name_ar: 'سكر أبيض', name_en: 'White sugar', quantity: '1.00', unit: { name_ar: 'كيلو', name_en: 'kg' } },
-{ id: 2, name_ar: 'أرز مصري', name_en: 'Egyptian rice', quantity: '1.00', unit: { name_ar: 'كيلو', name_en: 'kg' } },
-{ id: 3, name_ar: 'زيت دوار الشمس', name_en: 'Sunflower oil', quantity: '1.00', unit: { name_ar: 'لتر', name_en: 'L' } },
 ];
 
 function debounce(fn, wait) {
@@ -64,15 +57,6 @@ return parts.join(' ');
 }
 
 // ---------- الطلب ----------
-function mockSearch(q) {
-var needle = q.toLowerCase();
-var rows = MOCK_ROWS.filter(function (row) {
-    return (row.name_ar || '').toLowerCase().indexOf(needle) !== -1 ||
-    (row.name_en || '').toLowerCase().indexOf(needle) !== -1;
-});
-return new Promise(function (resolve) { setTimeout(function () { resolve(rows); }, 150); });
-}
-
 function apiSearch(q, signal) {
 var timeoutController = typeof AbortController === 'function' ? new AbortController() : null;
 var timer = timeoutController ? setTimeout(function () { timeoutController.abort(); }, CONFIG.TIMEOUT_MS) : null;
@@ -115,6 +99,9 @@ style.textContent =
     '.gm-psearch-name{font-weight:600}' +
     '.gm-psearch-meta{font-size:.82em;opacity:.75}' +
     '.gm-psearch-empty{padding:10px;font-size:.9em;opacity:.75;cursor:default}' +
+    '.gm-psearch-suggest{padding:10px;font-weight:600;cursor:pointer;border-radius:8px;text-decoration:underline}' +
+    '.gm-psearch-suggest:hover{background:rgba(0,0,0,.06)}' +
+    'body.dark-mode .gm-psearch-suggest:hover{background:rgba(255,255,255,.08)}' +
     'body.dark-mode .gm-psearch-list{background:#1f2328;color:#e6e6e6;border-color:rgba(255,255,255,.14)}' +
     'body.dark-mode .gm-psearch-item:hover,body.dark-mode .gm-psearch-item[aria-selected="true"]{background:rgba(255,255,255,.08)}';
 document.head.appendChild(style);
@@ -167,6 +154,14 @@ function render(rows) {
     empty.className = 'gm-psearch-empty';
     empty.textContent = text('ما في نتائج', 'No results');
     list.appendChild(empty);
+
+    if (opts.pickFills) {
+        var suggest = document.createElement('li');
+        suggest.className = 'gm-psearch-suggest';
+        suggest.setAttribute('role', 'option');
+        suggest.textContent = text('المنتج مش موجود؟ اقترحه كمنتج جديد', 'Product not found? Suggest it as a new product');
+        list.appendChild(suggest);
+    }
     }
 
     rows.slice(0, MAX_ITEMS).forEach(function (item) {
@@ -209,7 +204,7 @@ function run() {
     var mine = seq;
     controller = typeof AbortController === 'function' ? new AbortController() : null;
 
-    var request = USE_MOCK ? mockSearch(q) : apiSearch(q, controller ? controller.signal : undefined);
+    var request = apiSearch(q, controller ? controller.signal : undefined);
 
     request.then(
     function (rows) {
@@ -251,6 +246,17 @@ input.addEventListener('keydown', function (e) {
 
 // mousedown (مش click) عشان الـ blur ما يخفي القائمة قبل الاختيار
 list.addEventListener('mousedown', function (e) {
+    var suggest = e.target.closest ? e.target.closest('.gm-psearch-suggest') : null;
+    if (suggest) {
+    e.preventDefault();
+    var typed = input.value.trim().slice(0, MAX_CHARS);
+    debouncedRun.cancel();
+    cancelPending();
+    hide();
+    document.dispatchEvent(new CustomEvent('gm:suggest-product', { detail: { name: typed } }));
+    return;
+    }
+
     var li = e.target.closest ? e.target.closest('.gm-psearch-item') : null;
     if (!li) return;
     e.preventDefault();

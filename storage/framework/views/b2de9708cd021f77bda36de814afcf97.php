@@ -405,6 +405,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="add-price-search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             </div>
             <span class="npw-field-err" id="productSearchErr" data-i18n="addPrice.errRequired">This field is required</span>
+            <span class="npw-field-err" id="productPickErr" data-i18n="addPrice.errPickProduct">Please pick the product from the list</span>
           </div>
         </section>
         <section class="gm-form-card" data-step="2">
@@ -420,43 +421,10 @@
 
           <div class="add-price-field">
             <div class="npw-region-grid" id="addPriceRegionGrid" role="group" aria-labelledby="addPriceRegionLabel">
-              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
-              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
-              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
-              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
-              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
-              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
-              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
-              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
-              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
-              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
-              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
-              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+              <!-- تُعبَّأ من GET /api/product-options عبر main.js -->
             </div>
             <select class="npw-visually-hidden-select" id="regionSelect" name="region" tabindex="-1" aria-hidden="true">
               <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>
-              <option value="Alrimal">Al-Rimal</option>
-              <option value="Alshaati">Al-Shaati</option>
-              <option value="Sheikh Radwan">Sheikh Radwan</option>
-              <option value="Saftawi">Saftawi</option>
-              <option value="Beit Hanoun">Beit Hanoun</option>
-              <option value="Beit Lahia">Beit Lahia</option>
-              <option value="Tal Al-Hawa">Tal Al-Hawa</option>
-              <option value="Jabalia">Jabalia</option>
-              <option value="Nuseirat">Nuseirat</option>
-              <option value="Breij">Breij</option>
-              <option value="Maghazi">Maghazi</option>
-              <option value="Zawayda">Zawayda</option>
-              <option value="Deir al-Balah">Deir al-Balah</option>
-              <option value="Khan Yunis">Khan Yunis</option>
-              <option value="Rafah">Rafah</option>
-              <option value="Mawasi Khan Yunis">Mawasi Khan Yunis</option>
-              <option value="Mawasi al-Qarara">Mawasi al-Qarara</option>
             </select>
             <span class="gm-field-err" id="addPriceRegionErr" data-i18n="addPrice.errRegionRequired">Please select a region</span>
           </div>

@@ -1590,8 +1590,212 @@ document.addEventListener("DOMContentLoaded", () => {
       try { saved = typeof gmGetSelectedArea === "function" ? gmGetSelectedArea() : ""; }
       catch (err) { saved = ""; }
       if (!saved) return;
-      const match = regionGrid?.querySelector(`.npw-region-btn[data-value="${CSS.escape(saved)}"]`);
+      const wanted = compactKey(saved);
+      const match = [...(regionGrid?.querySelectorAll(".npw-region-btn") || [])].find(
+        (b) =>
+          b.dataset.value === saved ||
+          compactKey(b.dataset.nameEn) === wanted ||
+          compactKey(b.dataset.value) === wanted
+      );
       if (match) setRegionSelection(match);
+    }
+
+    /* ================================================================
+       المناطق من الداتابيز + الإرسال الحقيقي
+       GET  /api/product-options -> areas (id, slug, name_ar, name_en)
+       POST /api/prices          -> يضيف السعر (يحتاج تسجيل دخول)
+       قيمة الزر = slug المنطقة (هيك بيتحقق منها الباك إند)
+       ================================================================ */
+    const OPTIONS_URL = "/api/product-options";
+    const PRICE_SUBMIT_URL = "/api/prices";
+    const CSRF_COOKIE_URL = "/sanctum/csrf-cookie";
+    const REQUEST_TIMEOUT_MS = 30000;
+
+    let areas = null;
+    let areasPromise = null;
+    let submitting = false;
+
+    const isArabicUi = () => document.documentElement.getAttribute("lang") === "ar";
+    const uiText = (ar, en) => (isArabicUi() ? ar : en);
+    const areaLabel = (a) => ((isArabicUi() ? (a.name_ar || a.name_en) : (a.name_en || a.name_ar)) || "");
+    const compactKey = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]/g, "");
+
+    function makeNotice(text) {
+      const el = document.createElement("div");
+      el.className = "npw-field-err show";
+      el.setAttribute("role", "alert");
+      el.textContent = text;
+      return el;
+    }
+
+    function loadAreas() {
+      if (areas) return Promise.resolve(areas);
+      if (areasPromise) return areasPromise;
+
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+
+      areasPromise = fetch(OPTIONS_URL, {
+        method: "GET",
+        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller ? controller.signal : undefined,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((body) => {
+          const list = body && body.data && body.data.areas;
+          areas = Array.isArray(list) && list.length ? list : null;
+          return areas;
+        })
+        .catch(() => null)
+        .then((result) => {
+          window.clearTimeout(timer);
+          areasPromise = null;
+          return result;
+        });
+
+      return areasPromise;
+    }
+
+    function renderAreas() {
+      if (!areas) return;
+      const keep = regionSelect?.value || "";
+
+      if (regionSelect) {
+        [...regionSelect.options].slice(1).forEach((o) => o.remove());
+        areas.forEach((a) => {
+          const o = document.createElement("option");
+          o.value = String(a.slug);
+          o.textContent = areaLabel(a);
+          regionSelect.appendChild(o);
+        });
+        regionSelect.selectedIndex = 0;
+      }
+
+      if (regionGrid) {
+        regionGrid.replaceChildren(
+          ...areas.map((a) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "npw-region-btn";
+            b.dataset.value = String(a.slug);
+            b.dataset.nameEn = a.name_en || "";
+            b.setAttribute("aria-pressed", "false");
+            b.textContent = areaLabel(a);
+            return b;
+          })
+        );
+
+        const keepBtn = keep
+          ? regionGrid.querySelector(`.npw-region-btn[data-value="${CSS.escape(keep)}"]`)
+          : null;
+        if (keepBtn) setRegionSelection(keepBtn);
+        else prefillSavedRegion();
+      }
+    }
+
+    function ensureAreas() {
+      loadAreas().then((list) => {
+        if (list) renderAreas();
+        else if (regionGrid) {
+          regionGrid.replaceChildren(makeNotice(uiText(
+            "تعذّر تحميل المناطق. تحقق من الاتصال ثم أعد فتح النافذة.",
+            "Couldn't load the regions. Check your connection and reopen this window."
+          )));
+        }
+      });
+    }
+
+    modalEl.addEventListener("show.bs.modal", ensureAreas);
+    document.addEventListener("languageChanged", renderAreas);
+
+    function selectedRegionLabel() {
+      const opt = regionSelect?.options?.[regionSelect.selectedIndex];
+      return opt?.value ? (opt.textContent?.trim() || "") : "";
+    }
+
+    function getXsrfToken() {
+      const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function ensureCsrfCookie(force) {
+      if (!force && getXsrfToken()) return Promise.resolve();
+      return fetch(CSRF_COOKIE_URL, {
+        method: "GET",
+        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+        cache: "no-store",
+      }).then(() => {}, () => {});
+    }
+
+    function postPrice(formData, isRetry) {
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+
+      return ensureCsrfCookie(!!isRetry)
+        .then(() => {
+          const headers = { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
+          const xsrf = getXsrfToken();
+          if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
+          return fetch(PRICE_SUBMIT_URL, {
+            method: "POST",
+            headers,
+            body: formData,
+            credentials: "same-origin",
+            cache: "no-store",
+            signal: controller ? controller.signal : undefined,
+          });
+        })
+        .then(
+          (response) =>
+            response.json().then(
+              (body) => ({ status: response.status, payload: body }),
+              () => ({ status: response.status, payload: {} })
+            ),
+          () => ({ status: 0, payload: {} })
+        )
+        .then((res) => {
+          window.clearTimeout(timer);
+          // انتهت صلاحية رمز CSRF: نجدده ونعيد المحاولة مرة وحدة فقط
+          if (res.status === 419 && !isRetry) return postPrice(formData, true);
+          return res;
+        });
+    }
+
+    function submitErrorText(res) {
+      switch (res.status) {
+        case 0:
+          return uiText("تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.", "Couldn't reach the server. Check your connection and try again.");
+        case 400: {
+          const t = res.payload && typeof res.payload.title === "string" ? res.payload.title.trim() : "";
+          return t ? t.slice(0, 200) : uiText("بعض البيانات غير صحيحة، راجعها وحاول مجدداً.", "Some details are invalid. Please review and try again.");
+        }
+        case 401:
+          return uiText("انتهت جلستك. سجّل الدخول من جديد ثم أرسل السعر.", "Your session has expired. Please log in again, then resend.");
+        case 403:
+          return uiText("ما عندك صلاحية لإضافة سعر.", "You don't have permission to add a price.");
+        case 419:
+          return uiText("انتهت صلاحية الصفحة. حدّثها وحاول مجدداً.", "This page has expired. Refresh it and try again.");
+        case 429:
+          return uiText("محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.", "Too many attempts. Please wait a moment and try again.");
+        default:
+          return uiText("صار خطأ بالخادم. حاول مجدداً بعد قليل.", "Something went wrong on our side. Please try again shortly.");
+      }
+    }
+
+    function clearSubmitError() {
+      document.getElementById("addPriceSubmitErr")?.remove();
+    }
+
+    function showSubmitError(text) {
+      clearSubmitError();
+      const host = document.getElementById("addPriceReviewList")?.parentElement;
+      if (!host) return;
+      const el = makeNotice(text);
+      el.id = "addPriceSubmitErr";
+      host.appendChild(el);
     }
 
     regionGrid?.addEventListener("click", (e) => {
@@ -1616,6 +1820,10 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(priceErr, priceInput);
     });
 
+    productInput?.addEventListener("input", () => {
+      document.getElementById("productPickErr")?.classList.remove("show");
+    });
+
     priceInput?.addEventListener("input", () => {
       setQuickPriceActive(priceInput.value);
       clearFieldError(priceErr, priceInput);
@@ -1623,9 +1831,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function validateStep(step) {
       if (step === 1) {
-        const productOk = !!productInput?.value?.trim();
-        productOk ? clearFieldError(productErr, productInput) : showFieldError(productErr, productInput);
-        if (!productOk) return { valid: false, focusEl: productInput };
+        const typed = !!productInput?.value?.trim();
+        const picked = !!productInput?.dataset?.productId;
+        const pickErr = document.getElementById("productPickErr");
+        // فاضي: "مطلوب" / مكتوب بس ما انختار من القائمة: "اختر من القائمة"
+        typed ? clearFieldError(productErr, productInput) : showFieldError(productErr, productInput);
+        if (typed && !picked) {
+          pickErr?.classList.add("show");
+          productInput?.classList.add("gm-invalid-input", "npw-invalid");
+        } else {
+          pickErr?.classList.remove("show");
+        }
+        if (!typed || !picked) return { valid: false, focusEl: productInput };
         return { valid: true };
       }
       if (step === 2) {
@@ -1635,7 +1852,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return { valid: true };
       }
       if (step === 3) {
-        const priceOk = !!priceInput?.value;
+        const priceOk = parseFloat(normalizeDigits(priceInput?.value)) > 0;
         priceOk ? clearFieldError(priceErr, priceInput) : showFieldError(priceErr, priceInput);
         if (!priceOk) return { valid: false, focusEl: priceInput };
         return { valid: true };
@@ -1644,6 +1861,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function populateReview(step, total) {
+      clearSubmitError();
       if (step !== total) return;
       const list = document.getElementById("addPriceReviewList");
       if (!list) return;
@@ -1655,7 +1873,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const values = {
         product: productInput?.value?.trim() || "—",
-        region: regionSelect?.value || "—",
+        region: selectedRegionLabel() || "—",
         price: priceInput?.value ? `₪${priceInput.value}` : "—",
         store: storeBits || "—",
         image: document.getElementById("receiptImage")?.files?.length ? "تم إرفاق صورة" : "لا يوجد",
@@ -1669,22 +1887,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function submitForm(btn) {
       function proceedWithSubmit() {
-        const payload = {
-          product: productInput?.value?.trim() || "",
-          price: priceInput?.value || "",
-          region: regionSelect?.value || "",
-          storeName: storeNameInput?.value?.trim() || "",
-          storeAddress: storeAddressInput?.value?.trim() || "",
-          storePhone: storePhoneInput?.value?.trim() || "",
-          hasReceipt: !!document.getElementById("receiptImage")?.files?.length,
-        };
+        if (submitting) return;
+        clearSubmitError();
 
+        const productId = productInput?.dataset?.productId || "";
+        const regionSlug = regionSelect?.value || "";
+        const storeName = storeNameInput?.value?.trim() || "";
+
+        if (!productId || !regionSlug) {
+          showSubmitError(uiText(
+            "اختر المنتج من القائمة والمنطقة أولاً.",
+            "Please pick the product from the list and a region first."
+          ));
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append("product_id", productId);
+        fd.append("region", regionSlug);
+        fd.append("price", normalizeDigits(priceInput?.value));
+        fd.append("store_name", storeName);
+
+        const address = storeAddressInput?.value?.trim() || "";
+        const phone = normalizeDigits(storePhoneInput?.value?.trim() || "");
+        if (address) fd.append("store_address", address);
+        if (phone) fd.append("store_phone", phone);
+
+        const receiptFile = document.getElementById("receiptImage")?.files?.[0];
+        if (receiptFile) fd.append("receipt_image", receiptFile);
+
+        submitting = true;
         setBtnLoading(btn, true);
-        setTimeout(() => {
+        postPrice(fd).then((res) => {
+          submitting = false;
           setBtnLoading(btn, false);
-          console.log("New price payload:", payload);
-          switchModal("addPriceModal", "priceSuccessModal");
-        }, 700);
+          if (res.status === 201) {
+            switchModal("addPriceModal", "priceSuccessModal");
+            return;
+          }
+          showSubmitError(submitErrorText(res));
+        });
       }
 
       if (typeof window.gmRequireAuthThenRun === "function") {
@@ -1708,6 +1950,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function resetForm() {
       [productInput, priceInput, storeNameInput, storeAddressInput, storePhoneInput].forEach((el) => { if (el) el.value = ""; });
+      if (productInput) delete productInput.dataset.productId;
+      document.getElementById("productPickErr")?.classList.remove("show");
+      clearSubmitError();
       setRegionSelection(null);
       setQuickPriceActive(null);
       receiptUpload?.reset();
@@ -1731,6 +1976,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("addSomethingElseBtn")?.addEventListener("click", (e) => {
       e.preventDefault();
       switchModal("priceSuccessModal", "additionModal");
+    });
+
+    // "المنتج مش موجود؟ اقترحه كمنتج جديد": بنفتح مودال المنتج الجديد واسم المنتج جاهز
+    document.addEventListener("gm:suggest-product", (e) => {
+      const name = String(e.detail?.name || "").trim().slice(0, 100);
+      const target = document.getElementById("addNewProductModal");
+      if (!target) return;
+      // إعادة ضبط الفورم بتصير عند show، فبنعبّي الاسم بعد ما يظهر المودال
+      target.addEventListener("shown.bs.modal", () => {
+        const nameEl = document.getElementById("npwProductName");
+        if (nameEl && name) nameEl.value = name;
+      }, { once: true });
+      switchModal("addPriceModal", "addNewProductModal");
     });
   }
 
