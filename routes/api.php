@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PlaceVisitController;
 use App\Http\Controllers\Api\PointLevelController;
 use App\Http\Controllers\Api\PointRuleController;
 use App\Http\Controllers\Api\PointTransactionController;
+use App\Http\Controllers\Api\ProductOptionsController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductPriceController;
 use App\Http\Controllers\Api\RegionController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:lookups')->group(function () {
+    // قوائم فورم "منتج جديد" (فئات + وحدات + مناطق فعّالة) - قراءة فقط
+    Route::get('product-options', ProductOptionsController::class);
     Route::apiResource('regions', RegionController::class);
     Route::apiResource('units', UnitController::class);
     Route::apiResource('areas', AreaController::class);

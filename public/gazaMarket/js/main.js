@@ -2134,6 +2134,275 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedCategory = null;
     let selectedCategoryLabel = "";
 
+    /* ================================================================
+       خيارات الفورم من الداتابيز (فئات / وحدات / مناطق) + الإرسال الحقيقي
+       GET  /api/product-options  -> القوائم الفعّالة بأرقامها (ids)
+       POST /api/products         -> يُنشئ المنتج بحالة pending للمراجعة
+       ================================================================ */
+    const PRODUCT_OPTIONS_URL = "/api/product-options";
+    const PRODUCT_SUBMIT_URL = "/api/products";
+    const CSRF_COOKIE_URL = "/sanctum/csrf-cookie";
+    const REQUEST_TIMEOUT_MS = 30000;
+
+    const unitWrap = document.querySelector('[data-gm-custom-select][data-hidden-select="npwUnitSelect"]');
+    const unitPanel = unitWrap?.querySelector("[data-select-panel]");
+    const unitTriggerText = unitWrap?.querySelector("[data-select-trigger-text]");
+
+    let productOptions = null;
+    let optionsPromise = null;
+
+    const isArabicUi = () => document.documentElement.getAttribute("lang") === "ar";
+    const uiText = (ar, en) => (isArabicUi() ? ar : en);
+    const optionLabel = (o) =>
+      (isArabicUi() ? (o.name_ar || o.name_en) : (o.name_en || o.name_ar)) || "";
+    const compactKey = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]/g, "");
+
+    function loadProductOptions() {
+      if (productOptions) return Promise.resolve(productOptions);
+      if (optionsPromise) return optionsPromise;
+
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+
+      optionsPromise = fetch(PRODUCT_OPTIONS_URL, {
+        method: "GET",
+        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller ? controller.signal : undefined,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((body) => {
+          const d = body && body.data;
+          const valid = d && Array.isArray(d.categories) && Array.isArray(d.units) && Array.isArray(d.areas);
+          productOptions = valid ? d : null;
+          return productOptions;
+        })
+        .catch(() => null)
+        .then((result) => {
+          window.clearTimeout(timer);
+          optionsPromise = null;
+          return result;
+        });
+
+      return optionsPromise;
+    }
+
+    function makeNotice(text) {
+      const el = document.createElement("div");
+      el.className = "npw-field-err show";
+      el.setAttribute("role", "alert");
+      el.textContent = text;
+      return el;
+    }
+
+    function renderOptionsError() {
+      const text = uiText(
+        "تعذّر تحميل القوائم. تحقق من الاتصال ثم أعد فتح النافذة.",
+        "Couldn't load the lists. Check your connection and reopen this window."
+      );
+      categoryGrid?.replaceChildren(makeNotice(text));
+      regionGrid?.replaceChildren(makeNotice(text));
+      unitPanel?.replaceChildren(makeNotice(text));
+    }
+
+    function renderProductOptions() {
+      if (!productOptions) return;
+
+      const keepCategory = selectedCategory;
+      const keepUnit = unitSelect?.value || "";
+      const keepRegion = regionSelect?.value || "";
+
+      // --- الفئات ---
+      if (categoryGrid) {
+        categoryGrid.replaceChildren(
+          ...productOptions.categories.map((c) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "npw-category-btn";
+            b.dataset.value = String(c.id);
+            b.textContent = optionLabel(c);
+            if (keepCategory && String(c.id) === String(keepCategory)) {
+              b.classList.add("active");
+              selectedCategoryLabel = b.textContent;
+            }
+            return b;
+          })
+        );
+      }
+
+      // --- الوحدات (select مخفي + القائمة المخصصة) ---
+      if (unitSelect) {
+        [...unitSelect.options].slice(1).forEach((o) => o.remove());
+        productOptions.units.forEach((u) => {
+          const o = document.createElement("option");
+          o.value = String(u.id);
+          o.textContent = optionLabel(u);
+          unitSelect.appendChild(o);
+        });
+        const stillThere = productOptions.units.some((u) => String(u.id) === String(keepUnit));
+        if (keepUnit && stillThere) unitSelect.value = String(keepUnit);
+        else unitSelect.selectedIndex = 0;
+      }
+
+      if (unitPanel) {
+        unitPanel.replaceChildren(
+          ...productOptions.units.map((u) => {
+            const d = document.createElement("div");
+            d.className = "npw-custom-select-option";
+            d.setAttribute("role", "option");
+            d.dataset.value = String(u.id);
+            d.textContent = optionLabel(u);
+            if (keepUnit && String(u.id) === String(keepUnit)) {
+              d.classList.add("selected");
+              if (unitTriggerText) {
+                unitTriggerText.textContent = d.textContent;
+                unitTriggerText.classList.remove("placeholder");
+              }
+            }
+            return d;
+          })
+        );
+      }
+
+      if (unitTriggerText && !unitSelect?.value) {
+        unitTriggerText.textContent = unitSelect?.options?.[0]?.textContent?.trim() || "";
+        unitTriggerText.classList.add("placeholder");
+      }
+
+      // --- المناطق (areas) ---
+      if (regionSelect) {
+        [...regionSelect.options].slice(1).forEach((o) => o.remove());
+        productOptions.areas.forEach((a) => {
+          const o = document.createElement("option");
+          o.value = String(a.id);
+          o.textContent = optionLabel(a);
+          regionSelect.appendChild(o);
+        });
+        regionSelect.selectedIndex = 0;
+      }
+
+      if (regionGrid) {
+        regionGrid.replaceChildren(
+          ...productOptions.areas.map((a) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "npw-region-btn";
+            b.dataset.value = String(a.id);
+            b.dataset.nameEn = a.name_en || "";
+            b.dataset.slug = a.slug || "";
+            b.setAttribute("aria-pressed", "false");
+            b.textContent = optionLabel(a);
+            return b;
+          })
+        );
+
+        const keepBtn = keepRegion
+          ? regionGrid.querySelector(`.npw-region-btn[data-value="${CSS.escape(String(keepRegion))}"]`)
+          : null;
+        if (keepBtn) setRegionSelection(keepBtn);
+        else prefillSavedRegion();
+      }
+    }
+
+    function ensureProductOptions() {
+      loadProductOptions().then((opts) => {
+        if (opts) renderProductOptions();
+        else renderOptionsError();
+      });
+    }
+
+    modalEl.addEventListener("show.bs.modal", ensureProductOptions);
+    document.addEventListener("languageChanged", renderProductOptions);
+
+    function selectedRegionLabel() {
+      const opt = regionSelect?.options?.[regionSelect.selectedIndex];
+      return opt?.value ? (opt.textContent?.trim() || "") : "";
+    }
+
+    function getXsrfToken() {
+      const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function ensureCsrfCookie(force) {
+      if (!force && getXsrfToken()) return Promise.resolve();
+      return fetch(CSRF_COOKIE_URL, {
+        method: "GET",
+        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+        cache: "no-store",
+      }).then(() => {}, () => {});
+    }
+
+    function postProduct(formData, isRetry) {
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+
+      return ensureCsrfCookie(!!isRetry)
+        .then(() => {
+          const headers = { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
+          const xsrf = getXsrfToken();
+          if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
+          return fetch(PRODUCT_SUBMIT_URL, {
+            method: "POST",
+            headers,
+            body: formData,
+            credentials: "same-origin",
+            cache: "no-store",
+            signal: controller ? controller.signal : undefined,
+          });
+        })
+        .then(
+          (response) =>
+            response.json().then(
+              (body) => ({ status: response.status, payload: body }),
+              () => ({ status: response.status, payload: {} })
+            ),
+          () => ({ status: 0, payload: {} })
+        )
+        .then((res) => {
+          window.clearTimeout(timer);
+          // انتهت صلاحية رمز CSRF: نجدده ونعيد المحاولة مرة وحدة فقط
+          if (res.status === 419 && !isRetry) return postProduct(formData, true);
+          return res;
+        });
+    }
+
+    function submitErrorText(res) {
+      switch (res.status) {
+        case 0:
+          return uiText("تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.", "Couldn't reach the server. Check your connection and try again.");
+        case 400: {
+          const t = res.payload && typeof res.payload.title === "string" ? res.payload.title.trim() : "";
+          return t ? t.slice(0, 200) : uiText("بعض البيانات غير صحيحة، راجعها وحاول مجدداً.", "Some details are invalid. Please review and try again.");
+        }
+        case 401:
+          return uiText("انتهت جلستك. سجّل الدخول من جديد ثم أرسل المنتج.", "Your session has expired. Please log in again, then resend.");
+        case 403:
+          return uiText("ما عندك صلاحية لإرسال منتج.", "You don't have permission to submit a product.");
+        case 419:
+          return uiText("انتهت صلاحية الصفحة. حدّثها وحاول مجدداً.", "This page has expired. Refresh it and try again.");
+        case 429:
+          return uiText("محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.", "Too many attempts. Please wait a moment and try again.");
+        default:
+          return uiText("صار خطأ بالخادم. حاول مجدداً بعد قليل.", "Something went wrong on our side. Please try again shortly.");
+      }
+    }
+
+    function clearSubmitError() {
+      document.getElementById("npwSubmitErr")?.remove();
+    }
+
+    function showSubmitError(text) {
+      clearSubmitError();
+      const host = document.getElementById("npwReviewList")?.parentElement;
+      if (!host) return;
+      const el = makeNotice(text);
+      el.id = "npwSubmitErr";
+      host.appendChild(el);
+    }
+
     categoryGrid?.addEventListener("click", (e) => {
       const btn = e.target.closest(".npw-category-btn");
       if (!btn) return;
@@ -2220,7 +2489,13 @@ document.addEventListener("DOMContentLoaded", () => {
       try { saved = typeof gmGetSelectedArea === "function" ? gmGetSelectedArea() : ""; }
       catch (err) { saved = ""; }
       if (!saved) return;
-      const match = regionGrid?.querySelector(`.npw-region-btn[data-value="${CSS.escape(saved)}"]`);
+      const wanted = compactKey(saved);
+      const match = [...(regionGrid?.querySelectorAll(".npw-region-btn") || [])].find(
+        (b) =>
+          b.dataset.value === saved ||
+          compactKey(b.dataset.nameEn) === wanted ||
+          compactKey(b.dataset.slug) === wanted
+      );
       if (match) setRegionSelection(match);
     }
 
@@ -2283,6 +2558,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function populateReview(step, total) {
+      clearSubmitError();
       if (step !== total) return;
       const list = document.getElementById("npwReviewList");
       if (!list) return;
@@ -2293,7 +2569,7 @@ document.addEventListener("DOMContentLoaded", () => {
         unit: quantityInput?.value ? `${quantityInput.value} ${unitLabel()}`.trim() : "—",
         price: priceInput?.value ? `₪${priceInput.value}` : "—",
         store: storeNameInput?.value?.trim() || "—",
-        region: regionSelect?.value || "—",
+        region: selectedRegionLabel() || "—",
       };
 
       Object.entries(values).forEach(([key, val]) => {
@@ -2304,25 +2580,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function submitForm(btn) {
       function proceedWithSubmit() {
-        const payload = {
-          productName: nameInput?.value?.trim() || "",
-          category: selectedCategory || "",
-          quantity: quantityInput?.value || "",
-          unit: unitSelect?.value || "",
-          price: priceInput?.value || "",
-          storeName: storeNameInput?.value?.trim() || "",
-          region: regionSelect?.value || "",
-          storeAddress: storeAddressInput?.value?.trim() || "",
-          storePhone: storePhoneInput?.value?.trim() || "",
-          hasImage: !!document.getElementById("npwProductImage")?.files?.length,
-        };
+        clearSubmitError();
+
+        const rawName = nameInput?.value?.trim() || "";
+        const unitId = unitSelect?.value || "";
+        const areaId = regionSelect?.value || "";
+
+        if (!selectedCategory || !unitId || !areaId) {
+          showSubmitError(uiText(
+            "القوائم ما انحملت. أغلق النافذة وافتحها من جديد.",
+            "The lists didn't load. Close this window and open it again."
+          ));
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append(/[\u0600-\u06FF]/.test(rawName) ? "product_name_ar" : "product_name_en", rawName);
+        fd.append("category_id", selectedCategory);
+        fd.append("product_quantity", normalizeDigits(quantityInput?.value));
+        fd.append("unit_id", unitId);
+        fd.append("product_price", normalizeDigits(priceInput?.value));
+        fd.append("product_store_name", storeNameInput?.value?.trim() || "");
+        fd.append("area_id", areaId);
+
+        const address = storeAddressInput?.value?.trim() || "";
+        const phone = normalizeDigits(storePhoneInput?.value?.trim() || "");
+        if (address) fd.append("product_store_address", address);
+        if (phone) fd.append("product_store_phone", phone);
+
+        const imageFile = document.getElementById("npwProductImage")?.files?.[0];
+        if (imageFile) fd.append("product_receipt_image", imageFile);
 
         setBtnLoading(btn, true);
-        setTimeout(() => {
+        postProduct(fd).then((res) => {
           setBtnLoading(btn, false);
-          console.log("New product suggestion payload:", payload);
-          switchModal("addNewProductModal", "newProductSuccessModal");
-        }, 700);
+          if (res.status === 201) {
+            switchModal("addNewProductModal", "newProductSuccessModal");
+            return;
+          }
+          showSubmitError(submitErrorText(res));
+        });
       }
 
       if (typeof window.gmRequireAuthThenRun === "function") {

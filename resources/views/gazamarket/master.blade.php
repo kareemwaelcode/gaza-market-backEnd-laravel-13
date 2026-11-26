@@ -83,7 +83,7 @@
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-     @foreach($regions as $region)
+    @foreach($regions as $region)
     <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
           style="cursor:pointer;">
         <span data-name-ar="{{ $region->region_name_ar }}" data-name-en="{{ $region->region_name_en }}">{{ $region->region_name_ar }}</span>
@@ -977,40 +977,7 @@
           <div class="add-price-field">
             <label class="add-price-label" data-i18n="npw.category">Category</label>
               <div class="npw-category-grid" id="npwCategoryGrid">
-              <button type="button" class="npw-category-btn" data-value="grains-flour" data-i18n="npw.catGrainsFlour">Grains &amp; Flour</button>
-              <button type="button" class="npw-category-btn" data-value="oils" data-i18n="npw.catOils">Oils</button>
-              <button type="button" class="npw-category-btn" data-value="sugars" data-i18n="npw.catSugars">Sugars</button>
-              <button type="button" class="npw-category-btn" data-value="legumes" data-i18n="npw.catLegumes">Legumes</button>
-              <button type="button" class="npw-category-btn" data-value="beverages" data-i18n="npw.catBeverages">Beverages</button>
-              <button type="button" class="npw-category-btn" data-value="dairy-products" data-i18n="npw.catDairyProducts">Dairy Products</button>
-              <button type="button" class="npw-category-btn" data-value="vegetables" data-i18n="npw.catVegetables">Vegetables</button>
-              <button type="button" class="npw-category-btn" data-value="fruits" data-i18n="npw.catFruits">Fruits</button>
-              <button type="button" class="npw-category-btn" data-value="meat-poultry" data-i18n="npw.catMeatPoultry">Meat &amp; Poultry</button>
-              <button type="button" class="npw-category-btn" data-value="canned-goods" data-i18n="npw.catCannedGoods">Canned Goods</button>
-              <button type="button" class="npw-category-btn" data-value="spices-seasonings" data-i18n="npw.catSpicesSeasonings">Spices &amp; Seasonings</button>
-              <button type="button" class="npw-category-btn" data-value="bread-bakery" data-i18n="npw.catBreadBakery">Bread &amp; Bakery</button>
-              <button type="button" class="npw-category-btn" data-value="rice-pasta" data-i18n="npw.catRicePasta">Rice &amp; Pasta</button>
-              <button type="button" class="npw-category-btn" data-value="fuel-combustibles" data-i18n="npw.catFuelCombustibles">Fuel &amp; Combustibles</button>
-              <button type="button" class="npw-category-btn" data-value="oils-grease" data-i18n="npw.catOilsGrease">Oils &amp; Grease</button>
-              <button type="button" class="npw-category-btn" data-value="sugar-salt" data-i18n="npw.catSugarSalt">Sugar &amp; Salt</button>
-              <button type="button" class="npw-category-btn" data-value="legumes-canned" data-i18n="npw.catLegumesCanned">Legumes &amp; Canned Goods</button>
-              <button type="button" class="npw-category-btn" data-value="fresh-vegetables" data-i18n="npw.catFreshVegetables">Fresh Vegetables</button>
-              <button type="button" class="npw-category-btn" data-value="fish-seafood" data-i18n="npw.catFishSeafood">Fish &amp; Seafood</button>
-              <button type="button" class="npw-category-btn" data-value="eggs-dairy-cheese" data-i18n="npw.catEggsDairyCheese">Eggs, Dairy &amp; Cheese</button>
-              <button type="button" class="npw-category-btn" data-value="water-juices" data-i18n="npw.catWaterJuices">Water &amp; Juices</button>
-              <button type="button" class="npw-category-btn" data-value="tea-coffee" data-i18n="npw.catTeaCoffee">Tea &amp; Coffee</button>
-              <button type="button" class="npw-category-btn" data-value="soft-drinks" data-i18n="npw.catSoftDrinks">Soft Drinks</button>
-              <button type="button" class="npw-category-btn" data-value="cleaning-supplies" data-i18n="npw.catCleaningSupplies">Cleaning Supplies</button>
-              <button type="button" class="npw-category-btn" data-value="household-tools" data-i18n="npw.catHouseholdTools">Household Tools</button>
-              <button type="button" class="npw-category-btn" data-value="personal-care" data-i18n="npw.catPersonalCare">Personal Care</button>
-              <button type="button" class="npw-category-btn" data-value="diapers-baby" data-i18n="npw.catDiapersBaby">Diapers &amp; Baby Supplies</button>
-              <button type="button" class="npw-category-btn" data-value="medicine-medical" data-i18n="npw.catMedicineMedical">Medicine &amp; Medical Supplies</button>
-              <button type="button" class="npw-category-btn" data-value="tissues-paper" data-i18n="npw.catTissuesPaper">Tissues &amp; Paper</button>
-              <button type="button" class="npw-category-btn" data-value="cooking-gas" data-i18n="npw.catCookingGas">Cooking Gas</button>
-              <button type="button" class="npw-category-btn" data-value="batteries-generators" data-i18n="npw.catBatteriesGenerators">Batteries &amp; Generators</button>
-              <button type="button" class="npw-category-btn" data-value="animal-feed" data-i18n="npw.catAnimalFeed">Animal Feed</button>
-              <button type="button" class="npw-category-btn" data-value="seeds-agriculture" data-i18n="npw.catSeedsAgriculture">Seeds &amp; Agriculture</button>
-              <button type="button" class="npw-category-btn" data-value="other-products" data-i18n="npw.catOtherProducts">Other Products</button>
+              <!-- تُعبَّأ من GET /api/product-options عبر main.js -->
             </div>
             <span class="npw-field-err" id="npwCategoryErr" data-i18n="npw.errCategoryRequired">Please select a category</span>
           </div>
@@ -1048,28 +1015,11 @@
                 </button>
 
                 <div class="npw-custom-select-panel" data-select-panel role="listbox" aria-labelledby="npwUnitLabel">
-                  <div class="npw-custom-select-option" role="option" data-value="gram"    data-i18n="npw.unitGram">gram</div>
-                  <div class="npw-custom-select-option" role="option" data-value="kg"      data-i18n="npw.unitKg">kg</div>
-                  <div class="npw-custom-select-option" role="option" data-value="Liter"   data-i18n="npw.unitLiter">Liter</div>
-                  <div class="npw-custom-select-option" role="option" data-value="Milli"   data-i18n="npw.unitMilli">Milli</div>
-                  <div class="npw-custom-select-option" role="option" data-value="can"     data-i18n="npw.unitCan">can</div>
-                  <div class="npw-custom-select-option" role="option" data-value="piece"   data-i18n="npw.unitPiece">piece</div>
-                  <div class="npw-custom-select-option" role="option" data-value="Packet"  data-i18n="npw.unitPacket">Packet</div>
-                  <div class="npw-custom-select-option" role="option" data-value="cartoon" data-i18n="npw.unitCarton">cartoon</div>
-                  <div class="npw-custom-select-option" role="option" data-value="cup"     data-i18n="npw.unitCup">cup</div>
-                  <div class="npw-custom-select-option" role="option" data-value="other"   data-i18n="npw.unitOther">other</div>
+                  <!-- تُعبَّأ من الـ API عبر main.js -->
                 </div>
 
                 <select class="npw-visually-hidden-select" id="npwUnitSelect" name="unit" tabindex="-1" aria-hidden="true">
                   <option value="" disabled selected data-i18n="npw.unitPlaceholder">kg</option>
-                  <option value="kg" data-i18n="npw.unitKg">Kilogram (kg)</option>
-                  <option value="g" data-i18n="npw.unitG">Gram (g)</option>
-                  <option value="l" data-i18n="npw.unitL">Liter (l)</option>
-                  <option value="ml" data-i18n="npw.unitMl">Milliliter (ml)</option>
-                  <option value="piece" data-i18n="npw.unitPiece">Piece</option>
-                  <option value="pack" data-i18n="npw.unitPack">Pack</option>
-                  <option value="box" data-i18n="npw.unitBox">Box</option>
-                  <option value="sack" data-i18n="npw.unitSack">Sack</option>
                 </select>
               </div>
               <span class="npw-field-err" id="npwUnitErr" data-select-err data-i18n="npw.errUnitRequired">Please select a unit</span>
@@ -1142,43 +1092,10 @@
 
           <div class="add-price-field">
             <div class="npw-region-grid" id="npwRegionGrid" role="group" aria-labelledby="npwRegionLabel">
-              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
-              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
-              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
-              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
-              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
-              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
-              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
-              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
-              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
-              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
-              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
-              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
+              <!-- تُعبَّأ من الـ API عبر main.js -->
             </div>
             <select class="npw-visually-hidden-select" id="npwRegionSelect" name="region" tabindex="-1" aria-hidden="true">
               <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>
-              <option value="Alrimal">Al-Rimal</option>
-              <option value="Alshaati">Al-Shaati</option>
-              <option value="Sheikh Radwan">Sheikh Radwan</option>
-              <option value="Saftawi">Saftawi</option>
-              <option value="Beit Hanoun">Beit Hanoun</option>
-              <option value="Beit Lahia">Beit Lahia</option>
-              <option value="Tal Al-Hawa">Tal Al-Hawa</option>
-              <option value="Jabalia">Jabalia</option>
-              <option value="Nuseirat">Nuseirat</option>
-              <option value="Breij">Breij</option>
-              <option value="Maghazi">Maghazi</option>
-              <option value="Zawayda">Zawayda</option>
-              <option value="Deir al-Balah">Deir al-Balah</option>
-              <option value="Khan Yunis">Khan Yunis</option>
-              <option value="Rafah">Rafah</option>
-              <option value="Mawasi Khan Yunis">Mawasi Khan Yunis</option>
-              <option value="Mawasi al-Qarara">Mawasi al-Qarara</option>
             </select>
             <span class="gm-field-err" id="npwRegionErr" data-i18n="addPrice.errRegionRequired">Please select a region</span>
           </div>
