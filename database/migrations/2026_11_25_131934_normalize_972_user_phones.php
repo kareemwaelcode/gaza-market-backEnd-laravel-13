@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * هوية الحساب صارت 05[69]xxxxxxx لكل صيغ الرقم (محلي أو 970 أو 972).
- * يحوّل أي رقم مخزّن بصيغة 972 إلى المحلي، ويوقف قبل أي تعديل إذا وُجد تعارض مع رقم محلي موجود
- * (يشمل الحسابات المحذوفة لأن الاستعلام مباشر على الجدول). تغيير بيانات فقط، بدون تغيير مخطط.
- */
 return new class extends Migration
 {
     public function up(): void

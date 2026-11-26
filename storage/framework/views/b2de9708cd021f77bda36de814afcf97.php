@@ -83,7 +83,7 @@
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-    <?php $__currentLoopData = $regions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $region): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+     <?php $__currentLoopData = $regions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $region): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
     <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
           style="cursor:pointer;">
         <span data-name-ar="<?php echo e($region->region_name_ar); ?>" data-name-en="<?php echo e($region->region_name_en); ?>"><?php echo e($region->region_name_ar); ?></span>

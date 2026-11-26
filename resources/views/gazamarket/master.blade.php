@@ -83,7 +83,7 @@
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-    @foreach($regions as $region)
+     @foreach($regions as $region)
     <span class="dropdown-item d-flex justify-content-between align-items-center region-toggle"
           style="cursor:pointer;">
         <span data-name-ar="{{ $region->region_name_ar }}" data-name-en="{{ $region->region_name_en }}">{{ $region->region_name_ar }}</span>

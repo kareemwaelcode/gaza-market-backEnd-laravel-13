@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Unit extends Model
 {
-    // الجدول بدون created_at / updated_at
     public $timestamps = false;
     protected $fillable = [
     "unit_slug",
