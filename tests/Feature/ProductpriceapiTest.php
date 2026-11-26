@@ -28,7 +28,6 @@ class ProductPriceApiTest extends TestCase
         ], $overrides);
     }
 
-    // ---------- المخطط ----------
 
     public function test_schema_has_the_agreed_columns_and_vote_unique_key(): void
     {
@@ -57,7 +56,6 @@ class ProductPriceApiTest extends TestCase
         $this->makeVote($price, $voter, 'report');
     }
 
-    // ---------- الـ feed ----------
 
     public function test_feed_is_public_and_returns_only_approved_prices_in_the_frontend_shape(): void
     {
@@ -93,7 +91,6 @@ class ProductPriceApiTest extends TestCase
 
         $item = $response->json('data.0');
         $this->assertArrayHasKey('created_at', $item);
-        // ما في بيانات حساسة بالبطاقة
         foreach (['my_vote', 'user_id', 'product_price_store_phone', 'store_phone', 'product_price_receipt_image', 'receipt'] as $key) {
             $this->assertArrayNotHasKey($key, $item);
         }
@@ -173,7 +170,6 @@ class ProductPriceApiTest extends TestCase
         $this->assertArrayNotHasKey('my_vote', $item);
     }
 
-    // ---------- my-votes ----------
 
     public function test_my_votes_requires_login(): void
     {
@@ -208,7 +204,6 @@ class ProductPriceApiTest extends TestCase
             $response->json('data'),
         );
 
-        // ما في تسريب: المستخدم التاني بيشوف صوته بس
         $this->actingAs($other)->getJson('/api/prices/my-votes?'.http_build_query(['price_ids' => $ids]))
             ->assertOk()
             ->assertExactJson(['data' => [['price_id' => $onlyOther->id, 'my_vote' => 'confirm']]]);
@@ -280,7 +275,6 @@ class ProductPriceApiTest extends TestCase
         $this->getJson('/api/prices?page=abc')->assertStatus(400);
     }
 
-    // ---------- تسجيل سعر ----------
 
     public function test_guest_cannot_store_a_price(): void
     {
@@ -292,7 +286,7 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame(0, ProductPrice::count());
     }
 
-    public function test_store_creates_an_approved_price_owned_by_the_logged_in_user(): void
+    public function test_store_creates_a_pending_price_owned_by_the_logged_in_user(): void
     {
         $lookups = $this->lookups();
         $user = $this->makeUser();
@@ -302,7 +296,6 @@ class ProductPriceApiTest extends TestCase
         $data = $this->validData($product->only('id'), $lookups, [
             'store_address' => 'قرب مجمع الرازي',
             'store_phone' => '0591234567',
-            // محاولات تجاوز: لازم تنتجاهل
             'user_id' => $other->id,
             'product_price_status' => 'rejected',
             'confirm_count' => 99,
@@ -311,20 +304,35 @@ class ProductPriceApiTest extends TestCase
 
         $this->actingAs($user)->postJson('/api/prices', $data)
             ->assertStatus(201)
-            ->assertJsonPath('data.status', 'approved');
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.points_awarded', 0);
 
         $price = ProductPrice::firstOrFail();
 
         $this->assertSame($user->id, (int) $price->user_id);
-        $this->assertSame('approved', $price->product_price_status);
+        $this->assertSame('pending', $price->product_price_status);
         $this->assertSame($product->id, (int) $price->product_id);
         $this->assertSame($lookups['area']->id, (int) $price->area_id);
         $this->assertSame('7.50', $price->product_price_value);
         $this->assertSame('قرب مجمع الرازي', $price->product_price_store_address);
         $this->assertSame(0, $price->confirm_count);
         $this->assertSame(0, $price->report_count);
-        // ما بنلمس الكتالوج
         $this->assertSame(1, Product::count());
+    }
+
+    public function test_a_pending_price_stays_out_of_the_public_feed_and_shows_in_my_prices(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $product = $this->makeProduct($lookups, $this->makeUser());
+
+        $this->actingAs($user)->postJson('/api/prices', $this->validData($product->only('id'), $lookups))->assertStatus(201);
+
+        $this->getJson('/api/prices')->assertJsonCount(0, 'data');
+        $this->actingAs($user)->getJson('/api/me/prices')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'pending');
     }
 
     public function test_store_allows_missing_optional_fields(): void
@@ -414,7 +422,6 @@ class ProductPriceApiTest extends TestCase
 
         $this->assertNotNull($path);
         $this->assertStringStartsWith('receipts/', $path);
-        // المسار أطول من 45 حرف: كان رح يفشل بعمود VARCHAR(45)
         $this->assertGreaterThan(45, strlen($path));
         Storage::disk('local')->assertExists($path);
         Storage::disk('public')->assertMissing($path);
@@ -436,7 +443,6 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame([], Storage::disk('local')->allFiles());
     }
 
-    // ---------- التصويت ----------
 
     private function votable(): array
     {
@@ -518,14 +524,12 @@ class ProductPriceApiTest extends TestCase
             ->assertJsonPath('data.confirm_count', 0);
 
         $this->assertSame(0, PriceVote::count());
-        // إلغاء صوت مش موجود ما بيكسر شي
         $this->actingAs($user)->postJson("/api/prices/{$price->id}/vote", ['vote' => null])->assertOk();
     }
 
     public function test_counters_are_recomputed_from_the_votes_table(): void
     {
         [$price] = $this->votable();
-        // عدّاد منحرف يدوياً
         $price->forceFill(['confirm_count' => 50, 'report_count' => 40])->save();
 
         $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'confirm'])
@@ -578,7 +582,6 @@ class ProductPriceApiTest extends TestCase
     {
         [$price] = $this->votable();
 
-        // 5 بلاغات: لسه ظاهر
         foreach (range(1, ProductPrice::MAX_REPORTS) as $i) {
             $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
                 ->assertOk()
@@ -588,7 +591,6 @@ class ProductPriceApiTest extends TestCase
         $this->assertSame('approved', $price->refresh()->product_price_status);
         $this->getJson('/api/prices')->assertJsonCount(1, 'data');
 
-        // البلاغ السادس: بينسحب
         $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'report'])
             ->assertOk()
             ->assertJsonPath('data.removed', true)
@@ -602,7 +604,6 @@ class ProductPriceApiTest extends TestCase
     {
         [$price] = $this->votable();
 
-        // 4 تأكيدات (> 3) = محمي
         foreach (range(1, ProductPrice::PROTECTED_CONFIRMS + 1) as $i) {
             $this->actingAs($this->makeUser())->postJson("/api/prices/{$price->id}/vote", ['vote' => 'confirm'])->assertOk();
         }

@@ -26,7 +26,6 @@ private function ticker()
 return $this->getJson('/api/prices/ticker');
 }
 
-// ترتيب الشريط: آخر سعر لكل منتج، الأحدث أولاً. بنقارن بأرقام المنتجات (الشريط ما بيعرض price_id)
 private function ids(): array
 {
 return collect($this->ticker()->assertOk()->json('data'))->pluck('product_id')->all();
@@ -46,7 +45,6 @@ $callback();
 return DB::getQueryLog();
 }
 
-// ---------- المحتوى ----------
 
 public function test_ticker_is_public_and_shows_only_the_product_and_its_price(): void
 {
@@ -89,7 +87,6 @@ $this->makePrice($active, $lookups, $user, 'flagged', ['product_price_value' => 
 $this->makePrice($hidden, $lookups, $user, 'approved');
 $this->makePrice($other, $lookups, $user, 'approved', ['product_price_value' => 4]);
 
-// منتج واحد = سعر واحد (آخر معتمد)، والأحدث بالأول
 $this->assertSame([$other->id, $active->id], $this->ids());
 $this->assertSame([$other->id => '4.00', $active->id => '6.00'], $this->prices());
 }
@@ -131,7 +128,6 @@ public function test_ticker_is_empty_without_prices(): void
 $this->ticker()->assertOk()->assertExactJson(['data' => []]);
 }
 
-// ---------- الكاش ----------
 
 public function test_second_request_is_served_from_cache_without_queries(): void
 {
@@ -139,7 +135,6 @@ $lookups = $this->lookups();
 $user = $this->makeUser();
 $this->makePrice($this->makeProduct($lookups, $user), $lookups, $user);
 
-// أول طلب بكاش فاضي بيبني الشريط (مرة وحدة)
 $this->assertNotSame([], $this->queriesDuring(fn () => $this->ticker()->assertOk()));
 
 $queries = $this->queriesDuring(fn () => $this->ticker()->assertOk()->assertJsonCount(1, 'data'));
@@ -177,7 +172,6 @@ $this->assertSame([$product->id => '5.00'], $this->prices());
 
 $this->makePrice($product, $lookups, $user, 'approved', ['product_price_value' => 9]);
 
-// نفس المنتج: السعر الأحدث بيحل مكان القديم فوراً لأنه ما في كاش
 $this->assertSame([$product->id => '9.00'], $this->prices());
 $this->assertFalse(Cache::has(PriceTicker::KEY));
 }
@@ -219,13 +213,11 @@ $user = $this->makeUser();
 $product = $this->makeProduct($lookups, $user);
 $this->makePrice($product, $lookups, $user);
 
-// نسخة v1 القديمة (بحقول أكثر) ممكن تكون ضايلة بكاش الإنتاج
 Cache::put('prices:ticker:v1', [['price_id' => 1, 'store_name' => 'old']], 600);
 
 $this->ticker()->assertOk()->assertJsonMissingPath('data.0.store_name')->assertJsonPath('data.0.product_id', $product->id);
 }
 
-// ---------- الأمر المجدول والجدولة ----------
 
 public function test_the_refresh_command_builds_the_cache_and_fresh_rebuilds_it(): void
 {
@@ -237,7 +229,6 @@ $this->makePrice($product, $lookups, $user, 'approved', ['product_price_value' =
 $this->artisan('prices:refresh-ticker')->expectsOutputToContain('1 items')->assertSuccessful();
 $this->assertCount(1, Cache::get(PriceTicker::KEY));
 
-// تغيير مباشر بالداتابيز: الكاش بيضل زي ما هو لحد التحديث الجاي
 $this->makePrice($product, $lookups, $user, 'approved', ['product_price_value' => 6]);
 $this->assertSame([$product->id => '5.00'], $this->prices());
 
@@ -262,7 +253,7 @@ $this->artisan('prices:refresh-ticker')->expectsOutputToContain('must be longer'
 
 public function test_the_ticker_refresh_is_scheduled_every_interval_and_every_night(): void
 {
-Artisan::call('list'); // بيحمّل routes/console.php وبيسجّل الجدولة
+Artisan::call('list');
 
 $events = collect(app(Schedule::class)->events())
     ->filter(fn ($event) => str_contains($event->command, 'prices:refresh-ticker'));
@@ -282,9 +273,7 @@ $this->assertTrue($nightly->withoutOverlapping);
 $this->assertTrue($nightly->onOneServer);
 }
 
-// ---------- متى بيتحدّث الشريط ----------
 
-// يسخّن الكاش بسعر واحد (7.5) ويرجّعه
 private function warm(): array
 {
 $lookups = $this->lookups();
@@ -297,23 +286,25 @@ $this->assertSame([$product->id => '7.50'], $this->prices());
 return [$lookups, $owner, $product, $price];
 }
 
-public function test_a_new_price_from_the_api_does_not_clear_the_cache_and_shows_up_at_the_next_refresh(): void
+public function test_a_new_price_from_the_api_stays_out_of_the_ticker_until_it_is_approved(): void
 {
 [$lookups, $owner, $product] = $this->warm();
 
-$this->actingAs($this->makeUser())->postJson('/api/prices', [
+$newId = $this->actingAs($this->makeUser())->postJson('/api/prices', [
     'product_id' => $product->id,
     'region' => $lookups['area']->area_slug,
     'price' => 6,
     'store_name' => 'متجر جديد',
-])->assertCreated();
+])->assertCreated()->json('data.id');
 
-// الكاش لسا موجود وبدون أي استعلام: الإضافة ما ضربت الداتابيز من طرف الزوار
 $this->assertTrue(Cache::has(PriceTicker::KEY));
 $queries = $this->queriesDuring(fn () => $this->assertSame([$product->id => '7.50'], $this->prices()));
 $this->assertSame([], $queries);
 
-// مع التحديث المجدول الجاي بيظهر السعر الجديد
+$this->artisan('prices:refresh-ticker')->assertSuccessful();
+$this->assertSame([$product->id => '7.50'], $this->prices());
+
+$this->postJson(route('product_price_approve', $newId))->assertOk();
 $this->artisan('prices:refresh-ticker')->assertSuccessful();
 $this->assertSame([$product->id => '6.00'], $this->prices());
 }
@@ -338,7 +329,6 @@ public function test_moderation_refreshes_the_cache_itself_so_visitors_do_not_re
 
 $this->postJson(route('product_price_reject', $price->id))->assertOk();
 
-// الأدمن هو اللي بنى الشريط الجديد: الزائر بيقرأ جاهز بدون استعلام
 $this->assertTrue(Cache::has(PriceTicker::KEY));
 $this->assertSame([], $this->queriesDuring(fn () => $this->assertSame([], $this->ids())));
 }
@@ -349,7 +339,6 @@ Exceptions::fake();
 
 [, , , $price] = $this->warm();
 
-// الكاش بيجي من ApiCache::store() (Cache::store())، فبنخلي الـ store نفسه هو اللي يفشل بالكتابة
 $broken = Mockery::mock(Repository::class)->shouldIgnoreMissing();
 $broken->shouldReceive('put')->andThrow(new RuntimeException('cache down'));
 Cache::partialMock()->shouldReceive('store')->andReturn($broken);
@@ -440,9 +429,6 @@ $old = $this->makeProduct($lookups, $owner, 'active', ['product_name_ar' => 'ق�
 
 $this->artisan('prices:backfill-first')->assertSuccessful();
 
-// الـ backfill بينشئ سعر أول للمنتج القديم وللمنتج المسخَّن (سعره المسجّل بقيم غير قيم صفّه)،
-// والشريط بيعرض آخر سعر لكل منتج: منتجين، والمنتج المسخَّن بسعره المسجّل (8) مش 7.5
-// الأحدث أولاً: سعر المنتج القديم انعمل بعد سعر المنتج المسخَّن
 $this->assertSame([$old->id => '8.00', $product->id => '8.00'], $this->prices());
 $this->assertCount(2, $this->ids());
 }

@@ -48,9 +48,18 @@ class PointsApiTest extends TestCase
         ], $extra));
     }
 
-    // ---------- منح النقاط عند إضافة سعر ----------
 
-    public function test_adding_a_price_awards_points_once(): void
+    private function approve(ProductPrice $price)
+    {
+        return $this->postJson(route('product_price_approve', $price->id));
+    }
+
+    private function pendingPrice($user, array $lookups): ProductPrice
+    {
+        return $this->makePrice($this->makeProduct($lookups, $this->makeUser()), $lookups, $user, 'pending');
+    }
+
+    public function test_adding_a_price_awards_nothing_until_the_admin_approves_it(): void
     {
         $this->addPriceRule(10);
         $lookups = $this->lookups();
@@ -59,14 +68,75 @@ class PointsApiTest extends TestCase
 
         $this->storePrice($user, $lookups, $product->id)
             ->assertStatus(201)
-            ->assertJsonPath('data.points_awarded', 10);
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.points_awarded', 0);
 
-        $price = ProductPrice::firstOrFail();
+        $this->assertSame(1, ProductPrice::count());
+        $this->assertSame(0, PointTransaction::count());
+        $this->assertSame(0, $user->refresh()->user_points_total);
+    }
+
+    public function test_approving_a_price_awards_its_owner_points_once(): void
+    {
+        $this->addPriceRule(10);
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $price = $this->pendingPrice($user, $lookups);
+
+        $this->approve($price)->assertOk();
+
         $tx = PointTransaction::firstOrFail();
 
         $this->assertSame(10, $user->refresh()->user_points_total);
         $this->assertSame('product_price', $tx->point_transaction_source_type);
         $this->assertSame($price->id, $tx->point_transaction_source_id);
+
+        $this->approve($price)->assertStatus(409);
+
+        $this->assertSame(1, PointTransaction::count());
+        $this->assertSame(10, $user->refresh()->user_points_total);
+    }
+
+    public function test_a_hidden_price_shown_again_does_not_award_points_twice(): void
+    {
+        $this->addPriceRule(10);
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $price = $this->pendingPrice($user, $lookups);
+
+        $this->approve($price)->assertOk();
+        $this->postJson(route('product_price_reject', $price->id))->assertOk();
+        $this->approve($price)->assertOk();
+
+        $this->assertSame(1, PointTransaction::count());
+        $this->assertSame(10, $user->refresh()->user_points_total);
+    }
+
+    public function test_hiding_an_approved_price_keeps_the_points(): void
+    {
+        $this->addPriceRule(10);
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $price = $this->pendingPrice($user, $lookups);
+
+        $this->approve($price)->assertOk();
+        $this->postJson(route('product_price_reject', $price->id))->assertOk();
+
+        $this->assertSame('rejected', $price->refresh()->product_price_status);
+        $this->assertSame(10, $user->refresh()->user_points_total);
+    }
+
+    public function test_rejecting_a_pending_price_awards_nothing(): void
+    {
+        $this->addPriceRule(10);
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $price = $this->pendingPrice($user, $lookups);
+
+        $this->postJson(route('product_price_reject', $price->id))->assertOk();
+
+        $this->assertSame(0, PointTransaction::count());
+        $this->assertSame(0, $user->refresh()->user_points_total);
     }
 
     public function test_no_rule_means_the_price_is_still_saved_with_zero_points(): void
@@ -83,17 +153,32 @@ class PointsApiTest extends TestCase
         $this->assertSame(0, PointTransaction::count());
     }
 
-    public function test_daily_limit_stops_points_but_not_the_price(): void
+    public function test_approving_without_a_rule_still_approves_with_zero_points(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+        $price = $this->pendingPrice($user, $lookups);
+
+        $this->approve($price)->assertOk();
+
+        $this->assertSame('approved', $price->refresh()->product_price_status);
+        $this->assertSame(0, PointTransaction::count());
+    }
+
+    public function test_daily_limit_stops_points_but_not_the_approval(): void
     {
         $this->addPriceRule(10, 1);
         $lookups = $this->lookups();
         $user = $this->makeUser();
-        $product = $this->makeProduct($lookups, $this->makeUser());
+        $first = $this->pendingPrice($user, $lookups);
+        $second = $this->pendingPrice($user, $lookups);
 
-        $this->storePrice($user, $lookups, $product->id)->assertJsonPath('data.points_awarded', 10);
-        $this->storePrice($user, $lookups, $product->id)->assertStatus(201)->assertJsonPath('data.points_awarded', 0);
+        $this->approve($first)->assertOk();
+        $this->approve($second)->assertOk();
 
-        $this->assertSame(2, ProductPrice::count());
+        $this->assertSame('approved', $first->refresh()->product_price_status);
+        $this->assertSame('approved', $second->refresh()->product_price_status);
+        $this->assertSame(1, PointTransaction::count());
         $this->assertSame(10, $user->refresh()->user_points_total);
     }
 
@@ -110,23 +195,22 @@ class PointsApiTest extends TestCase
         $this->assertSame(0, $user->refresh()->user_points_total);
     }
 
-    public function test_if_awarding_fails_the_price_is_rolled_back(): void
+    public function test_if_awarding_fails_the_approval_is_rolled_back(): void
     {
         $this->addPriceRule(10);
         $lookups = $this->lookups();
         $user = $this->makeUser();
-        $product = $this->makeProduct($lookups, $this->makeUser());
+        $price = $this->pendingPrice($user, $lookups);
 
         $this->mock(PointService::class)
             ->shouldReceive('award')->andThrow(new \RuntimeException('boom'));
 
-        $this->storePrice($user, $lookups, $product->id)->assertStatus(500);
+        $this->approve($price)->assertStatus(500);
 
-        $this->assertSame(0, ProductPrice::count());
+        $this->assertSame('pending', $price->refresh()->product_price_status);
         $this->assertSame(0, PointTransaction::count());
     }
 
-    // ---------- GET /api/me/points ----------
 
     public function test_points_requires_login(): void
     {

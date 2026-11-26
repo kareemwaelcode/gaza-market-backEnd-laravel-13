@@ -466,9 +466,9 @@ const translations = {
     "npw.next":                  "Next",
     "npw.submit":                "Submit",
 
-    "priceSuccess.title":      "Price added successfully",
-    "priceSuccess.desc":       "Thank you — your contribution has been received and will help the people of Gaza know real prices and make better decisions.",
-    "priceSuccess.message":    "Thank you — your contribution has been received and will help the people of Gaza know real prices and make better decisions.",
+    "priceSuccess.title":      "Price sent for review",
+    "priceSuccess.desc":       "Thank you — your price was received and is under review. Once approved it will appear on the platform and you will get your points.",
+    "priceSuccess.message":    "Thank you — your price was received and is under review. Once approved it will appear on the platform and you will get your points.",
     "priceSuccess.backHome":   "Back to Home",
     "priceSuccess.addAnother": "Add Something Else",
     "priceSuccess.addMore":    "Add something else",
@@ -824,7 +824,7 @@ const translations = {
     "places.reset":             "Reset filters",
     "places.favAdd":            "Add to favorites",
     "places.favRemove":         "Remove from favorites",
- 
+
   },
 
   ar: {
@@ -1293,9 +1293,9 @@ const translations = {
     "npw.next":                  "التالي",
     "npw.submit":                "إرسال",
 
-    "priceSuccess.title":      "تمت إضافة السعر بنجاح",
-    "priceSuccess.desc":       "شكراً لك — تم استلام مساهمتك وبتساعد أهل غزة يعرفوا الأسعار الحقيقية وياخدوا قرارات أفضل.",
-    "priceSuccess.message":    "شكراً لك — تم استلام مساهمتك وستساعد أهل غزة على معرفة الأسعار الحقيقية واتخاذ قرارات أفضل.",
+    "priceSuccess.title":      "تم إرسال السعر للمراجعة",
+    "priceSuccess.desc":       "شكراً لك — وصلنا سعرك وهو قيد المراجعة. بعد الموافقة عليه بيظهر على المنصة وبتاخد نقاطك.",
+    "priceSuccess.message":    "شكراً لك — تم استلام سعرك وهو قيد المراجعة. بعد الموافقة عليه سيظهر على المنصة وتحصل على نقاطك.",
     "priceSuccess.backHome":   "العودة للرئيسية",
     "priceSuccess.addAnother": "أضف شي تاني",
     "priceSuccess.addMore":    "أضف شيئاً آخر",
@@ -1394,7 +1394,7 @@ const translations = {
     "hero.compareProduct":"أرز 5 كغ",
     "hero.lowest":        "الأقل",
     "hero.store1":        "سوبرماركت الأمل",
-    "hero.highest":       "الأعلى", 
+    "hero.highest":       "الأعلى",
     "hero.store2":        "متجر القدس",
     "hero.saveUpTo":      "وفّر حتى",
     "hero.byComparing":   "بالمقارنة",
@@ -1649,6 +1649,6 @@ const translations = {
     "places.reset":             "إعادة ضبط الفلاتر",
     "places.favAdd":            "أضف للمفضلة",
     "places.favRemove":         "أزل من المفضلة",
- 
+
   },
 };

@@ -126,7 +126,6 @@
 <li class="has-sub"><a class="js-arrow" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-group preview-icon"><path d="M17 21v-1a2 2 0 00-2-2H9a2 2 0 00-2 2v1"/><path d="M19 10h1a2 2 0 012 2v1"/><path d="M5 10H4a2 2 0 00-2 2v1"/><circle cx="12" cy="11" r="3"/><circle cx="18" cy="4" r="2"/><circle cx="6" cy="4" r="2"/></svg>Users</a>
 <ul class="list-unstyled navbar__sub-list js-sub-list">
   <li><a href="{{ route('user.index') }}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv-minimal preview-icon"><path d="M7 21h10"/><rect width="20" height="14" x="2" y="3" rx="2"/></svg>Index</a></li>
-  {{--  <li><a href="{{ route('admin.create') }}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-plus preview-icon"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="M19 16v6"/><path d="M22 19h-6"/></svg>Create</a></li>  --}}
 </ul>
 </li>
 
@@ -282,7 +281,7 @@
         <div class="notifi__title">
           <p>You have 3 Notifications</p>
         </div>
- 
+
         <div class="notifi__footer"><a href="#">All notifications</a></div>
       </div>
     </div>
@@ -361,7 +360,7 @@
                 <p class="stat-card__label">Products</p>
                 <span class="stat-card__icon stat-card__icon--c4"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box preview-icon"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
             </div>
-            <p class="stat-card__value">0</p>
+            <p class="stat-card__value">{{ \App\Models\Product::count() }}</p>
         </article>
     </div>
 
@@ -388,7 +387,6 @@
     </div>
 </div>
 
-<!-- Traffic trend + Sources donut -->
 <div class="row row-tight" style="margin-top: 16px;">
     <div class="col-lg-12">
         <section class="m-card" aria-labelledby="traffic-title">
@@ -408,7 +406,6 @@
 
         @yield('content')
 
-        <!-- Footer -->
         <div class="row" style="margin-top: 28px;">
             <div class="col-md-12">
                 <div class="copyright">

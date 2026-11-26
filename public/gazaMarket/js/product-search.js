@@ -4,8 +4,8 @@ var CONFIG = Object.assign({ API_BASE: '/api', TIMEOUT_MS: 15000, CREDENTIALS: '
 var API_BASE = String(CONFIG.API_BASE).replace(/\/+$/, '');
 
 var DELAY_MS = 350;
-var MIN_CHARS = 2;   // نفس حد الباك إند (min:2)
-var MAX_CHARS = 50;  // نفس حد الباك إند (max:50)
+var MIN_CHARS = 2;
+var MAX_CHARS = 50;
 var MAX_ITEMS = 8;
 
 var TARGETS = [
@@ -31,7 +31,6 @@ debounced.cancel = function () {
 return debounced;
 }
 
-// ---------- اللغة والنصوص ----------
 function isEnglish() {
 return document.documentElement.lang === 'en';
 }
@@ -46,7 +45,6 @@ var en = item.name_en;
 return (isEnglish() ? en || ar : ar || en) || '';
 }
 
-// الحجم: "1 كيلو" (الكمية بدون أصفار زيادة + اسم الوحدة بلغة الصفحة)
 function sizeText(item) {
 var qty = Number(item.quantity);
 var unit = item.unit ? (isEnglish() ? item.unit.name_en || item.unit.name_ar : item.unit.name_ar || item.unit.name_en) : '';
@@ -56,12 +54,10 @@ if (unit) parts.push(unit);
 return parts.join(' ');
 }
 
-// ---------- الطلب ----------
 function apiSearch(q, signal) {
 var timeoutController = typeof AbortController === 'function' ? new AbortController() : null;
 var timer = timeoutController ? setTimeout(function () { timeoutController.abort(); }, CONFIG.TIMEOUT_MS) : null;
 
-// لو المستخدم كتب حرف جديد (signal) أو انتهت المهلة، الطلب بينلغي
 if (signal && timeoutController) {
     signal.addEventListener('abort', function () { timeoutController.abort(); });
 }
@@ -85,7 +81,6 @@ return fetch(API_BASE + '/products/search?q=' + encodeURIComponent(q), {
     );
 }
 
-// ---------- الستايل (مرة وحدة) ----------
 function injectStyles() {
 if (document.getElementById('gm-psearch-style')) return;
 var style = document.createElement('style');
@@ -99,15 +94,21 @@ style.textContent =
     '.gm-psearch-name{font-weight:600}' +
     '.gm-psearch-meta{font-size:.82em;opacity:.75}' +
     '.gm-psearch-empty{padding:10px;font-size:.9em;opacity:.75;cursor:default}' +
-    '.gm-psearch-suggest{padding:10px;font-weight:600;cursor:pointer;border-radius:8px;text-decoration:underline}' +
-    '.gm-psearch-suggest:hover{background:rgba(0,0,0,.06)}' +
-    'body.dark-mode .gm-psearch-suggest:hover{background:rgba(255,255,255,.08)}' +
+    '.gm-psearch-suggest{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:10px 14px;' +
+    'font:inherit;font-size:.92em;font-weight:700;color:var(--blue,#3866df);background:rgba(56,102,223,.08);' +
+    'border:1.5px dashed rgba(56,102,223,.45);border-radius:12px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s}' +
+    '.gm-psearch-suggest[hidden]{display:none}' +
+    '.gm-psearch-suggest:hover,.gm-psearch-suggest:focus-visible{background:rgba(56,102,223,.15);border-color:var(--blue,#3866df);outline:none}' +
+    '.gm-psearch-suggest-plus{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;' +
+    'background:var(--blue,#3866df);color:#fff;font-size:16px;line-height:1}' +
+    'body.dark-mode .gm-psearch-suggest{color:#8fb0ff;background:rgba(143,176,255,.1);border-color:rgba(143,176,255,.45)}' +
+    'body.dark-mode .gm-psearch-suggest:hover,body.dark-mode .gm-psearch-suggest:focus-visible{background:rgba(143,176,255,.18);border-color:#8fb0ff}' +
+    'body.dark-mode .gm-psearch-suggest-plus{background:#8fb0ff;color:#1f2328}' +
     'body.dark-mode .gm-psearch-list{background:#1f2328;color:#e6e6e6;border-color:rgba(255,255,255,.14)}' +
     'body.dark-mode .gm-psearch-item:hover,body.dark-mode .gm-psearch-item[aria-selected="true"]{background:rgba(255,255,255,.08)}';
 document.head.appendChild(style);
 }
 
-// ---------- ربط حقل واحد ----------
 var uid = 0;
 
 function attach(input, opts) {
@@ -125,17 +126,47 @@ list.setAttribute('role', 'listbox');
 list.hidden = true;
 host.appendChild(list);
 
+var suggestBtn = null;
+if (opts.pickFills) {
+    suggestBtn = document.createElement('button');
+    suggestBtn.type = 'button';
+    suggestBtn.className = 'gm-psearch-suggest';
+    suggestBtn.hidden = true;
+    var plus = document.createElement('span');
+    plus.className = 'gm-psearch-suggest-plus';
+    plus.setAttribute('aria-hidden', 'true');
+    plus.textContent = '+';
+    var label = document.createElement('span');
+    label.className = 'gm-psearch-suggest-label';
+    suggestBtn.appendChild(plus);
+    suggestBtn.appendChild(label);
+    host.insertAdjacentElement('afterend', suggestBtn);
+}
+
+function setSuggestLabel() {
+    if (suggestBtn) suggestBtn.lastChild.textContent = text('المنتج مش موجود؟ اقترحه كمنتج جديد', 'Product not found? Suggest it as a new product');
+}
+
 input.setAttribute('aria-autocomplete', 'list');
 input.setAttribute('aria-controls', list.id);
 input.setAttribute('aria-expanded', 'false');
 
 var controller = null;
-var seq = 0; // رقم آخر طلب: أي رد برقم أقدم بيتجاهل
+var seq = 0;
 
-function hide() {
+function hideList() {
     list.hidden = true;
     list.textContent = '';
     input.setAttribute('aria-expanded', 'false');
+}
+
+function hideSuggest() {
+    if (suggestBtn) suggestBtn.hidden = true;
+}
+
+function hide() {
+    hideList();
+    hideSuggest();
 }
 
 function cancelPending() {
@@ -155,13 +186,12 @@ function render(rows) {
     empty.textContent = text('ما في نتائج', 'No results');
     list.appendChild(empty);
 
-    if (opts.pickFills) {
-        var suggest = document.createElement('li');
-        suggest.className = 'gm-psearch-suggest';
-        suggest.setAttribute('role', 'option');
-        suggest.textContent = text('المنتج مش موجود؟ اقترحه كمنتج جديد', 'Product not found? Suggest it as a new product');
-        list.appendChild(suggest);
+    if (suggestBtn) {
+        setSuggestLabel();
+        suggestBtn.hidden = false;
     }
+    } else {
+    hideSuggest();
     }
 
     rows.slice(0, MAX_ITEMS).forEach(function (item) {
@@ -199,7 +229,6 @@ function run() {
     }
     q = q.slice(0, MAX_CHARS);
 
-    // ألغي الطلب السابق لهاد الحقل بس (باقي الحقول مش متأثرة)
     cancelPending();
     var mine = seq;
     controller = typeof AbortController === 'function' ? new AbortController() : null;
@@ -216,7 +245,7 @@ function run() {
         if (mine !== seq) return;
         controller = null;
         if (err && err.name === 'AbortError') return;
-        hide(); // خطأ شبكة أو سيرفر: القائمة بتختفي بدون رسالة مزعجة
+        hide();
     }
     );
 }
@@ -224,7 +253,6 @@ function run() {
 var debouncedRun = debounce(run, DELAY_MS);
 
 input.addEventListener('input', function () {
-    // أي تعديل يدوي بيلغي المنتج المختار: لازم يختار من القائمة من جديد
     if (opts.pickFills) delete input.dataset.productId;
 
     if (input.value.trim().length < MIN_CHARS) {
@@ -244,19 +272,24 @@ input.addEventListener('keydown', function (e) {
     }
 });
 
-// mousedown (مش click) عشان الـ blur ما يخفي القائمة قبل الاختيار
-list.addEventListener('mousedown', function (e) {
-    var suggest = e.target.closest ? e.target.closest('.gm-psearch-suggest') : null;
-    if (suggest) {
+if (suggestBtn) {
+    suggestBtn.addEventListener('mousedown', function (e) {
     e.preventDefault();
+    });
+
+    suggestBtn.addEventListener('click', function () {
     var typed = input.value.trim().slice(0, MAX_CHARS);
     debouncedRun.cancel();
     cancelPending();
     hide();
     document.dispatchEvent(new CustomEvent('gm:suggest-product', { detail: { name: typed } }));
-    return;
-    }
+    });
 
+    var modalHost = input.closest ? input.closest('.modal') : null;
+    if (modalHost) modalHost.addEventListener('hidden.bs.modal', hide);
+}
+
+list.addEventListener('mousedown', function (e) {
     var li = e.target.closest ? e.target.closest('.gm-psearch-item') : null;
     if (!li) return;
     e.preventDefault();
@@ -270,12 +303,12 @@ list.addEventListener('mousedown', function (e) {
 });
 
 document.addEventListener('mousedown', function (e) {
-    if (!host.contains(e.target)) hide();
+    if (!host.contains(e.target)) hideList();
 });
 
 input.addEventListener('blur', function () {
     setTimeout(function () {
-    if (document.activeElement !== input) hide();
+    if (document.activeElement !== input) hideList();
     }, 150);
 });
 }

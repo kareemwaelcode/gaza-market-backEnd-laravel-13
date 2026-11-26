@@ -6,6 +6,7 @@ use App\Models\Area;
 use App\Models\Category;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
+use App\Services\PointService;
 use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Http\Request;
@@ -102,6 +103,13 @@ if ($row->product_price_status === ProductPrice::STATUS_FLAGGED || $row->report_
     $row->product_price_status = ProductPrice::STATUS_APPROVED;
     $row->reviewed_at = now();
     $row->save();
+
+    app(PointService::class)->award(
+        (int) $row->user_id,
+        'add_price',
+        'product_price',
+        (int) $row->id,
+    );
 
     return true;
 });

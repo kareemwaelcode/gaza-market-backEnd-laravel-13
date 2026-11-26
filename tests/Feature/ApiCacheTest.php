@@ -20,7 +20,6 @@ class ApiCacheTest extends TestCase
     use BuildsProductPrices;
     use RefreshDatabase;
 
-    /** @return array{0: array, 1: User, 2: Product, 3: ProductPrice} */
     private function warm(): array
     {
         $lookups = $this->lookups();
@@ -52,7 +51,6 @@ class ApiCacheTest extends TestCase
         return $queries;
     }
 
-    // ---------- الـ feed ----------
 
     public function test_second_feed_request_is_served_from_cache_with_no_queries(): void
     {
@@ -114,7 +112,6 @@ class ApiCacheTest extends TestCase
 
         $this->assertSame([], $this->feedIds());
 
-        // بدون إبطال (إدخال مباشر بالداتابيز): لسا فاضي جوّا مدة الكاش
         [, , , $price] = $this->warm();
         $this->assertSame([], $this->feedIds());
 
@@ -135,9 +132,8 @@ class ApiCacheTest extends TestCase
         $this->assertStringNotContainsString('my_vote', $asUser);
     }
 
-    // ---------- إبطال الـ feed ----------
 
-    public function test_a_new_user_price_shows_up_in_the_feed_immediately(): void
+    public function test_a_new_user_price_stays_out_of_the_feed_until_it_is_approved(): void
     {
         [$lookups, , $product, $price] = $this->warm();
         $this->assertSame([$price->id], $this->feedIds());
@@ -148,6 +144,10 @@ class ApiCacheTest extends TestCase
             'price' => 6.5,
             'store_name' => 'بقالة جديدة',
         ])->assertCreated()->json('data.id');
+
+        $this->assertSame([$price->id], $this->feedIds());
+
+        $this->postJson(route('product_price_approve', $newId))->assertOk();
 
         $this->assertEqualsCanonicalizing([$price->id, $newId], $this->feedIds());
     }
@@ -215,14 +215,12 @@ class ApiCacheTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.confirm_count', 1);
 
-        // القرار المتفق عليه: العدّادات بالـ feed بتتأخر لحد feed_ttl
         $this->assertSame(0, $this->getJson('/api/prices')->json('data.0.confirm_count'));
 
         $this->travel(2)->minutes();
         $this->assertSame(1, $this->getJson('/api/prices')->json('data.0.confirm_count'));
     }
 
-    // ---------- البحث ----------
 
     public function test_second_search_is_served_from_cache_and_the_term_is_normalized(): void
     {
@@ -264,7 +262,6 @@ class ApiCacheTest extends TestCase
         $this->assertSame([$product->id], $this->searchIds('zzzz'));
     }
 
-    // ---------- الشريط ----------
 
     public function test_ticker_uses_the_configured_cache_store(): void
     {
@@ -277,14 +274,12 @@ class ApiCacheTest extends TestCase
         $this->assertFalse(Cache::store('array')->has(PriceTicker::KEY));
     }
 
-    // ---------- الأعطال ----------
 
     public function test_the_feed_and_search_still_work_when_the_cache_store_is_down(): void
     {
         Exceptions::fake();
         [, , $product, $price] = $this->warm();
 
-        // Redis مغلق (بورت ما حدا سامع عليه): كل عملية كاش بترمي استثناء
         config([
             'database.redis.client' => 'predis',
             'database.redis.broken' => ['host' => '127.0.0.1', 'port' => 1, 'database' => 0],
@@ -315,7 +310,6 @@ class ApiCacheTest extends TestCase
         $this->assertSame('rejected', $price->refresh()->product_price_status);
     }
 
-    // ---------- الـ helper ----------
 
     public function test_bump_only_invalidates_keys_that_depend_on_the_bumped_group(): void
     {

@@ -9,7 +9,6 @@ use App\Models\Area;
 use App\Models\Category;
 use App\Models\PriceVote;
 use App\Models\ProductPrice;
-use App\Services\PointService;
 use App\Support\ApiCache;
 use App\Support\PriceTicker;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,7 +50,6 @@ $build = fn () => $this->feedPayload($region, $category, $limit);
 
 $pageNumber = Paginator::resolveCurrentPage();
 
-// الاستجابة نفسها لكل الناس (بدون my_vote)، فبتنكاش؛ الصفحات البعيدة والمفاتيح العشوائية ما بتنكاش
 $payload = $pageNumber > (int) config('prices.cache.max_page')
 ? $build()
 : ApiCache::remember(
@@ -65,7 +63,6 @@ $payload = $pageNumber > (int) config('prices.cache.max_page')
 return response()->json($payload);
 }
 
-/** @return array{data: array, next_cursor: null, has_more: bool, total: int} */
 private function feedPayload(?string $region, ?string $category, int $limit): array
 {
 $areaId = null;
@@ -142,7 +139,6 @@ return response()->json([
 ], 400);
 }
 
-// المستخدم من الجلسة فقط (مش من الطلب): ما حدا بيشوف أصوات غيره
 $votes = PriceVote::query()
 ->where('user_id', $request->user()->id)
 ->whereIn('product_price_id', $validator->validated()['price_ids'])
@@ -172,7 +168,6 @@ return response()->json(['icon' => 'error', 'title' => 'Region not found'], 404)
 }
 
 $storedPath = null;
-$pointsAwarded = 0;
 
 try {
 $price = new ProductPrice;
@@ -185,7 +180,7 @@ $price->fill([
     'product_price_store_phone' => $data['store_phone'] ?? null,
 ]);
 $price->user_id = $request->user()->id;
-$price->product_price_status = ProductPrice::STATUS_APPROVED;
+$price->product_price_status = ProductPrice::STATUS_PENDING;
 
 if ($request->hasFile('receipt_image')) {
     $path = app(ImageProcessor::class)->store($request->file('receipt_image'), 'receipts', 'local', 'receipt');
@@ -198,19 +193,7 @@ if ($request->hasFile('receipt_image')) {
     $price->product_price_receipt_image = $path;
 }
 
-// حفظ السعر ومنح النقاط وحدة واحدة: لو فشل المنح بيتراجع السعر كمان
-$pointsAwarded = DB::transaction(function () use ($price) {
-    $price->save();
-
-    $transaction = app(PointService::class)->award(
-        (int) $price->user_id,
-        'add_price',
-        'product_price',
-        (int) $price->id,
-    );
-
-    return $transaction?->point_transaction_points ?? 0;
-});
+$price->save();
 } catch (Throwable $e) {
 if ($storedPath !== null) {
     Storage::disk('local')->delete($storedPath);
@@ -221,16 +204,11 @@ report($e);
 return response()->json(['icon' => 'error', 'title' => 'Could not save the price'], 500);
 }
 
-// السعر معتمد فوراً فبيظهر بالـ feed: بنبطّل كاش الـ feed (بدون ما نلمس كاش الشريط)
-ApiCache::pricesChanged();
-
-// ما بنمسح كاش الشريط هون: السعر الجديد بيظهر مع التحديث المجدول الجاي (بدل ما كل إضافة تضرب الداتابيز)
-
 return response()->json([
 'data' => [
     'id' => $price->id,
     'status' => $price->product_price_status,
-    'points_awarded' => $pointsAwarded,
+    'points_awarded' => 0,
 ],
 ], 201);
 }
@@ -304,7 +282,6 @@ if ($outcome['code'] !== 200) {
 return response()->json(['icon' => 'error', 'title' => $outcome['title']], $outcome['code']);
 }
 
-// بس لما السعر اختفى بالبلاغات: عدّادات التصويت مش جزء من الشريط
 if ($outcome['data']['removed']) {
 PriceTicker::refreshAfterChange();
 ApiCache::pricesChanged();
