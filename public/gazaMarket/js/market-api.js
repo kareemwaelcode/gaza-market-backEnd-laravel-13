@@ -10,19 +10,33 @@ CSRF_URL: "/api/auth/me",
 
 const CONFIG = Object.assign({}, DEFAULTS, window.GM_CONFIG || {});
 const API_BASE = String(CONFIG.API_BASE).replace(/\/+$/, "");
-const USE_MOCK = !!(window.GM_ENV && window.GM_ENV.isMockAllowed());
+// الـ mock بيشتغل بس لو فعّلته صراحةً (window.GM_CONFIG = { USE_MOCK: true }) وعلى دومين محلي؛ الافتراضي دايماً الباك إند الحقيقي
+const USE_MOCK = CONFIG.USE_MOCK === true && !!(window.GM_ENV && window.GM_ENV.isMockAllowed());
 
 const STORE_KEY = "gm_mock_market_v1";
 const SAVED_KEY = "gm_mock_market_saved_v1";
 const USER_KEY = (window.GM_STORAGE_KEYS && window.GM_STORAGE_KEYS.user) || "user";
 
-// قائمة احتياطية فقط؛ بعد تحميل الخيارات تُستبدل (في نفس المصفوفة) بتصنيفات جدول listing_categories
-const CATEGORIES = ["electronics", "clothing", "furniture", "food", "books", "tools", "toys", "other"];
+// slugs التصنيفات الفعّالة: بتبدأ فاضية وبتتعبّى (في نفس المصفوفة) من جدول listing_categories بعد تحميل الخيارات
+const CATEGORIES = [];
+
+// بيانات وهمية لوضع الـ mock الصريح فقط (GM_CONFIG.USE_MOCK = true)؛ ما بتُستخدم أبداً مع الباك إند
+const MOCK_CATEGORIES = [
+    { id: 1, slug: "electronics", name_en: "Electronics", name_ar: "إلكترونيات" },
+    { id: 2, slug: "clothing", name_en: "Clothing", name_ar: "ملابس" },
+    { id: 3, slug: "furniture", name_en: "Furniture", name_ar: "أثاث" },
+    { id: 4, slug: "food", name_en: "Food", name_ar: "طعام" },
+    { id: 5, slug: "books", name_en: "Books", name_ar: "كتب" },
+    { id: 6, slug: "tools", name_en: "Tools", name_ar: "أدوات" },
+    { id: 7, slug: "toys", name_en: "Toys", name_ar: "ألعاب" },
+    { id: 8, slug: "other", name_en: "Other", name_ar: "أخرى" },
+];
 const PHONE_RE = /^05[69]\d{7}$/;
 const WHATSAPP_RE = /^\+\d{3}[1-9]\d{6,10}$/;
 
 // خيارات الفورم من الباك إند: listing_categories (الفعّالة) + areas. فيها الـ ids اللي بيتحقق منها StoreListingRequest
-const options = { ready: false, categories: [], areas: [] };
+// categoriesState: idle | loading | ok | empty (ما في تصنيفات فعّالة) | error (فشل الطلب)
+const options = { ready: false, categories: [], areas: [], categoriesState: "idle" };
 let optionsPromise = null;
 const CONDITIONS = Object.freeze(["new", "used", "urgent"]);
 const STATUSES = Object.freeze(["pending", "approved"]);
@@ -968,25 +982,81 @@ const rows = [];
 return { cats: cats, rows: rows };
 }
 
+function setCategories(list) {
+options.categories = list;
+CATEGORIES.splice(0, CATEGORIES.length, ...list.map((c) => c.slug));
+options.ready = list.length > 0;
+}
+
+// التصنيفات من GET /api/listing-categories (index): بنجيب كل الصفحات (last_page) وبنفلتر الفعّالة بس بالواجهة
+const CATEGORY_MAX_PAGES = 20;
+
+async function fetchCategoryRows() {
+const rows = [];
+let page = 1;
+let last = 1;
+do {
+    const res = await request("GET", "/listing-categories?page=" + page);
+    const body = res && res.data && typeof res.data === "object" ? res.data : null;
+    if (!body || !Array.isArray(body.data)) throw GMMarketError("invalid_response", "Invalid categories response");
+    rows.push(...body.data);
+    last = Math.floor(Number(body.last_page)) || 1;
+    page += 1;
+} while (page <= last && page <= CATEGORY_MAX_PAGES);
+
+return rows
+    .filter((r) => r && r.listing_category_is_active === true)
+    .map((r) => ({
+    id: r.id,
+    slug: r.listing_category_slug,
+    name_en: r.listing_category_name_en,
+    name_ar: r.listing_category_name_ar,
+    }));
+}
+
+// التصنيفات والمناطق بتتحمّل باستقلال: فشل واحد منهم ما بيعطّل التاني. الطلب الفاشل بيتعاد عند الاستدعاء الجاي
 function loadOptions() {
-if (USE_MOCK) return Promise.resolve(false);
-if (options.ready) return Promise.resolve(true);
-if (optionsPromise) return optionsPromise;
-optionsPromise = Promise.all([
-    request("GET", "/listing-categories/options"),
-    request("GET", "/product-options"),
-]).then((results) => {
-    const cats = results[0] && results[0].data ? results[0].data.categories : null;
-    const areas = results[1] && results[1].data ? results[1].data.areas : null;
-    const clean = sanitizeOptions(cats, areas);
-    if (!clean.cats.length || !clean.rows.length) return false;
-    options.categories = clean.cats;
-    options.areas = clean.rows;
-    CATEGORIES.splice(0, CATEGORIES.length, ...clean.cats.map((c) => c.slug));
-    options.ready = true;
+if (USE_MOCK) {
+    if (!options.ready) {
+    setCategories(MOCK_CATEGORIES.map((c) => Object.assign({}, c)));
+    options.categoriesState = "ok";
     document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
-    return true;
-}).catch(() => false).then((ok) => {
+    }
+    return Promise.resolve(true);
+}
+if (options.ready && options.areas.length) return Promise.resolve(true);
+if (optionsPromise) return optionsPromise;
+
+const needCats = !options.ready;
+const needAreas = !options.areas.length;
+if (needCats) options.categoriesState = "loading";
+const safe = (path) => request("GET", path).then((res) => ({ ok: true, res: res }), () => ({ ok: false, res: null }));
+
+optionsPromise = Promise.all([
+    needCats
+    ? fetchCategoryRows().then((list) => ({ ok: true, res: { data: { categories: list } } }), () => ({ ok: false, res: null }))
+    : Promise.resolve(null),
+    needAreas ? safe("/product-options") : Promise.resolve(null),
+]).then((results) => {
+    const catsRes = results[0];
+    const areasRes = results[1];
+    const clean = sanitizeOptions(
+    catsRes && catsRes.res && catsRes.res.data ? catsRes.res.data.categories : null,
+    areasRes && areasRes.res && areasRes.res.data ? areasRes.res.data.areas : null
+    );
+    if (catsRes) {
+    if (!catsRes.ok) options.categoriesState = "error";
+    else if (!clean.cats.length) { setCategories([]); options.categoriesState = "empty"; }
+    else { setCategories(clean.cats); options.categoriesState = "ok"; }
+    }
+    if (areasRes && clean.rows.length) options.areas = clean.rows;
+    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
+    return options.ready;
+}).catch(() => {
+    if (needCats) options.categoriesState = "error";
+    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
+    return false;
+}).then((ok) => {
     optionsPromise = null;
     return ok;
 });
@@ -996,6 +1066,7 @@ return optionsPromise;
 function getOptions() {
 return {
     ready: options.ready,
+    categoriesState: options.categoriesState,
     categories: options.categories.map((c) => Object.assign({}, c)),
     areas: options.areas.map((a) => Object.assign({}, a)),
 };

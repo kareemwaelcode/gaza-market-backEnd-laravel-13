@@ -640,14 +640,7 @@
           <div class="add-listing-field">
             <label class="add-listing-label" id="listingCategoryLabel" data-i18n="addListing.adType">Category</label>
             <div class="npw-region-grid" id="listingCategoryGrid" role="group" aria-labelledby="listingCategoryLabel">
-              <button type="button" class="npw-region-btn" data-value="electronics" data-i18n="addListing.electronics">Electronics</button>
-              <button type="button" class="npw-region-btn" data-value="clothing" data-i18n="addListing.clothing">Clothing</button>
-              <button type="button" class="npw-region-btn" data-value="furniture" data-i18n="addListing.furniture">Furniture</button>
-              <button type="button" class="npw-region-btn" data-value="food" data-i18n="addListing.food">Food</button>
-              <button type="button" class="npw-region-btn" data-value="books" data-i18n="addListing.books">Books</button>
-              <button type="button" class="npw-region-btn" data-value="tools" data-i18n="addListing.tools">Tools</button>
-              <button type="button" class="npw-region-btn" data-value="toys" data-i18n="addListing.toys">Toys</button>
-              <button type="button" class="npw-region-btn" data-value="other" data-i18n="addListing.other">Other</button>
+              <!-- تُعبَّأ من GET /api/listing-categories/options عبر main.js (الفعّالة فقط من جدول listing_categories) -->
             </div>
             <span class="gm-field-err" id="listingCategoryErr" data-i18n="addListing.errRequired">This field is required</span>
           </div>

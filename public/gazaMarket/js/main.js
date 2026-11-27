@@ -2047,11 +2047,45 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(categoryErr, categoryGrid);
     });
 
-    // الأزرار الثابتة بالـ HTML احتياطية فقط؛ أول ما تتحمّل تصنيفات الجدول (الفعّالة) بتنبني الشبكة منها
+    // الشبكة بتنبني بس من تصنيفات الجدول (الفعّالة)؛ ما في أزرار ثابتة. لو فشل التحميل بتظهر رسالة مع إعادة محاولة
+    function renderListingCategoriesMessage(state) {
+      if (!categoryGrid) return;
+      const wrap = document.createElement("div");
+      wrap.className = "text-muted small";
+      wrap.setAttribute("data-listing-categories-msg", "");
+      if (state === "loading" || state === "idle") {
+        wrap.textContent = t("addListing.categoriesLoading", "Loading categories…");
+      } else if (state === "empty") {
+        wrap.textContent = t("market.categoriesEmpty", "No categories available right now");
+      } else {
+        wrap.textContent = t("market.categoriesError", "Could not load categories") + " ";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn btn-sm btn-outline-secondary";
+        retry.setAttribute("data-listing-categories-retry", "");
+        retry.textContent = t("market.categoriesRetry", "Retry");
+        wrap.appendChild(retry);
+      }
+      categoryGrid.replaceChildren(wrap);
+    }
+
+    categoryGrid?.addEventListener("click", (e) => {
+      if (!e.target.closest("[data-listing-categories-retry]")) return;
+      const market = window.GMMarket;
+      if (market && typeof market.loadOptions === "function") {
+        renderListingCategoriesMessage("loading");
+        market.loadOptions().then(renderListingCategories);
+      }
+    });
+
     function renderListingCategories() {
       const market = window.GMMarket;
       const opts = market && typeof market.options === "function" ? market.options() : null;
-      if (!categoryGrid || !opts || !opts.ready || !opts.categories.length) return;
+      if (!categoryGrid) return;
+      if (!opts || !opts.ready || !opts.categories.length) {
+        renderListingCategoriesMessage(opts ? opts.categoriesState : (document.readyState === "complete" ? "error" : "loading"));
+        return;
+      }
 
       const lang = document.documentElement.lang?.startsWith("en") ? "en" : "ar";
       const keep = selectedCategory;
@@ -2088,6 +2122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modalEl.addEventListener("show.bs.modal", () => {
       const market = window.GMMarket;
       if (market && typeof market.loadOptions === "function") market.loadOptions().then(renderListingCategories);
+      else renderListingCategories();
     });
 
     let selectedRegion = null;

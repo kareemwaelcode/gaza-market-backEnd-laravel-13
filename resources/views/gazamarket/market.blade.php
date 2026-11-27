@@ -1243,14 +1243,7 @@
             </button>
             <ul class="dropdown-menu places-menu" aria-labelledby="marketCategoryBtn">
               <li><button type="button" class="dropdown-item" data-market-category="all" data-i18n="market.allCategories">All categories</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="electronics" data-i18n="addListing.electronics">Electronics</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="clothing" data-i18n="addListing.clothing">Clothing</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="furniture" data-i18n="addListing.furniture">Furniture</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="food" data-i18n="addListing.food">Food</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="books" data-i18n="addListing.books">Books</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="tools" data-i18n="addListing.tools">Tools</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="toys" data-i18n="addListing.toys">Toys</button></li>
-              <li><button type="button" class="dropdown-item" data-market-category="other" data-i18n="addListing.other">Other</button></li>
+              <!-- باقي التصنيفات بتنبني من GET /api/listing-categories/options عبر market.js -->
             </ul>
           </div>
 
@@ -1391,4 +1384,3 @@
 <script src="{{ asset('gazamarket/js/market-api.js') }}" defer></script>
 <script src="{{ asset('gazamarket/js/market.js') }}" defer></script>
 @endsection
-

@@ -69,17 +69,12 @@
   const MONTH_SECONDS = 30 * 86400;
   const DEFAULT_COUNTRY_CODE = '970';
 
-  const CATEGORY_KEYS = {
-    electronics: 'addListing.electronics',
-    clothing: 'addListing.clothing',
-    furniture: 'addListing.furniture',
-    food: 'addListing.food',
-    books: 'addListing.books',
-    tools: 'addListing.tools',
-    toys: 'addListing.toys',
-    other: 'addListing.other'
-  };
-
+  // اسم التصنيف من جدول listing_categories عبر market-api (بدون أسماء ثابتة)
+  function categoryLabel(slug) {
+    const lang = document.documentElement.lang && document.documentElement.lang.indexOf('en') === 0 ? 'en' : 'ar';
+    const name = api && typeof api.categoryName === 'function' ? api.categoryName(slug, lang) : null;
+    return name || '';
+  }
   const CONDITION_KEYS = {
     'new': 'addListing.new',
     'used': 'addListing.used',
@@ -426,7 +421,7 @@
 
     condEl.className = 'market-details__cond market-cond--' + item.condition;
     condEl.textContent = t(CONDITION_KEYS[item.condition] || CONDITION_KEYS['new']);
-    catEl.textContent = t(CATEGORY_KEYS[item.category] || CATEGORY_KEYS.other);
+    catEl.textContent = categoryLabel(item.category);
     titleEl.textContent = item.title;
 
     if (item.price === null) {
@@ -567,7 +562,7 @@
     if (!entry) return;
 
     paintTexts(col);
-    col.querySelector('[data-role="cat"]').textContent = t(CATEGORY_KEYS[entry.category] || CATEGORY_KEYS.other);
+    col.querySelector('[data-role="cat"]').textContent = categoryLabel(entry.category);
 
     const amount = col.querySelector('[data-role="amount"]');
     amount.classList.toggle('market-card__amount--none', entry.price === null);

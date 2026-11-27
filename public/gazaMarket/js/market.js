@@ -40,17 +40,6 @@ const STAGGER_MS = 60;
 const STAGGER_MAX = 8;
 const MONTH_SECONDS = 30 * 86400;
 
-const CATEGORY_KEYS = {
-electronics: 'addListing.electronics',
-clothing: 'addListing.clothing',
-furniture: 'addListing.furniture',
-food: 'addListing.food',
-books: 'addListing.books',
-tools: 'addListing.tools',
-toys: 'addListing.toys',
-other: 'addListing.other'
-};
-
 const CONDITION_KEYS = {
 'new': 'addListing.new',
 'used': 'addListing.used',
@@ -118,36 +107,61 @@ function categoryItems() {
 return Array.from(document.querySelectorAll('[data-market-category]'));
 }
 
-// الاسم من جدول listing_categories لما تتحمّل الخيارات، وإلا من ترجمات الواجهة الثابتة
+// الاسم دايماً من جدول listing_categories (عبر market-api)؛ بدون أسماء ثابتة بالواجهة
 function categoryName(slug) {
 const name = api && typeof api.categoryName === 'function' ? api.categoryName(slug, currentLang()) : null;
-if (name) return name;
-return CATEGORY_KEYS[slug] ? t(CATEGORY_KEYS[slug]) : slug;
+return name || slug;
 }
 
-// قائمة التصنيفات من الـ API (الفعّالة فقط)؛ لو ما تحمّلت بتضل القائمة الثابتة بالـ HTML
+// قائمة التصنيفات من الـ API (الفعّالة فقط). ما في قائمة احتياطية: لو فشل التحميل بتظهر رسالة مع إعادة محاولة
 function renderCategoryMenu() {
 const opts = api && typeof api.options === 'function' ? api.options() : null;
-if (!opts || !opts.ready || !opts.categories.length || !categoryBtn) return;
+if (!opts || !categoryBtn) return;
 const menu = categoryBtn.parentNode.querySelector('.dropdown-menu');
 if (!menu) return;
 const allItem = menu.querySelector('[data-market-category="all"]');
 if (!allItem) return;
 const frag = document.createDocumentFragment();
 frag.appendChild(allItem.parentNode);
-opts.categories.forEach(function (c) {
+if (opts.categories.length) {
+    opts.categories.forEach(function (c) {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'dropdown-item';
+        btn.dataset.marketCategory = c.slug;
+        btn.textContent = categoryName(c.slug);
+        li.appendChild(btn);
+        frag.appendChild(li);
+    });
+} else if (opts.categoriesState === 'error') {
     const li = document.createElement('li');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'dropdown-item';
-    btn.dataset.marketCategory = c.slug;
-    btn.textContent = categoryName(c.slug);
+    btn.setAttribute('data-market-categories-retry', '');
+    btn.textContent = t('market.categoriesError') + ' — ' + t('market.categoriesRetry');
     li.appendChild(btn);
     frag.appendChild(li);
-});
+} else if (opts.categoriesState === 'empty') {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.className = 'dropdown-item-text text-muted';
+    span.textContent = t('market.categoriesEmpty');
+    li.appendChild(span);
+    frag.appendChild(li);
+}
 menu.replaceChildren(frag);
 if (state.category !== 'all' && !isCategory(state.category)) state.category = 'all';
 }
+
+document.addEventListener('gmMarketOptionsReady', renderCategoryMenu);
+document.addEventListener('click', function (e) {
+if (!e.target.closest('[data-market-categories-retry]')) return;
+e.preventDefault();
+e.stopPropagation();
+if (api && typeof api.loadOptions === 'function') api.loadOptions();
+}, true);
 
 function isCondition(code) {
 return !!api && api.conditions.indexOf(code) !== -1;
