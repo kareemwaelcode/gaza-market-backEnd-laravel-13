@@ -1219,6 +1219,8 @@
 <script src="<?php echo e(asset('gazamarket/js/vendor/bootstrap.bundle.min.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/translations.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/i18n.js')); ?>" defer></script>
+<script src="<?php echo e(asset('gazamarket/js/regions-api.js')); ?>" defer></script>
+<script src="<?php echo e(asset('gazamarket/js/market-api.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/main.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/product-search.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/auth.js')); ?>" defer></script>

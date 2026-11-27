@@ -1587,8 +1587,6 @@
 
 
 @section('scripts')
-  <script src="{{ asset('gazamarket/js/regions-api.js') }}" defer></script>
   <script src="{{ asset('gazamarket/js/add-store-api.js') }}" defer></script>
   <script src="{{ asset('gazamarket/js/add-store.js') }}" defer></script>
 @endsection
-

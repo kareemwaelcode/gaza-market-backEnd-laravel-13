@@ -10,17 +10,14 @@ CSRF_URL: "/api/auth/me",
 
 const CONFIG = Object.assign({}, DEFAULTS, window.GM_CONFIG || {});
 const API_BASE = String(CONFIG.API_BASE).replace(/\/+$/, "");
-// الـ mock بيشتغل بس لو فعّلته صراحةً (window.GM_CONFIG = { USE_MOCK: true }) وعلى دومين محلي؛ الافتراضي دايماً الباك إند الحقيقي
 const USE_MOCK = CONFIG.USE_MOCK === true && !!(window.GM_ENV && window.GM_ENV.isMockAllowed());
 
 const STORE_KEY = "gm_mock_market_v1";
 const SAVED_KEY = "gm_mock_market_saved_v1";
 const USER_KEY = (window.GM_STORAGE_KEYS && window.GM_STORAGE_KEYS.user) || "user";
 
-// slugs التصنيفات الفعّالة: بتبدأ فاضية وبتتعبّى (في نفس المصفوفة) من جدول listing_categories بعد تحميل الخيارات
 const CATEGORIES = [];
 
-// بيانات وهمية لوضع الـ mock الصريح فقط (GM_CONFIG.USE_MOCK = true)؛ ما بتُستخدم أبداً مع الباك إند
 const MOCK_CATEGORIES = [
     { id: 1, slug: "electronics", name_en: "Electronics", name_ar: "إلكترونيات" },
     { id: 2, slug: "clothing", name_en: "Clothing", name_ar: "ملابس" },
@@ -34,10 +31,9 @@ const MOCK_CATEGORIES = [
 const PHONE_RE = /^05[69]\d{7}$/;
 const WHATSAPP_RE = /^\+\d{3}[1-9]\d{6,10}$/;
 
-// خيارات الفورم من الباك إند: listing_categories (الفعّالة) + areas. فيها الـ ids اللي بيتحقق منها StoreListingRequest
-// categoriesState: idle | loading | ok | empty (ما في تصنيفات فعّالة) | error (فشل الطلب)
 const options = { ready: false, categories: [], areas: [], categoriesState: "idle" };
-let optionsPromise = null;
+let catsPromise = null;
+let areasPromise = null;
 const CONDITIONS = Object.freeze(["new", "used", "urgent"]);
 const STATUSES = Object.freeze(["pending", "approved"]);
 
@@ -290,7 +286,6 @@ if (norm) {
 return typeof slug === "string" ? slug : "";
 }
 
-// بيقبل شكل الباك إند (id, is_negotiable, category{slug}, cover, published_at, seller_name) وشكل الواجهة القديم (listing_id, negotiable...)
 function normalizeItem(raw) {
 if (!raw) return null;
 const rawId = raw.listing_id !== undefined && raw.listing_id !== null && raw.listing_id !== "" ? raw.listing_id : raw.id;
@@ -299,7 +294,6 @@ if (rawId === undefined || rawId === null || rawId === "") return null;
 const title = cleanTitle(raw.title);
 if (!title) return null;
 
-// الـ endpoints العامة ما بترجّع status لأنها approved فقط
 const rawStatus = raw.status === undefined || raw.status === null ? "approved" : raw.status;
 const status = STATUSES.indexOf(rawStatus) === -1 ? null : rawStatus;
 if (!status) return null;
@@ -345,7 +339,6 @@ if (!item) throw GMMarketError("invalid_response", "Invalid listing response");
 return item;
 }
 
-// ردّ الإضافة/التعديل من الباك إند مختصر ({ id, status, images })، فبنكمّل باقي الحقول من اللي أرسله المستخدم
 function normalizeWritten(json, value) {
 const body = json && json.data && typeof json.data === "object" && !Array.isArray(json.data) ? json.data : null;
 if (!body) throw GMMarketError("invalid_response", "Invalid listing response");
@@ -377,7 +370,6 @@ function normalizePage(json) {
 const items = normalizeList(json);
 const meta = json.meta && typeof json.meta === "object" ? json.meta : {};
 const hasMoreFlag = json.has_more !== undefined ? json.has_more : meta.has_more;
-// الباك إند بيرجّع current_page + has_more (page-based)؛ بنحوّلها لـ "cursor" = رقم الصفحة التالية
 const pageNo = Number(meta.current_page);
 const nextCursor = json.next_cursor || meta.next_cursor || (hasMoreFlag && isFinite(pageNo) && pageNo >= 1 ? String(pageNo + 1) : null);
 const rawTotal = json.total !== undefined ? json.total : meta.total;
@@ -485,7 +477,6 @@ if (json === null) throw GMMarketError("invalid_response", "Empty or invalid JSO
 return json;
 }
 
-// أسماء الحقول والـ ids زي ما بيتوقعها StoreListingRequest / UpdateListingRequest
 function buildFormData(value, method, ids) {
 const form = new FormData();
 if (method) form.append("_method", method);
@@ -498,8 +489,6 @@ form.append("listing_is_negotiable", value.negotiable ? "1" : "0");
 form.append("area_id", String(ids.areaId));
 form.append("listing_phone", value.phone);
 if (value.whatsapp) form.append("listing_whatsapp", value.whatsapp);
-// بالتعديل: الصور الحالية اللي بدّه يحتفظ فيها (روابطها زي ما رجّعها الباك إند) + الملفات الجديدة.
-// الباك إند بيحذف الصور الحالية اللي مش بالـ keep_images
 value.images.forEach((item) => {
     if (typeof item === "string") {
     if (method) form.append("keep_images[]", item);
@@ -541,8 +530,6 @@ function apiFetchMine() {
 return request("GET", "/market/mine");
 }
 
-// الـ endpoint العام بيرجّع المنشور (approved) فقط. لو الإعلان معلّق (pending) بنجرّب معاينة المالك
-// (/market/mine/{id}، بتتطلب تسجيل دخول وبترجّع إعلانات المستخدم نفسه فقط). أي فشل غير 404 بيتمرّر زي ما هو.
 async function apiFetchOne(id) {
 const path = encodeURIComponent(id);
 try {
@@ -553,7 +540,6 @@ try {
     try {
     own = await request("GET", "/market/mine/" + path);
     } catch (ownErr) {
-    // غير مسجّل دخول (401) أو مش إعلانه (404): للزائر الإعلان ببساطة مش موجود
     if (ownErr && (ownErr.code === "unauthorized" || ownErr.code === "not_found" || ownErr.code === "forbidden")) throw err;
     throw ownErr;
     }
@@ -583,7 +569,6 @@ function apiMarkSold(id) {
 return request("POST", "/market/" + encodeURIComponent(id) + "/sold", {});
 }
 
-// الباك إند: POST للحفظ وDELETE لإلغائه (بيرجّعوا { data: { listing_id, saved } })
 function apiSetSaved(id, saved) {
 return request(saved ? "POST" : "DELETE", "/market/" + encodeURIComponent(id) + "/save");
 }
@@ -988,79 +973,71 @@ CATEGORIES.splice(0, CATEGORIES.length, ...list.map((c) => c.slug));
 options.ready = list.length > 0;
 }
 
-// التصنيفات من GET /api/listing-categories (index): بنجيب كل الصفحات (last_page) وبنفلتر الفعّالة بس بالواجهة
-const CATEGORY_MAX_PAGES = 20;
-
 async function fetchCategoryRows() {
-const rows = [];
-let page = 1;
-let last = 1;
-do {
-    const res = await request("GET", "/listing-categories?page=" + page);
-    const body = res && res.data && typeof res.data === "object" ? res.data : null;
-    if (!body || !Array.isArray(body.data)) throw GMMarketError("invalid_response", "Invalid categories response");
-    rows.push(...body.data);
-    last = Math.floor(Number(body.last_page)) || 1;
-    page += 1;
-} while (page <= last && page <= CATEGORY_MAX_PAGES);
-
-return rows
-    .filter((r) => r && r.listing_category_is_active === true)
-    .map((r) => ({
-    id: r.id,
-    slug: r.listing_category_slug,
-    name_en: r.listing_category_name_en,
-    name_ar: r.listing_category_name_ar,
-    }));
+const res = await request("GET", "/listing-categories/options");
+const body = res && res.data && typeof res.data === "object" ? res.data : null;
+if (!body || !Array.isArray(body.categories)) throw GMMarketError("invalid_response", "Invalid categories response");
+return body.categories;
 }
 
-// التصنيفات والمناطق بتتحمّل باستقلال: فشل واحد منهم ما بيعطّل التاني. الطلب الفاشل بيتعاد عند الاستدعاء الجاي
+function notifyOptions() {
+document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
+}
+
+function loadCategories() {
+if (options.ready) return Promise.resolve(true);
+if (catsPromise) return catsPromise;
+options.categoriesState = "loading";
+catsPromise = fetchCategoryRows()
+    .then((list) => {
+    const clean = sanitizeOptions(list, null);
+    if (!clean.cats.length) {
+        setCategories([]);
+        options.categoriesState = "empty";
+    } else {
+        setCategories(clean.cats);
+        options.categoriesState = "ok";
+    }
+    })
+    .catch(() => {
+    options.categoriesState = "error";
+    })
+    .then(() => {
+    catsPromise = null;
+    notifyOptions();
+    return options.ready;
+    });
+return catsPromise;
+}
+
+function loadAreas() {
+if (options.areas.length) return Promise.resolve(true);
+if (areasPromise) return areasPromise;
+areasPromise = request("GET", "/product-options")
+    .then((res) => {
+    const clean = sanitizeOptions(null, res && res.data ? res.data.areas : null);
+    if (clean.rows.length) options.areas = clean.rows;
+    })
+    .catch(() => {})
+    .then(() => {
+    areasPromise = null;
+    notifyOptions();
+    return options.areas.length > 0;
+    });
+return areasPromise;
+}
+
 function loadOptions() {
 if (USE_MOCK) {
     if (!options.ready) {
     setCategories(MOCK_CATEGORIES.map((c) => Object.assign({}, c)));
     options.categoriesState = "ok";
-    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
+    notifyOptions();
     }
     return Promise.resolve(true);
 }
 if (options.ready && options.areas.length) return Promise.resolve(true);
-if (optionsPromise) return optionsPromise;
-
-const needCats = !options.ready;
-const needAreas = !options.areas.length;
-if (needCats) options.categoriesState = "loading";
-const safe = (path) => request("GET", path).then((res) => ({ ok: true, res: res }), () => ({ ok: false, res: null }));
-
-optionsPromise = Promise.all([
-    needCats
-    ? fetchCategoryRows().then((list) => ({ ok: true, res: { data: { categories: list } } }), () => ({ ok: false, res: null }))
-    : Promise.resolve(null),
-    needAreas ? safe("/product-options") : Promise.resolve(null),
-]).then((results) => {
-    const catsRes = results[0];
-    const areasRes = results[1];
-    const clean = sanitizeOptions(
-    catsRes && catsRes.res && catsRes.res.data ? catsRes.res.data.categories : null,
-    areasRes && areasRes.res && areasRes.res.data ? areasRes.res.data.areas : null
-    );
-    if (catsRes) {
-    if (!catsRes.ok) options.categoriesState = "error";
-    else if (!clean.cats.length) { setCategories([]); options.categoriesState = "empty"; }
-    else { setCategories(clean.cats); options.categoriesState = "ok"; }
-    }
-    if (areasRes && clean.rows.length) options.areas = clean.rows;
-    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
-    return options.ready;
-}).catch(() => {
-    if (needCats) options.categoriesState = "error";
-    document.dispatchEvent(new CustomEvent("gmMarketOptionsReady"));
-    return false;
-}).then((ok) => {
-    optionsPromise = null;
-    return ok;
-});
-return optionsPromise;
+return Promise.all([loadCategories(), loadAreas()]).then(() => options.ready);
 }
 
 function getOptions() {
@@ -1148,6 +1125,12 @@ async function setSaved(id, saved) {
 const cleaned = cleanId(id);
 const json = USE_MOCK ? await mockSetSaved(cleaned, !!saved) : await apiSetSaved(cleaned, !!saved);
 return normalizeSaved(json);
+}
+
+if (!USE_MOCK) {
+const warmCategories = () => { loadCategories(); };
+if (document.readyState === "complete") warmCategories();
+else window.addEventListener("load", warmCategories, { once: true });
 }
 
 window.GMMarket = Object.freeze({

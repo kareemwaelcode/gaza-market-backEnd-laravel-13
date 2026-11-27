@@ -1387,9 +1387,6 @@
 
 
 @section('scripts')
-<script src="{{ asset('gazamarket/js/regions-api.js') }}" defer></script>
 <script src="{{ asset('gazamarket/js/places-api.js') }}" defer></script>
 <script src="{{ asset('gazamarket/js/places.js') }}" defer></script>
 @endsection
-
-
