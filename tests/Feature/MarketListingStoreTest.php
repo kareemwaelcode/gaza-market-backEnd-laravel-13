@@ -192,7 +192,7 @@ class MarketListingStoreTest extends TestCase
             'no images' => [],
             'four images' => $this->images(4),
             'not an image' => [UploadedFile::fake()->create('doc.pdf', 10, 'application/pdf')],
-            'too large' => [UploadedFile::fake()->image('big.jpg')->size(2049)],
+            'too large' => [UploadedFile::fake()->image('big.jpg')->size(5121)],
         ];
 
         foreach ($cases as $label => $images) {

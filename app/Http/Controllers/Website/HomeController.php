@@ -20,4 +20,22 @@ class HomeController extends Controller
         $areas = Area::orderBy('created_at', 'desc')->get();
         return response()->view('gazamarket.home' , compact('regions', 'areas'));
     }
+
+    public function market (Request $request) {
+        $regions = Regions::orderBy('created_at', 'desc')->get();
+        $areas = Area::orderBy('created_at', 'desc')->get();
+        return response()->view('gazamarket.market' , compact('regions', 'areas'));
+    }
+
+    public function marketDetails (Request $request) {
+        $regions = Regions::orderBy('created_at', 'desc')->get();
+        $areas = Area::orderBy('created_at', 'desc')->get();
+        return response()->view('gazamarket.market-details' , compact('regions', 'areas'));
+    }
+
+    public function profile (Request $request) {
+        $regions = Regions::orderBy('created_at', 'desc')->get();
+        $areas = Area::orderBy('created_at', 'desc')->get();
+        return response()->view('gazamarket.profile' , compact('regions', 'areas'));
+    }
 }

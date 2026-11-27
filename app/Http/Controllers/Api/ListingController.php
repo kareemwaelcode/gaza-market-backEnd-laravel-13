@@ -123,14 +123,6 @@ class ListingController extends Controller implements HasMiddleware
 
     public function reject(Request $request, string $id): JsonResponse
     {
-        $validator = validator($request->all(), [
-            'listing_rejection_reason' => ['required', 'string', 'max:255'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
-
         $listing = Listing::findOrFail($id);
 
         $updated = Listing::whereKey($listing->id)
@@ -138,7 +130,7 @@ class ListingController extends Controller implements HasMiddleware
             ->update([
                 'listing_status' => Listing::STATUS_REJECTED,
                 'listing_published_at' => null,
-                'listing_rejection_reason' => trim($request->input('listing_rejection_reason')),
+                'listing_rejection_reason' => null,
                 'updated_at' => now(),
             ]);
 

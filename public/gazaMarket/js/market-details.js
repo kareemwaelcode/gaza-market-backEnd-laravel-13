@@ -59,8 +59,8 @@
   const similarGrid = document.getElementById('marketSimilarGrid');
   const toast = document.getElementById('marketToast');
 
-  const LIST_PAGE = 'market.html';
-  const DETAILS_PAGE = 'market-details.html';
+  const LIST_PAGE = 'market';
+  const DETAILS_PAGE = 'market-details';
   const ID_RE = /^[\w-]{1,64}$/;
   const SIMILAR_LIMIT = 8;
   const SWIPE_PX = 40;

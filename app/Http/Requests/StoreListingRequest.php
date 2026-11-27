@@ -35,7 +35,7 @@ class StoreListingRequest extends FormRequest
             ],
             'area_id' => ['required', 'integer', Rule::exists('areas', 'id')],
             'images' => ['required', 'array', 'min:1', 'max:3'],
-            'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=6000,max_height=6000'],
+            'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
         ];
     }
 

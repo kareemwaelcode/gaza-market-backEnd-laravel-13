@@ -138,6 +138,9 @@ Route::prefix('cms/admins')->middleware('auth:admins')->group(function () {
 Route::prefix('gazamarket/')->group(function() {
     Route::get('index' , [HomeController::class, 'index'])->name('gazamarket.index');
     Route::get('home' , [HomeController::class, 'home'])->name('gazamarket.home');
+    Route::get('market' , [HomeController::class, 'market'])->name('gazamarket.market');
+    Route::get('market-details' , [HomeController::class, 'marketDetails'])->name('gazamarket.market-details');
+    Route::get('profile' , [HomeController::class, 'profile'])->name('gazamarket.profile');
 });
 
 
@@ -232,6 +235,7 @@ Route::middleware(['auth', 'active.user', 'throttle:market-owner'])
     ->name('market.owner.')
     ->group(function () {
         Route::get('mine', [MarketListingController::class, 'mine'])->name('mine');
+        Route::get('mine/count', [MarketListingController::class, 'count'])->name('count');
         Route::get('mine/{listing}', [MarketListingController::class, 'showMine'])->where('listing', '[0-9]{1,18}')->name('show');
         Route::match(['post', 'patch'], '{listing}', [MarketListingController::class, 'update'])->where('listing', '[0-9]{1,18}')->name('update');
         Route::delete('{listing}', [MarketListingController::class, 'destroy'])->where('listing', '[0-9]{1,18}')->name('destroy');

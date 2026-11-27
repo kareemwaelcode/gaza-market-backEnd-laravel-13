@@ -164,28 +164,28 @@ class ListingTest extends TestCase
         $this->assertSame('sold', $sold->refresh()->listing_status);
     }
 
-    public function test_reject_requires_a_reason(): void
+    public function test_reject_does_not_require_a_reason(): void
     {
         $listing = $this->listing('pending');
 
-        $this->postJson("/cms/admins/listing_reject/{$listing->id}", ['listing_rejection_reason' => ''])
-            ->assertStatus(400)
-            ->assertJson(['icon' => 'error']);
+        $this->postJson("/cms/admins/listing_reject/{$listing->id}")->assertOk();
 
-        $this->assertSame('pending', $listing->refresh()->listing_status);
+        $listing->refresh();
+        $this->assertSame('rejected', $listing->listing_status);
+        $this->assertNull($listing->listing_rejection_reason);
     }
 
-    public function test_reject_stores_reason_and_clears_publish_date(): void
+    public function test_reject_clears_publish_date(): void
     {
         $listing = $this->listing('pending');
         $this->postJson("/cms/admins/listing_approve/{$listing->id}")->assertOk();
 
-        $this->postJson("/cms/admins/listing_reject/{$listing->id}", ['listing_rejection_reason' => 'Blurry photos'])
+        $this->postJson("/cms/admins/listing_reject/{$listing->id}")
             ->assertOk();
 
         $listing->refresh();
         $this->assertSame('rejected', $listing->listing_status);
-        $this->assertSame('Blurry photos', $listing->listing_rejection_reason);
+        $this->assertNull($listing->listing_rejection_reason);
         $this->assertNull($listing->listing_published_at);
     }
 
@@ -193,7 +193,7 @@ class ListingTest extends TestCase
     {
         $listing = $this->listing('sold');
 
-        $this->postJson("/cms/admins/listing_reject/{$listing->id}", ['listing_rejection_reason' => 'x'])
+        $this->postJson("/cms/admins/listing_reject/{$listing->id}")
             ->assertStatus(409);
 
         $this->assertSame('sold', $listing->refresh()->listing_status);

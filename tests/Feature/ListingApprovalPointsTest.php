@@ -97,7 +97,7 @@ class ListingApprovalPointsTest extends TestCase
         $listing = $this->makeListing($owner, Listing::STATUS_PENDING);
 
         $this->postJson("/api/listings/{$listing->id}/approve")->assertOk();
-        $this->postJson("/api/listings/{$listing->id}/reject", ['listing_rejection_reason' => 'Not allowed'])->assertOk();
+        $this->postJson("/api/listings/{$listing->id}/reject")->assertOk();
         $this->postJson("/api/listings/{$listing->id}/approve")->assertOk();
 
         $this->assertSame(10, (int) $owner->fresh()->user_points_total);

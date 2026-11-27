@@ -168,8 +168,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function loadListingsCount() {
+    const el = document.getElementById('userListingsCount');
+    if (!el) return;
+    try {
+      const res = await fetch('/api/market/mine/count', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      const total = Number(json && json.data && json.data.total);
+      el.textContent = String(Number.isFinite(total) && total > 0 ? Math.floor(total) : 0);
+    } catch (err) {
+      console.warn('profile.js: failed to load listings count', err);
+    }
+  }
+
   renderUserData(currentUser);
   renderUserStats(currentUser);
+  loadListingsCount();
 
   function setRegionValue(value) {
     modalRegionInput.value = value || '';

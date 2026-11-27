@@ -631,6 +631,7 @@ const translations = {
     "stats.region":         "Region",
     "stats.points":         "Points",
     "stats.contributions":  "Contributions",
+    "stats.myListings":     "My Ads",
     "stats.memberSince":    "Member Since",
 
     "progress.nextTier": "Next tier:",
@@ -1462,6 +1463,7 @@ const translations = {
     "stats.region":         "المنطقة",
     "stats.points":         "النقاط",
     "stats.contributions":  "المساهمات",
+    "stats.myListings":     "إعلاناتي",
     "stats.memberSince":    "عضو منذ",
 
     "progress.nextTier": "المستوى التالي:",

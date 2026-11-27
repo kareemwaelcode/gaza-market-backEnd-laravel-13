@@ -164,12 +164,14 @@ class StoreListingRequestTest extends TestCase
         $this->assertTrue($this->fails($this->validData(['images' => $four])));
     }
 
-    public function test_images_must_be_real_allowed_images_under_2mb(): void
+    public function test_images_must_be_real_allowed_images_under_5mb(): void
     {
         $notImage = UploadedFile::fake()->create('doc.pdf', 10, 'application/pdf');
-        $tooBig = UploadedFile::fake()->image('big.jpg')->size(2049);
+        $tooBig = UploadedFile::fake()->image('big.jpg')->size(5121);
+        $threeMb = UploadedFile::fake()->image('ok.jpg')->size(3000);
 
         $this->assertTrue($this->fails($this->validData(['images' => [$notImage]])));
         $this->assertTrue($this->fails($this->validData(['images' => [$tooBig]])));
+        $this->assertFalse($this->fails($this->validData(['images' => [$threeMb]])));
     }
 }

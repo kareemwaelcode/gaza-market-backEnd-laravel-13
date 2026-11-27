@@ -68,6 +68,25 @@ class MarketListingController extends Controller
         ]);
     }
 
+    public function count(Request $request): JsonResponse
+    {
+        $byStatus = Listing::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('listing_status', self::VISIBLE_TO_OWNER)
+            ->selectRaw('listing_status, COUNT(*) as aggregate')
+            ->groupBy('listing_status')
+            ->pluck('aggregate', 'listing_status');
+
+        $pending = (int) ($byStatus[Listing::STATUS_PENDING] ?? 0);
+        $approved = (int) ($byStatus[Listing::STATUS_APPROVED] ?? 0);
+
+        return response()->json(['data' => [
+            'total' => $pending + $approved,
+            'pending' => $pending,
+            'approved' => $approved,
+        ]]);
+    }
+
     public function showMine(Request $request, int $listing): JsonResponse
     {
         $found = $this->ownerQuery($request->user()->id)->find($listing);

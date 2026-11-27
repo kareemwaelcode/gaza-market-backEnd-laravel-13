@@ -33,7 +33,7 @@ const filtersBar = document.getElementById('marketFilters');
 const tabs = Array.from(document.querySelectorAll('[data-market-tab]'));
 const conditionItems = Array.from(document.querySelectorAll('[data-market-condition]'));
 
-const DETAILS_PAGE = 'market-details.html';
+const DETAILS_PAGE = 'market-details';
 const PAGE_SIZE = 12;
 const EAGER_COUNT = 4;
 const STAGGER_MS = 60;

@@ -75,12 +75,6 @@
         @endif
     </div>
     {{-- ===== نهاية الصور ===== --}}
-
-    @if ($listing->listing_rejection_reason)
-        <div class="alert alert-danger">
-            <strong>Rejection reason:</strong> {{ $listing->listing_rejection_reason }}
-        </div>
-    @endif
 </div>
 
 <div class="col-lg-4">
@@ -119,18 +113,14 @@ storeRoute('/cms/admins/listing_approve/' + id, new FormData());
 
 function rejectListing(id){
 Swal.fire({
-title: 'سبب الرفض',
-input: 'textarea',
-inputAttributes: { maxlength: 255 },
+title: 'رفض الإعلان؟',
+icon: 'warning',
 showCancelButton: true,
 confirmButtonText: 'رفض',
 cancelButtonText: 'إلغاء',
-inputValidator: (value) => (!value || !value.trim()) ? 'اكتب سبب الرفض' : null,
 }).then((result) => {
 if (result.isConfirmed) {
-    let formData = new FormData();
-    formData.append('listing_rejection_reason', result.value);
-    storeRoute('/cms/admins/listing_reject/' + id, formData);
+    storeRoute('/cms/admins/listing_reject/' + id, new FormData());
 }
 });
 }

@@ -92,14 +92,6 @@ class ListingController extends Controller
 
     public function reject(Request $request, string $id)
     {
-        $validator = validator($request->all(), [
-            'listing_rejection_reason' => ['required', 'string', 'max:255'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['icon' => 'error', 'title' => $validator->getMessageBag()->first()], 400);
-        }
-
         $listing = Listing::findOrFail($id);
 
         $updated = Listing::whereKey($listing->id)
@@ -107,7 +99,7 @@ class ListingController extends Controller
             ->update([
                 'listing_status' => Listing::STATUS_REJECTED,
                 'listing_published_at' => null,
-                'listing_rejection_reason' => trim($request->input('listing_rejection_reason')),
+                'listing_rejection_reason' => null,
                 'updated_at' => now(),
             ]);
 

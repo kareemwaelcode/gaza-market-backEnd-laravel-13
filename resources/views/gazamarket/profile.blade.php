@@ -1154,7 +1154,7 @@
         </div>
 
         <nav class="sidebar-nav" aria-label="Sidebar navigation">
-          <a href="profile.html" class="sidebar-nav__link sidebar-nav__link--profile is-current active" aria-current="page">
+          <a href="profile" class="sidebar-nav__link sidebar-nav__link--profile is-current active" aria-current="page">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-pen-icon lucide-user-round-pen Profile-edit"><path d="M2 21a8 8 0 0 1 10.821-7.487"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="8" r="5"/></svg>           
           <span data-i18n="sidebar.profile">Profile</span>
           </a>
@@ -1259,6 +1259,16 @@
 
               <div class="stat-tile">
                 <div class="stat-tile__icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                </div>
+                <div>
+                  <div class="stat-tile__value" id="userListingsCount">0</div>
+                  <div class="stat-tile__label" data-i18n="stats.myListings">My Ads</div>
+                </div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-heart-icon lucide-calendar-heart"><path d="M12.127 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.125"/><path d="M14.62 18.8A2.25 2.25 0 1 1 18 15.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/></svg>
                 </div>
                 <div>
@@ -1352,7 +1362,7 @@
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
     <span data-i18n="sidebar.market">Market</span>
   </a>
-  <a href="profile.html" class="bottom-nav__link bottom-nav__link--profile active" aria-current="page">
+  <a href="profile" class="bottom-nav__link bottom-nav__link--profile active" aria-current="page">
     <svg width="20" height="20" aria-hidden="true" focusable="false"><use href="#gm-i-user"/></svg>
     <span data-i18n="sidebar.profile">Profile</span>
   </a>

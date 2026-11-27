@@ -1214,7 +1214,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-store"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/></svg>
             <span data-i18n="sidebar.places">Places</span>
           </a>
-          <a href="market.html" class="sidebar-nav__link sidebar-nav__link--market active" aria-current="true">
+          <a href="market" class="sidebar-nav__link sidebar-nav__link--market active" aria-current="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             <span data-i18n="sidebar.market">Market</span>
           </a>
@@ -1229,7 +1229,7 @@
 
     <main class="col-12 col-lg-10 order-1 order-lg-2" id="marketDetailsMain">
       <section class="places-page market-details" id="marketDetails" aria-labelledby="marketDetailsTitle" aria-busy="true">
-        <a href="market.html" class="market-details__back" id="marketBack">
+        <a href="market" class="market-details__back" id="marketBack">
           <svg class="places-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           <span data-i18n="marketDetails.back">Back to market</span>
         </a>
@@ -1375,7 +1375,7 @@
           <h2 class="places-state__title" id="marketDetailsStateTitle"></h2>
           <p class="places-state__sub" id="marketDetailsStateSub"></p>
           <button type="button" class="places-state__add" id="marketDetailsRetry" data-i18n="market.retry" hidden>Try again</button>
-          <a class="places-state__reset" href="market.html" data-i18n="market.browseAll">Browse all ads</a>
+          <a class="places-state__reset" href="market" data-i18n="market.browseAll">Browse all ads</a>
         </div>
 
         <section class="market-details__similar" id="marketSimilar" aria-labelledby="marketSimilarTitle" hidden>
@@ -1404,7 +1404,7 @@
     <svg width="22" height="22" aria-hidden="true" focusable="false"><use href="#gm-i-plus"/></svg>
   </button>
 
-  <a href="market.html" class="bottom-nav__link bottom-nav__link--market active" aria-current="true">
+  <a href="market" class="bottom-nav__link bottom-nav__link--market active" aria-current="true">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
     <span data-i18n="sidebar.market">Market</span>
   </a>
