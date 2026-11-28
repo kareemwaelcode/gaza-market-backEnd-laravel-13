@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Website;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\HeroSection;
 use App\Models\Regions;
 use App\Models\Area;
+use App\Support\PriceTicker;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -20,7 +22,10 @@ class HomeController extends Controller
         $regions = Regions::orderBy('created_at', 'desc')->get();
         $areas = Area::orderBy('created_at', 'desc')->get();
         $categories = Category::where('category_is_active', true)->ordered()->get();
-        return response()->view('gazamarket.home' , compact('regions', 'areas', 'categories'));
+        $hero = HeroSection::orderBy('id')->first();
+        $heroSection = $hero?->only($hero->getFillable());
+        $heroTicker = PriceTicker::publicItems();
+        return response()->view('gazamarket.home' , compact('regions', 'areas', 'categories', 'heroSection', 'heroTicker'));
     }
 
     public function market (Request $request) {

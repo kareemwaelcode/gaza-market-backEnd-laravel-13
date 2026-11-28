@@ -1367,70 +1367,6 @@
               <span class="gm-skel"></span>
             </div>
             <div class="hero-ticker__track" id="heroTickerTrack">
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">قهوة</span>
-                <span class="hero-ticker__badge">₪24</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">ماجي</span>
-                <span class="hero-ticker__badge">₪24</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">اناناس</span>
-                <span class="hero-ticker__badge">₪24</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">صلصة</span>
-                <span class="hero-ticker__badge">₪24</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">فلفل احمر</span>
-                <span class="hero-ticker__badge">₪20</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">فطر</span>
-                <span class="hero-ticker__badge">₪5</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">فلفل حلو</span>
-                <span class="hero-ticker__badge">₪6</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">مخلل خيار</span>
-                <span class="hero-ticker__badge">₪6</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">مخلل فلفل</span>
-                <span class="hero-ticker__badge">₪6</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">قشطة</span>
-                <span class="hero-ticker__badge">₪5</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">جبنة فيتا</span>
-                <span class="hero-ticker__badge">₪5</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">جبنة مثلثات</span>
-                <span class="hero-ticker__badge">₪12</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">كاتشب</span>
-                <span class="hero-ticker__badge">₪3</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">ذرة</span>
-                <span class="hero-ticker__badge">₪8</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">زيتون اسود</span>
-                <span class="hero-ticker__badge">₪8</span>
-              </span>
-              <span class="hero-ticker__item" data-ticker-item>
-                <span class="hero-ticker__item-name">فول</span>
-                <span class="hero-ticker__badge">₪8</span>
-              </span>
             </div>
           </div>
 
@@ -1639,6 +1575,7 @@
 
 
 <?php $__env->startSection('scripts'); ?>
+<script>window.GM_HERO_SECTION = <?php echo json_encode($heroSection, 15, 512) ?>; window.GM_HERO_TICKER = <?php echo json_encode($heroTicker, 15, 512) ?>;</script>
 <script src="<?php echo e(asset('gazamarket/js/prices-api.js')); ?>" defer></script>
 <script src="<?php echo e(asset('gazamarket/js/home.js')); ?>" defer></script>
 <?php $__env->stopSection(); ?>

@@ -26,8 +26,7 @@ class PriceTickerCacheDownTest extends TestCase
 
         $lookups = $this->lookups();
         $user = $this->makeUser();
-        $product = $this->makeProduct($lookups, $user);
-        $this->makePrice($product, $lookups, $user, 'approved', ['product_price_value' => 5]);
+        $product = $this->makeProduct($lookups, $user, 'active', ['product_price' => 5]);
 
         // الكاش بيجي من ApiCache::store() (Cache::store())، فبنخلي الـ store نفسه هو اللي يفشل بالقراءة
         $broken = Mockery::mock(Repository::class)->shouldIgnoreMissing();
@@ -48,8 +47,7 @@ class PriceTickerCacheDownTest extends TestCase
 
         $lookups = $this->lookups();
         $user = $this->makeUser();
-        $product = $this->makeProduct($lookups, $user);
-        $this->makePrice($product, $lookups, $user, 'approved', ['product_price_value' => 5]);
+        $product = $this->makeProduct($lookups, $user, 'active', ['product_price' => 5]);
 
         // القراءة بترجع فاضي (miss) لكن القفل/الكتابة بيفشلوا: Redis وقع بنص الطلب
         $broken = Mockery::mock(Repository::class)->shouldIgnoreMissing();

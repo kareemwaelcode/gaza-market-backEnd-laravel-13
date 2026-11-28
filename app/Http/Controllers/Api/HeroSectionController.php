@@ -80,11 +80,7 @@ class HeroSectionController extends Controller implements HasMiddleware
             'section' => $hero['section'],
             'stats' => $hero['stats'],
             // الشريط له كاشه الخاص (PriceTicker)، وhome.js بيقرا name_ar / name_en / price.
-            'ticker' => array_map(fn (array $item) => [
-                'name_ar' => $item['product_name_ar'],
-                'name_en' => $item['product_name_en'],
-                'price' => $item['price'],
-            ], PriceTicker::items()),
+            'ticker' => PriceTicker::publicItems(),
         ]);
     }
 

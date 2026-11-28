@@ -1211,6 +1211,15 @@ function finishHeroLoading() {
 }
 
 async function loadHero() {
+  if (window.GM_HERO_SECTION || window.GM_HERO_TICKER) {
+    heroData = { section: window.GM_HERO_SECTION || null, stats: null, ticker: window.GM_HERO_TICKER || null };
+    renderHero();
+    if (window.GM_HERO_TICKER) {
+      const embeddedTicker = document.getElementById('heroTicker');
+      if (embeddedTicker) embeddedTicker.classList.remove('is-loading');
+    }
+  }
+
   const controller = typeof AbortController === 'function' ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), HERO_LOAD_TIMEOUT_MS) : null;
 
@@ -1225,6 +1234,8 @@ async function loadHero() {
     console.error('loadHero failed:', err);
 
     finishHeroLoading();
+    const failedTicker = document.getElementById('heroTicker');
+    if (failedTicker && !failedTicker.querySelector('[data-ticker-item]')) failedTicker.style.display = 'none';
     initHeroTicker();
     return;
   } finally {

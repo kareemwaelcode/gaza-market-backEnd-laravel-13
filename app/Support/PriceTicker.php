@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Models\Product;
-use App\Models\ProductPrice;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Throwable;
 class PriceTicker
@@ -67,6 +66,18 @@ public static function forget(): void
 ApiCache::store()->forget(self::KEY);
 }
 
+/**
+ * الشكل اللي بيقراه الفرونت (home.js): name_ar / name_en / price.
+ */
+public static function publicItems(): array
+{
+return array_map(fn (array $item) => [
+    'name_ar' => $item['product_name_ar'],
+    'name_en' => $item['product_name_en'],
+    'price' => $item['price'],
+], self::items());
+}
+
 private static function ttl(): int
 {
 return (int) config('prices.ticker.ttl');
@@ -93,26 +104,47 @@ try {
 
 private static function query(): array
 {
-$latestIds = ProductPrice::query()
-    ->approved()
-    ->whereIn('product_id', Product::query()->active()->select('id'))
-    ->selectRaw('max(id)')
-    ->groupBy('product_id');
+// الشريط بيقرأ من جدول products بس: الاسم + product_price للمنتجات الفعّالة.
+// المنتجات اللي بنفس الاسم بتظهر مرة وحدة بأرخص سعر (عند التعادل الأحدث).
+$cheapest = [];
 
-return ProductPrice::query()
-    ->select(['id', 'product_id', 'product_price_value'])
-    ->whereIn('id', $latestIds)
-    ->with('product:id,product_name_ar,product_name_en')
-    ->orderByDesc('id')
-    ->limit(max(1, (int) config('prices.ticker.limit')))
-    ->get()
-    ->map(fn (ProductPrice $price) => [
-        'product_id' => $price->product_id,
-        'product_name_ar' => $price->product?->product_name_ar,
-        'product_name_en' => $price->product?->product_name_en,
-        'price' => $price->product_price_value,
+Product::query()
+    ->active()
+    ->select(['id', 'product_name_ar', 'product_name_en', 'product_price'])
+    ->toBase()
+    ->orderBy('id')
+    ->cursor()
+    ->each(function (object $row) use (&$cheapest) {
+        $key = self::nameKey($row);
+        $cents = (int) round(((float) $row->product_price) * 100);
+
+        if (! isset($cheapest[$key]) || $cents <= $cheapest[$key]['cents']) {
+            $cheapest[$key] = ['cents' => $cents, 'row' => $row];
+        }
+    });
+
+return collect($cheapest)
+    ->pluck('row')
+    ->sortByDesc('id')
+    ->take(max(1, (int) config('prices.ticker.limit')))
+    ->map(fn (object $row) => [
+        'product_id' => (int) $row->id,
+        'product_name_ar' => $row->product_name_ar,
+        'product_name_en' => $row->product_name_en,
+        'price' => number_format((float) $row->product_price, 2, '.', ''),
     ])
     ->values()
     ->all();
+}
+
+private static function nameKey(object $row): string
+{
+$name = trim((string) ($row->product_name_ar ?: $row->product_name_en));
+
+if ($name === '') {
+    return 'product:'.$row->id;
+}
+
+return mb_strtolower(preg_replace('/\s+/u', ' ', $name));
 }
 }
