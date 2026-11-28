@@ -87,17 +87,18 @@ class MarketListingController extends Controller
         ]]);
     }
 
-    public function showMine(Request $request, int $listing): JsonResponse
-    {
-        $found = $this->ownerQuery($request->user()->id)->find($listing);
+        public function showMine(Request $request, int $listing): JsonResponse
+        {
+            $found = $this->ownerQuery($request->user()->id)->find($listing);
 
-        if ($found === null) {
-            return $this->notFound();
+            if ($found === null) {
+                return $this->notFound();
+            }
+
+            return response()->json([
+                'data' => $this->ownerPayload($found, $request->user()->user_full_name),
+            ]);
         }
-
-        return response()->json(['data' => $this->ownerPayload($found)]);
-    }
-
     public function update(UpdateListingRequest $request, int $listing): JsonResponse
     {
         $user = $request->user();
@@ -330,7 +331,7 @@ class MarketListingController extends Controller
             ->with(['area:id,area_slug,area_name_en,area_name_ar', 'category:id,listing_category_slug,listing_category_name_en,listing_category_name_ar', 'images']);
     }
 
-    private function ownerPayload(Listing $listing): array
+    private function ownerPayload(Listing $listing, ?string $sellerName = null): array
     {
         return [
             'id' => $listing->id,
@@ -355,6 +356,7 @@ class MarketListingController extends Controller
                 'name_en' => $listing->category->listing_category_name_en,
             ] : null,
             'images' => $listing->images->pluck('url')->values()->all(),
+            'seller_name' => $sellerName,
             'published_at' => $listing->listing_published_at?->toJSON(),
             'created_at' => $listing->created_at?->toJSON(),
         ];

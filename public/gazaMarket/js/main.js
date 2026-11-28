@@ -446,9 +446,7 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
     });
   });
 
-  let selectedAreaName   = null;
-  let selectedRegionName = null;
-  let selectedAreaValue  = null;
+  let selectedTag = null;
 
   const regionErrorMsg = document.getElementById("regionErrorMsg");
 
@@ -462,53 +460,58 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
     regionErrorMsg.classList.add("visible");
   }
 
+  function currentLang() {
+    return document.documentElement.dir === "rtl" ? "ar" : "en";
+  }
+
+  function areaLabel(tag) {
+    const key = currentLang() === "ar" ? "nameAr" : "nameEn";
+    return tag.dataset[key] || tag.textContent.trim();
+  }
+
+  function regionLabel(tag) {
+    const key = currentLang() === "ar" ? "regionAr" : "regionEn";
+    return tag.dataset[key] || "";
+  }
+
+  function renderSelection() {
+    if (!selectedTag) return;
+    const display = document.getElementById("selectedRegionDisplay");
+    const value   = document.getElementById("selectedRegionValue");
+    if (value) {
+      value.removeAttribute("data-i18n");
+      value.textContent = `${areaLabel(selectedTag)} — ${regionLabel(selectedTag)}`;
+    }
+    if (display) display.classList.add("visible");
+  }
+
+  function selectTag(tag) {
+    document.querySelectorAll(".region-tag").forEach(t => t.classList.remove("selected"));
+    tag.classList.add("selected");
+    selectedTag = tag;
+    renderSelection();
+  }
+
   (function restorePreviousSelection() {
     const savedValue = gmGetSelectedArea();
     if (!savedValue) return;
 
     const matchingTag = document.querySelector(`.region-tag[data-area="${CSS.escape(savedValue)}"]`);
-    if (matchingTag) {
-      matchingTag.classList.add("selected");
-      const areaKey   = matchingTag.getAttribute("data-i18n") || "";
-      const regionKey = matchingTag.dataset.regionName || "";
-      selectedAreaName   = translate(areaKey)   || areaKey;
-      selectedRegionName = translate(regionKey) || regionKey;
-      selectedAreaValue  = savedValue;
+    if (!matchingTag) return;
 
-      const display = document.getElementById("selectedRegionDisplay");
-      const value   = document.getElementById("selectedRegionValue");
-      if (value)   value.textContent = `${selectedAreaName} — ${selectedRegionName}`;
-      if (display) display.classList.add("visible");
-
-      const parentCard = matchingTag.closest(".region-card");
-      parentCard?.classList.add("open");
-    }
+    selectTag(matchingTag);
+    matchingTag.closest(".region-card")?.classList.add("open");
   })();
 
   document.querySelectorAll(".region-tag").forEach(tag => {
     tag.addEventListener("click", function (e) {
       e.stopPropagation();
-
-      document.querySelectorAll(".region-tag").forEach(t => t.classList.remove("selected"));
-      this.classList.add("selected");
-
-      const areaKey   = this.getAttribute("data-i18n") || "";
-      const regionKey = this.dataset.regionName || "";
-      const areaValue = this.dataset.area || areaKey;
-
-      selectedAreaName   = translate(areaKey)   || areaKey;
-      selectedRegionName = translate(regionKey) || regionKey;
-      selectedAreaValue  = areaValue;
-
-      const display = document.getElementById("selectedRegionDisplay");
-      const value   = document.getElementById("selectedRegionValue");
-
-      if (value)   value.textContent = `${selectedAreaName} — ${selectedRegionName}`;
-      if (display) display.classList.add("visible");
-
+      selectTag(this);
       hideRegionError();
     });
   });
+
+  document.addEventListener("languageChanged", renderSelection);
 
   const startBtn = document.getElementById("startBtn");
   if (!startBtn) return;
@@ -516,7 +519,7 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
   startBtn.addEventListener("click", function (e) {
     e.preventDefault();
 
-    if (!selectedAreaValue) {
+    if (!selectedTag) {
       this.classList.remove("shake");
       void this.offsetWidth;
       this.classList.add("shake");
@@ -528,11 +531,12 @@ window.gmRequireAuthThenRun = gmRequireAuthThenRun;
 
     hideRegionError();
 
-    gmSaveSelectedArea(selectedAreaValue, selectedAreaName, selectedRegionName);
-    gmSyncUserRegion(selectedAreaValue);
+    const areaValue = selectedTag.dataset.area;
+    gmSaveSelectedArea(areaValue, areaLabel(selectedTag), regionLabel(selectedTag));
+    gmSyncUserRegion(areaValue);
 
     const target = this.getAttribute("href") || "home.html";
-    window.location.href = `${target}?area=${encodeURIComponent(selectedAreaValue)}`;
+    window.location.href = `${target}?area=${encodeURIComponent(areaValue)}`;
   });
 })();
 

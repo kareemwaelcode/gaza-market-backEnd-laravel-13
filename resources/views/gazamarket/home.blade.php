@@ -20,108 +20,12 @@
         <a href="#" class="cat-pill is-active" data-category="all" role="listitem" aria-current="page">
           <span data-i18n="prices.filterAll">All</span>
         </a>
-        <a href="#" class="cat-pill" data-category="grains-flour" role="listitem">
-          <span data-i18n="npw.catGrainsFlour">Grains &amp; Flour</span>
+        @foreach($categories as $category)
+        <a href="#" class="cat-pill" data-category="{{ $category->category_slug }}" role="listitem">
+          <span data-name-ar="{{ $category->category_name_ar }}"
+                data-name-en="{{ $category->category_name_en }}">{{ $category->category_name_ar }}</span>
         </a>
-        <a href="#" class="cat-pill" data-category="oils" role="listitem">
-          <span data-i18n="npw.catOils">Oils</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="sugars" role="listitem">
-          <span data-i18n="npw.catSugars">Sugars</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="legumes" role="listitem">
-          <span data-i18n="npw.catLegumes">Legumes</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="beverages" role="listitem">
-          <span data-i18n="npw.catBeverages">Beverages</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="dairy-products" role="listitem">
-          <span data-i18n="npw.catDairyProducts">Dairy Products</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="vegetables" role="listitem">
-          <span data-i18n="npw.catVegetables">Vegetables</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="fruits" role="listitem">
-          <span data-i18n="npw.catFruits">Fruits</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="meat-poultry" role="listitem">
-          <span data-i18n="npw.catMeatPoultry">Meat &amp; Poultry</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="canned-goods" role="listitem">
-          <span data-i18n="npw.catCannedGoods">Canned Goods</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="spices-seasonings" role="listitem">
-          <span data-i18n="npw.catSpicesSeasonings">Spices &amp; Seasonings</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="bread-bakery" role="listitem">
-          <span data-i18n="npw.catBreadBakery">Bread &amp; Bakery</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="rice-pasta" role="listitem">
-          <span data-i18n="npw.catRicePasta">Rice &amp; Pasta</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="fuel" role="listitem">
-          <span data-i18n="npw.catFuel">Fuel</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="oils-fats" role="listitem">
-          <span data-i18n="npw.catOilsFats">Oils &amp; Fats</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="sugar-salt" role="listitem">
-          <span data-i18n="npw.catSugarSalt">Sugar &amp; Salt</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="legumes-canned" role="listitem">
-          <span data-i18n="npw.catLegumesCanned">Legumes &amp; Canned Goods</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="fresh-vegetables" role="listitem">
-          <span data-i18n="npw.catFreshVegetables">Fresh Vegetables</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="fish-seafood" role="listitem">
-          <span data-i18n="npw.catFishSeafood">Fish &amp; Seafood</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="eggs-dairy-cheese" role="listitem">
-          <span data-i18n="npw.catEggsDairyCheese">Eggs, Dairy &amp; Cheese</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="water-juices" role="listitem">
-          <span data-i18n="npw.catWaterJuices">Water &amp; Juices</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="tea-coffee" role="listitem">
-          <span data-i18n="npw.catTeaCoffee">Tea &amp; Coffee</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="carbonated-drinks" role="listitem">
-          <span data-i18n="npw.catCarbonatedDrinks">Carbonated Drinks</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="cleaning-supplies" role="listitem">
-          <span data-i18n="npw.catCleaningSupplies">Cleaning Supplies</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="household-tools" role="listitem">
-          <span data-i18n="npw.catHouseholdTools">Household Tools</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="personal-care" role="listitem">
-          <span data-i18n="npw.catPersonalCare">Personal Care</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="baby-supplies" role="listitem">
-          <span data-i18n="npw.catBabySupplies">Diapers &amp; Baby Supplies</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="medicine-medical" role="listitem">
-          <span data-i18n="npw.catMedicineMedical">Medicine &amp; Medical Supplies</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="tissues-paper" role="listitem">
-          <span data-i18n="npw.catTissuesPaper">Tissues &amp; Paper</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="cooking-gas" role="listitem">
-          <span data-i18n="npw.catCookingGas">Cooking Gas</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="batteries-generators" role="listitem">
-          <span data-i18n="npw.catBatteriesGenerators">Batteries &amp; Generators</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="animal-feed" role="listitem">
-          <span data-i18n="npw.catAnimalFeed">Animal Feed</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="seeds-agriculture" role="listitem">
-          <span data-i18n="npw.catSeedsAgriculture">Seeds &amp; Agriculture</span>
-        </a>
-        <a href="#" class="cat-pill" data-category="other-products" role="listitem">
-          <span data-i18n="npw.catOtherProducts">Other Products</span>
-        </a>
+        @endforeach
       </div>
     </div>
 
