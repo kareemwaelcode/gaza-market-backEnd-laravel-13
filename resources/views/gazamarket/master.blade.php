@@ -442,7 +442,7 @@
           <div class="add-price-field">
             <div class="npw-price-display" id="priceDisplayBox">
               <input type="number" class="npw-price-big-input" id="priceInput" name="price"
-                placeholder="0" min="0" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
+                placeholder="0" min="0.01" max="99999999.99" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
               <span class="npw-price-currency" aria-hidden="true">₪</span>
             </div>
 
@@ -477,7 +477,9 @@
           <div class="add-price-field">
             <label class="add-price-label" for="storeName" data-i18n="addPrice.storeName">From which place?</label>
             <input type="text" class="add-price-input" id="storeName" name="storeName"
+              maxlength="120" required aria-describedby="storeNameErr"
               data-i18n-placeholder="addPrice.storeNamePlaceholder" placeholder="Example: Obada Al-Hajj Supermarket, Abu Muhammad Grocery Store..." />
+            <span class="npw-field-err" id="storeNameErr" role="alert" data-i18n="addPrice.errStoreRequired">Please enter the store name</span>
           </div>
 
           <div class="gm-form-row">
@@ -487,7 +489,9 @@
                 <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
               </label>
               <input type="text" class="add-price-input" id="storeAddress" name="storeAddress"
+                maxlength="255" aria-describedby="storeAddressErr"
                 data-i18n-placeholder="addPrice.storeAddressPlaceholder" placeholder="Example: Near Al-Razi Medical Complex" />
+              <span class="npw-field-err" id="storeAddressErr" role="alert" data-i18n="addPrice.errAddressTooLong">Address must be 255 characters or fewer</span>
             </div>
             <div class="add-price-field">
               <label class="add-price-label" for="storePhone">
@@ -495,7 +499,9 @@
                 <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
               </label>
               <input type="tel" class="add-price-input" id="storePhone" name="storePhone" autocomplete="tel"
+                maxlength="20" aria-describedby="storePhoneErr"
                 data-i18n-placeholder="addPrice.phonePlaceholder" placeholder="Example: 0591234567" />
+              <span class="npw-field-err" id="storePhoneErr" role="alert" data-i18n="addPrice.errPhoneInvalid">Enter a valid phone number (6–20 digits)</span>
             </div>
           </div>
         </section>
@@ -518,7 +524,7 @@
             <input type="file" id="receiptImage" name="receiptImage" accept="image/jpeg,image/png,image/webp" hidden />
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round" class="add-price-upload-icon" data-upload-icon><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
             <p data-upload-filename data-i18n="addPrice.uploadText">Tap to upload photo</p>
-            <span data-i18n="addPrice.uploadHint">JPG, PNG up to 5MB</span>
+            <span data-i18n="addPrice.receiptHint">JPG, PNG, WEBP up to 4MB</span>
           </div>
         </section>
 
@@ -920,7 +926,7 @@
 
           <div class="add-price-field">
             <label class="add-price-label" for="npwProductName" data-i18n="npw.productName">Product Name</label>
-            <input type="text" class="add-price-input" id="npwProductName"
+            <input type="text" class="add-price-input" id="npwProductName" maxlength="100"
               data-i18n-placeholder="npw.productNamePlaceholder" placeholder="Example: Sheikh Qasim Olive Oil, Al Marai Milk, Zuhaiman Coffee" autocomplete="off" />
             <span class="npw-field-err" id="npwProductNameErr" data-i18n="npw.errRequired">This field is required</span>
           </div>
@@ -956,7 +962,7 @@
             <div class="add-price-field">
               <label class="add-price-label" for="npwQuantity" data-i18n="npw.quantity">Quantity</label>
               <input type="number" class="add-price-input" id="npwQuantity"
-                placeholder="250" min="0" step="0.01" inputmode="decimal"
+                placeholder="250" min="0.01" max="99999999.99" step="0.01" inputmode="decimal"
                 data-i18n-placeholder="npw.quantityPlaceholder" />
               <span class="npw-field-err" id="npwQuantityErr" data-i18n="npw.errRequired">This field is required</span>
             </div>
@@ -1002,7 +1008,7 @@
 
             <div class="npw-price-display" id="npwPriceDisplayBox">
               <input type="number" class="npw-price-big-input" id="npwPrice" name="price"
-                placeholder="0" min="0" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
+                placeholder="0" min="1" max="99999999.99" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" />
               <span class="npw-price-currency" aria-hidden="true">₪</span>
             </div>
 
@@ -1034,7 +1040,7 @@
 
           <div class="add-price-field">
             <label class="add-price-label" for="npwStoreName" data-i18n="addPrice.storeName">Store Name</label>
-            <input type="text" class="add-price-input" id="npwStoreName"
+            <input type="text" class="add-price-input" id="npwStoreName" maxlength="100"
               data-i18n-placeholder="addPrice.storeNamePlaceholder" placeholder="Example: Abu Ahmed Grocery" autocomplete="off" />
             <span class="npw-field-err" id="npwStoreNameErr" data-i18n="npw.errRequired">This field is required</span>
           </div>
@@ -1109,16 +1115,18 @@
                   <span data-i18n="addPrice.storeAddress">Store Address</span>
                   <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
                 </label>
-                <input type="text" class="add-price-input" id="npwStoreAddress"
+                <input type="text" class="add-price-input" id="npwStoreAddress" maxlength="150"
                   data-i18n-placeholder="addPrice.storeAddressPlaceholder" placeholder="Example: near the mosque" />
+                <span class="npw-field-err" id="npwStoreAddressErr" role="alert" data-i18n="npw.errAddressTooLong">Address must be 150 characters or fewer</span>
               </div>
               <div class="add-price-field">
                 <label class="add-price-label" for="npwStorePhone">
                   <span data-i18n="addPrice.phone">Store Phone</span>
                   <span class="add-price-optional" data-i18n="addPrice.optional">(optional)</span>
                 </label>
-                <input type="tel" class="add-price-input" id="npwStorePhone" autocomplete="tel"
+                <input type="tel" class="add-price-input" id="npwStorePhone" autocomplete="tel" maxlength="20"
                   data-i18n-placeholder="addPrice.phonePlaceholder" placeholder="05XX XXX XXX" />
+                <span class="npw-field-err" id="npwStorePhoneErr" role="alert" data-i18n="addPrice.errPhoneInvalid">Enter a valid phone number (6 to 20 characters)</span>
               </div>
             </div>
 
@@ -1131,7 +1139,7 @@
                 <input type="file" id="npwProductImage" accept="image/jpeg,image/png,image/webp" hidden />
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round" class="add-price-upload-icon" data-upload-icon><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
                 <p data-upload-filename data-i18n="npw.uploadText">Tap to upload receipt photo</p>
-                <span data-i18n="addPrice.uploadHint">JPG, PNG up to 5MB</span>
+                <span data-i18n="addPrice.receiptHint">JPG, PNG, WEBP up to 4MB</span>
               </div>
             </div>
           </div>

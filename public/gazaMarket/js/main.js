@@ -1241,7 +1241,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function initSingleImageUpload(areaId, inputId) {
+  function initSingleImageUpload(areaId, inputId, maxMb) {
+    const limitMb = Number(maxMb) > 0 ? Number(maxMb) : MAX_IMAGE_MB;
+    const limitBytes = limitMb * 1024 * 1024;
     const area = document.getElementById(areaId);
     const input = document.getElementById(inputId);
     if (!area || !input) return null;
@@ -1281,8 +1283,8 @@ document.addEventListener("DOMContentLoaded", () => {
         reset();
         return;
       }
-      if (file.size > MAX_IMAGE_BYTES) {
-        alert(t("addPrice.errImageSize", "حجم الصورة أكبر من {n}MB").replace("{n}", MAX_IMAGE_MB));
+      if (file.size > limitBytes) {
+        alert(t("addPrice.errImageSize", "حجم الصورة أكبر من {n}MB").replace("{n}", limitMb));
         reset();
         return;
       }
@@ -1560,6 +1562,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const storeNameInput = document.getElementById("storeName");
     const storeAddressInput = document.getElementById("storeAddress");
     const storePhoneInput = document.getElementById("storePhone");
+    const storeNameErr = document.getElementById("storeNameErr");
+    const storeAddressErr = document.getElementById("storeAddressErr");
+    const storePhoneErr = document.getElementById("storePhoneErr");
+
+    // حدود الباك (StoreProductPriceRequest)
+    const STORE_NAME_MAX = 120;
+    const STORE_ADDRESS_MAX = 255;
+    const PRICE_MAX = 99999999.99;
+    const PHONE_PATTERN = /^[0-9+\-\s()]{6,20}$/;
 
     const regionSelect = document.getElementById("regionSelect");
     const regionGrid = document.getElementById("addPriceRegionGrid");
@@ -1567,7 +1578,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const quickPriceRow = document.getElementById("quickPriceRow");
 
-    const receiptUpload = initSingleImageUpload("uploadArea", "receiptImage");
+    // الباك بيقبل إيصال لحد 4MB (StoreProductPriceRequest: max:4096)
+    const RECEIPT_MAX_MB = 4;
+    const receiptUpload = initSingleImageUpload("uploadArea", "receiptImage", RECEIPT_MAX_MB);
 
     function setRegionSelection(btn) {
       regionGrid?.querySelectorAll(".npw-region-btn").forEach((b) => {
@@ -1608,7 +1621,9 @@ document.addEventListener("DOMContentLoaded", () => {
        ================================================================ */
     const OPTIONS_URL = "/api/product-options";
     const PRICE_SUBMIT_URL = "/api/prices";
-    const CSRF_COOKIE_URL = "/sanctum/csrf-cookie";
+    // التطبيق ما بيستخدم Sanctum: أي GET على مسار web بيحط كوكي XSRF-TOKEN،
+    // ونفس الرابط اللي بيستخدمه auth.js (GET /api/auth/me، بيرجّع 401 للضيف وهذا عادي)
+    const CSRF_COOKIE_URL = "/api/auth/me";
     const REQUEST_TIMEOUT_MS = 30000;
 
     let areas = null;
@@ -1764,14 +1779,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // الباك بيرجّع رسالة التحقق بالإنجليزي؛ بنحوّلها لرسالة بلغة المستخدم حسب الحقل
+    function localizeServerError(title) {
+      const raw = typeof title === "string" ? title.trim() : "";
+      const generic = t("addPrice.errInvalidData", uiText(
+        "بعض البيانات غير صحيحة، راجعها وحاول مجدداً.",
+        "Some details are invalid. Please review and try again."
+      ));
+      if (!raw) return generic;
+      // إذا الرسالة أصلاً بالعربي بنعرضها كما هي بس لو اللغة عربي
+      if (/[\u0600-\u06ff]/.test(raw)) return isArabicUi() ? raw.slice(0, 200) : generic;
+
+      const m = raw.toLowerCase();
+      const pick = (key, fallbackAr, fallbackEn) => t(key, uiText(fallbackAr, fallbackEn));
+
+      if (m.includes("price")) {
+        if (m.includes("not be greater")) return pick("addPrice.errPriceMax", "السعر كبير جداً (الحد الأقصى 99,999,999.99)", "The price is too large (maximum 99,999,999.99)");
+        if (m.includes("greater than")) return pick("addPrice.errPriceZero", "السعر لازم يكون أكبر من صفر", "The price must be greater than zero");
+        return pick("addPrice.errPriceInvalid", "اكتب سعراً صحيحاً (أرقام فقط وبحد أقصى خانتين عشريتين)", "Enter a valid price (numbers only, up to 2 decimal places)");
+      }
+      if (m.includes("store name")) {
+        return m.includes("required")
+          ? pick("addPrice.errStoreRequired", "اكتب اسم المحل", "Please enter the store name")
+          : pick("addPrice.errStoreTooLong", "اسم المحل لازم ما يزيد عن 120 حرف", "The store name must be 120 characters or fewer");
+      }
+      if (m.includes("store address")) return pick("addPrice.errAddressTooLong", "العنوان لازم ما يزيد عن 255 حرف", "The address must be 255 characters or fewer");
+      if (m.includes("store phone")) return pick("addPrice.errPhoneInvalid", "رقم الهاتف غير صحيح (من 6 إلى 20 خانة)", "Enter a valid phone number (6 to 20 characters)");
+      if (m.includes("receipt")) {
+        return m.includes("kilobytes") || m.includes("greater")
+          ? t("addPrice.errImageSize", uiText("حجم الصورة أكبر من {n}MB", "Image is larger than {n}MB")).replace("{n}", RECEIPT_MAX_MB)
+          : pick("addPrice.errImageType", "صيغة الصورة غير مدعومة. الرجاء اختيار JPG أو PNG أو WEBP", "Unsupported image format. Please choose JPG, PNG or WEBP");
+      }
+      if (m.includes("region")) return pick("addPrice.errRegionRequired", "يرجى اختيار المنطقة", "Please select a region");
+      if (m.includes("product")) return pick("addPrice.errPickProduct", "اختر المنتج من القائمة المنسدلة", "Please pick the product from the list");
+      return generic;
+    }
+
     function submitErrorText(res) {
       switch (res.status) {
         case 0:
           return uiText("تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.", "Couldn't reach the server. Check your connection and try again.");
-        case 400: {
-          const t = res.payload && typeof res.payload.title === "string" ? res.payload.title.trim() : "";
-          return t ? t.slice(0, 200) : uiText("بعض البيانات غير صحيحة، راجعها وحاول مجدداً.", "Some details are invalid. Please review and try again.");
-        }
+        case 400:
+          return localizeServerError(res.payload && res.payload.title);
         case 401:
           return uiText("انتهت جلستك. سجّل الدخول من جديد ثم أرسل السعر.", "Your session has expired. Please log in again, then resend.");
         case 403:
@@ -1829,6 +1878,35 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(priceErr, priceInput);
     });
 
+    // يغيّر نص رسالة الخطأ ويربطها بمفتاح ترجمة (فبتتبدل مع تغيير اللغة)
+    function setErrKey(errEl, key, fallback) {
+      if (!errEl) return;
+      errEl.setAttribute("data-i18n", key);
+      errEl.textContent = t(key, fallback);
+    }
+
+    // يرجّع مفتاح الخطأ أو null إذا السعر سليم (نفس شروط الباك)
+    function priceErrorKey(raw) {
+      const v = normalizeDigits(raw);
+      if (!v) return "addPrice.errRequired";
+      if (!/^\d+(\.\d{1,2})?$/.test(v)) return "addPrice.errPriceInvalid";
+      const n = parseFloat(v);
+      if (!(n > 0)) return "addPrice.errPriceZero";
+      if (n > PRICE_MAX) return "addPrice.errPriceMax";
+      return null;
+    }
+
+    const PRICE_ERR_FALLBACK = {
+      "addPrice.errRequired": "هذا الحقل مطلوب",
+      "addPrice.errPriceInvalid": "اكتب سعراً صحيحاً (أرقام فقط وبحد أقصى خانتين عشريتين)",
+      "addPrice.errPriceZero": "السعر لازم يكون أكبر من صفر",
+      "addPrice.errPriceMax": "السعر كبير جداً (الحد الأقصى 99,999,999.99)",
+    };
+
+    storeNameInput?.addEventListener("input", () => clearFieldError(storeNameErr, storeNameInput));
+    storeAddressInput?.addEventListener("input", () => clearFieldError(storeAddressErr, storeAddressInput));
+    storePhoneInput?.addEventListener("input", () => clearFieldError(storePhoneErr, storePhoneInput));
+
     function validateStep(step) {
       if (step === 1) {
         const typed = !!productInput?.value?.trim();
@@ -1852,9 +1930,51 @@ document.addEventListener("DOMContentLoaded", () => {
         return { valid: true };
       }
       if (step === 3) {
-        const priceOk = parseFloat(normalizeDigits(priceInput?.value)) > 0;
-        priceOk ? clearFieldError(priceErr, priceInput) : showFieldError(priceErr, priceInput);
-        if (!priceOk) return { valid: false, focusEl: priceInput };
+        const errKey = priceErrorKey(priceInput?.value);
+        if (errKey) {
+          setErrKey(priceErr, errKey, PRICE_ERR_FALLBACK[errKey]);
+          showFieldError(priceErr, priceInput);
+          return { valid: false, focusEl: priceInput };
+        }
+        clearFieldError(priceErr, priceInput);
+        return { valid: true };
+      }
+      if (step === 4) {
+        let firstBad = null;
+
+        const name = storeNameInput?.value?.trim() || "";
+        let nameKey = null;
+        if (!name) nameKey = "addPrice.errStoreRequired";
+        else if (name.length > STORE_NAME_MAX) nameKey = "addPrice.errStoreTooLong";
+        if (nameKey) {
+          setErrKey(storeNameErr, nameKey, nameKey === "addPrice.errStoreRequired"
+            ? "اكتب اسم المحل" : "اسم المحل لازم ما يزيد عن 120 حرف");
+          showFieldError(storeNameErr, storeNameInput);
+          firstBad = firstBad || storeNameInput;
+        } else {
+          clearFieldError(storeNameErr, storeNameInput);
+        }
+
+        const address = storeAddressInput?.value?.trim() || "";
+        if (address.length > STORE_ADDRESS_MAX) {
+          setErrKey(storeAddressErr, "addPrice.errAddressTooLong", "العنوان لازم ما يزيد عن 255 حرف");
+          showFieldError(storeAddressErr, storeAddressInput);
+          firstBad = firstBad || storeAddressInput;
+        } else {
+          clearFieldError(storeAddressErr, storeAddressInput);
+        }
+
+        // الهاتف اختياري، بس إذا انكتب لازم يطابق صيغة الباك (6–20 خانة)
+        const phone = normalizeDigits(storePhoneInput?.value || "");
+        if (phone && !PHONE_PATTERN.test(phone)) {
+          setErrKey(storePhoneErr, "addPrice.errPhoneInvalid", "رقم الهاتف غير صحيح (من 6 إلى 20 خانة)");
+          showFieldError(storePhoneErr, storePhoneInput);
+          firstBad = firstBad || storePhoneInput;
+        } else {
+          clearFieldError(storePhoneErr, storePhoneInput);
+        }
+
+        if (firstBad) return { valid: false, focusEl: firstBad };
         return { valid: true };
       }
       return { valid: true };
@@ -1961,6 +2081,9 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(regionErr, regionGrid);
       clearFieldError(productErr, productInput);
       clearFieldError(priceErr, priceInput);
+      clearFieldError(storeNameErr, storeNameInput);
+      clearFieldError(storeAddressErr, storeAddressInput);
+      clearFieldError(storePhoneErr, storePhoneInput);
       wizard?.reset();
       prefillSavedRegion();
     }
@@ -2464,8 +2587,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const storeAddressInput = document.getElementById("npwStoreAddress");
     const storePhoneInput = document.getElementById("npwStorePhone");
+    const storeAddressErr = document.getElementById("npwStoreAddressErr");
+    const storePhoneErr = document.getElementById("npwStorePhoneErr");
 
-    const productImageUpload = initSingleImageUpload("npwUploadArea", "npwProductImage");
+    // حدود الباك (StoreProductRequest)
+    const NAME_MAX = 100;
+    const STORE_NAME_MAX = 100;
+    const STORE_ADDRESS_MAX = 150;
+    const DECIMAL_MAX = 99999999.99;
+    const PRICE_MIN = 1;
+    const PHONE_PATTERN = /^[0-9+\-\s()]{6,20}$/;
+    const RECEIPT_MAX_MB = 4; // max:4096 بالباك
+
+    const productImageUpload = initSingleImageUpload("npwUploadArea", "npwProductImage", RECEIPT_MAX_MB);
 
     let selectedCategory = null;
     let selectedCategoryLabel = "";
@@ -2477,7 +2611,9 @@ document.addEventListener("DOMContentLoaded", () => {
        ================================================================ */
     const PRODUCT_OPTIONS_URL = "/api/product-options";
     const PRODUCT_SUBMIT_URL = "/api/products";
-    const CSRF_COOKIE_URL = "/sanctum/csrf-cookie";
+    // التطبيق ما بيستخدم Sanctum: أي GET على مسار web بيحط كوكي XSRF-TOKEN،
+    // ونفس الرابط اللي بيستخدمه auth.js (GET /api/auth/me، بيرجّع 401 للضيف وهذا عادي)
+    const CSRF_COOKIE_URL = "/api/auth/me";
     const REQUEST_TIMEOUT_MS = 30000;
 
     const unitWrap = document.querySelector('[data-gm-custom-select][data-hidden-select="npwUnitSelect"]');
@@ -2705,14 +2841,58 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // الباك بيرجّع رسالة التحقق بالإنجليزي؛ بنحوّلها لرسالة بلغة المستخدم حسب الحقل
+    function localizeServerError(title) {
+      const raw = typeof title === "string" ? title.trim() : "";
+      const generic = t("addPrice.errInvalidData", uiText(
+        "بعض البيانات غير صحيحة، راجعها وحاول مجدداً.",
+        "Some details are invalid. Please review and try again."
+      ));
+      if (!raw) return generic;
+      if (/[\u0600-\u06ff]/.test(raw)) return isArabicUi() ? raw.slice(0, 200) : generic;
+
+      const m = raw.toLowerCase();
+      const pick = (key, ar, en) => t(key, uiText(ar, en));
+
+      if (m.includes("store name")) {
+        return m.includes("not be greater")
+          ? pick("npw.errStoreTooLong", "اسم المحل لازم ما يزيد عن 100 حرف", "The store name must be 100 characters or fewer")
+          : pick("npw.errRequired", "هذا الحقل مطلوب", "This field is required");
+      }
+      if (m.includes("store address")) return pick("npw.errAddressTooLong", "العنوان لازم ما يزيد عن 150 حرف", "The address must be 150 characters or fewer");
+      if (m.includes("store phone")) return pick("addPrice.errPhoneInvalid", "رقم الهاتف غير صحيح (من 6 إلى 20 خانة)", "Enter a valid phone number (6 to 20 characters)");
+      if (m.includes("receipt")) {
+        return m.includes("kilobytes") || m.includes("greater")
+          ? t("addPrice.errImageSize", uiText("حجم الصورة أكبر من {n}MB", "Image is larger than {n}MB")).replace("{n}", RECEIPT_MAX_MB)
+          : pick("addPrice.errImageType", "صيغة الصورة غير مدعومة. الرجاء اختيار JPG أو PNG أو WEBP", "Unsupported image format. Please choose JPG, PNG or WEBP");
+      }
+      if (m.includes("quantity")) {
+        if (m.includes("not be greater")) return pick("npw.errQtyMax", "الكمية كبيرة جداً (الحد الأقصى 99,999,999.99)", "The quantity is too large (maximum 99,999,999.99)");
+        if (m.includes("greater than")) return pick("npw.errQtyZero", "الكمية لازم تكون أكبر من صفر", "The quantity must be greater than zero");
+        return pick("npw.errQtyInvalid", "اكتب كمية صحيحة (أرقام فقط وبحد أقصى خانتين عشريتين)", "Enter a valid quantity (numbers only, up to 2 decimal places)");
+      }
+      if (m.includes("price")) {
+        if (m.includes("not be greater")) return pick("addPrice.errPriceMax", "السعر كبير جداً (الحد الأقصى 99,999,999.99)", "The price is too large (maximum 99,999,999.99)");
+        if (m.includes("at least")) return pick("npw.errPriceMin", "السعر لازم يكون 1 شيكل على الأقل", "The price must be at least 1 ₪");
+        return pick("addPrice.errPriceInvalid", "اكتب سعراً صحيحاً (أرقام فقط وبحد أقصى خانتين عشريتين)", "Enter a valid price (numbers only, up to 2 decimal places)");
+      }
+      if (m.includes("product name")) {
+        return m.includes("not be greater")
+          ? pick("npw.errNameTooLong", "اسم المنتج لازم ما يزيد عن 100 حرف", "The product name must be 100 characters or fewer")
+          : pick("npw.errRequired", "هذا الحقل مطلوب", "This field is required");
+      }
+      if (m.includes("category")) return pick("npw.errCategoryRequired", "يرجى اختيار تصنيف", "Please select a category");
+      if (m.includes("unit")) return pick("npw.errUnitRequired", "يرجى اختيار الوحدة", "Please select a unit");
+      if (m.includes("area") || m.includes("region")) return pick("addPrice.errRegionRequired", "يرجى اختيار المنطقة", "Please select a region");
+      return generic;
+    }
+
     function submitErrorText(res) {
       switch (res.status) {
         case 0:
           return uiText("تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.", "Couldn't reach the server. Check your connection and try again.");
-        case 400: {
-          const t = res.payload && typeof res.payload.title === "string" ? res.payload.title.trim() : "";
-          return t ? t.slice(0, 200) : uiText("بعض البيانات غير صحيحة، راجعها وحاول مجدداً.", "Some details are invalid. Please review and try again.");
-        }
+        case 400:
+          return localizeServerError(res.payload && res.payload.title);
         case 401:
           return uiText("انتهت جلستك. سجّل الدخول من جديد ثم أرسل المنتج.", "Your session has expired. Please log in again, then resend.");
         case 403:
@@ -2843,11 +3023,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
     prefillSavedRegion();
 
+    // يغيّر نص رسالة الخطأ ويربطها بمفتاح ترجمة (فبتتبدل مع تغيير اللغة)
+    function setErrKey(errEl, key, fallbackAr, fallbackEn) {
+      if (!errEl) return;
+      errEl.setAttribute("data-i18n", key);
+      errEl.textContent = t(key, uiText(fallbackAr, fallbackEn));
+    }
+
+    const ERR_TEXT = {
+      "npw.errRequired": ["هذا الحقل مطلوب", "This field is required"],
+      "npw.errNameTooLong": ["اسم المنتج لازم ما يزيد عن 100 حرف", "The product name must be 100 characters or fewer"],
+      "npw.errQtyInvalid": ["اكتب كمية صحيحة (أرقام فقط وبحد أقصى خانتين عشريتين)", "Enter a valid quantity (numbers only, up to 2 decimal places)"],
+      "npw.errQtyZero": ["الكمية لازم تكون أكبر من صفر", "The quantity must be greater than zero"],
+      "npw.errQtyMax": ["الكمية كبيرة جداً (الحد الأقصى 99,999,999.99)", "The quantity is too large (maximum 99,999,999.99)"],
+      "addPrice.errPriceInvalid": ["اكتب سعراً صحيحاً (أرقام فقط وبحد أقصى خانتين عشريتين)", "Enter a valid price (numbers only, up to 2 decimal places)"],
+      "npw.errPriceMin": ["السعر لازم يكون 1 شيكل على الأقل", "The price must be at least 1 ₪"],
+      "addPrice.errPriceMax": ["السعر كبير جداً (الحد الأقصى 99,999,999.99)", "The price is too large (maximum 99,999,999.99)"],
+      "npw.errStoreTooLong": ["اسم المحل لازم ما يزيد عن 100 حرف", "The store name must be 100 characters or fewer"],
+      "npw.errAddressTooLong": ["العنوان لازم ما يزيد عن 150 حرف", "The address must be 150 characters or fewer"],
+      "addPrice.errPhoneInvalid": ["رقم الهاتف غير صحيح (من 6 إلى 20 خانة)", "Enter a valid phone number (6 to 20 characters)"],
+    };
+
+    function showErrKey(errEl, inputEl, key) {
+      setErrKey(errEl, key, ERR_TEXT[key][0], ERR_TEXT[key][1]);
+      showFieldError(errEl, inputEl);
+    }
+
+    // رقم بخانتين عشريتين: يرجّع مفتاح الخطأ أو null
+    function decimalErrorKey(raw, keys, isAboveMin) {
+      const v = normalizeDigits(raw);
+      if (!v) return "npw.errRequired";
+      if (!/^\d+(\.\d{1,2})?$/.test(v)) return keys.invalid;
+      const n = parseFloat(v);
+      if (!isAboveMin(n)) return keys.low;
+      if (n > DECIMAL_MAX) return keys.max;
+      return null;
+    }
+
+    nameInput?.addEventListener("input", () => clearFieldError(nameErr, nameInput));
+    storeAddressInput?.addEventListener("input", () => clearFieldError(storeAddressErr, storeAddressInput));
+    storePhoneInput?.addEventListener("input", () => clearFieldError(storePhoneErr, storePhoneInput));
+
     function validateStep(step) {
       if (step === 1) {
-        const ok = !!nameInput?.value?.trim();
-        ok ? clearFieldError(nameErr, nameInput) : showFieldError(nameErr, nameInput);
-        if (!ok) return { valid: false, focusEl: nameInput };
+        const value = nameInput?.value?.trim() || "";
+        const key = !value ? "npw.errRequired" : (value.length > NAME_MAX ? "npw.errNameTooLong" : null);
+        if (key) {
+          showErrKey(nameErr, nameInput, key);
+          return { valid: false, focusEl: nameInput };
+        }
+        clearFieldError(nameErr, nameInput);
         return { valid: true };
       }
       if (step === 2) {
@@ -2861,8 +3086,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (quantityInput && qtyNormalized !== quantityInput.value) {
           quantityInput.value = qtyNormalized;
         }
-        const qtyOk = !!qtyNormalized && !Number.isNaN(parseFloat(qtyNormalized));
-        qtyOk ? clearFieldError(quantityErr, quantityInput) : showFieldError(quantityErr, quantityInput);
+        const qtyKey = decimalErrorKey(
+          qtyNormalized,
+          { invalid: "npw.errQtyInvalid", low: "npw.errQtyZero", max: "npw.errQtyMax" },
+          (n) => n > 0
+        );
+        const qtyOk = !qtyKey;
+        qtyOk ? clearFieldError(quantityErr, quantityInput) : showErrKey(quantityErr, quantityInput, qtyKey);
 
         resyncUnitSelect();
         const unitOk = !!unitSelect?.value?.trim();
@@ -2873,21 +3103,55 @@ document.addEventListener("DOMContentLoaded", () => {
         return { valid: true };
       }
       if (step === 4) {
-        const ok = !!priceInput?.value;
-        ok ? clearFieldError(priceErr, priceInput) : showFieldError(priceErr, priceInput);
-        if (!ok) return { valid: false, focusEl: priceInput };
+        const priceKey = decimalErrorKey(
+          priceInput?.value,
+          { invalid: "addPrice.errPriceInvalid", low: "npw.errPriceMin", max: "addPrice.errPriceMax" },
+          (n) => n >= PRICE_MIN
+        );
+        if (priceKey) {
+          showErrKey(priceErr, priceInput, priceKey);
+          return { valid: false, focusEl: priceInput };
+        }
+        clearFieldError(priceErr, priceInput);
         return { valid: true };
       }
       if (step === 5) {
-        const ok = !!storeNameInput?.value?.trim();
-        ok ? clearFieldError(storeNameErr, storeNameInput) : showFieldError(storeNameErr, storeNameInput);
-        if (!ok) return { valid: false, focusEl: storeNameInput };
+        const value = storeNameInput?.value?.trim() || "";
+        const key = !value ? "npw.errRequired" : (value.length > STORE_NAME_MAX ? "npw.errStoreTooLong" : null);
+        if (key) {
+          showErrKey(storeNameErr, storeNameInput, key);
+          return { valid: false, focusEl: storeNameInput };
+        }
+        clearFieldError(storeNameErr, storeNameInput);
         return { valid: true };
       }
       if (step === 6) {
         const ok = !!regionSelect?.value;
         ok ? clearFieldError(regionErr, regionGrid) : showFieldError(regionErr, regionGrid);
         if (!ok) return { valid: false, focusEl: regionGrid };
+        return { valid: true };
+      }
+      if (step === 7) {
+        let firstBad = null;
+
+        const address = storeAddressInput?.value?.trim() || "";
+        if (address.length > STORE_ADDRESS_MAX) {
+          showErrKey(storeAddressErr, storeAddressInput, "npw.errAddressTooLong");
+          firstBad = firstBad || storeAddressInput;
+        } else {
+          clearFieldError(storeAddressErr, storeAddressInput);
+        }
+
+        // الهاتف اختياري، بس إذا انكتب لازم يطابق صيغة الباك (6–20 خانة)
+        const phone = normalizeDigits(storePhoneInput?.value || "");
+        if (phone && !PHONE_PATTERN.test(phone)) {
+          showErrKey(storePhoneErr, storePhoneInput, "addPrice.errPhoneInvalid");
+          firstBad = firstBad || storePhoneInput;
+        } else {
+          clearFieldError(storePhoneErr, storePhoneInput);
+        }
+
+        if (firstBad) return { valid: false, focusEl: firstBad };
         return { valid: true };
       }
       return { valid: true };
@@ -2998,7 +3262,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (storePhoneInput) storePhoneInput.value = "";
       productImageUpload?.reset();
 
-      [nameErr, categoryErr, quantityErr, unitErr, priceErr, storeNameErr, regionErr]
+      [nameErr, categoryErr, quantityErr, unitErr, priceErr, storeNameErr, regionErr, storeAddressErr, storePhoneErr]
         .forEach((el) => el?.classList.remove("show"));
       modalEl.querySelectorAll(".gm-invalid-input, .npw-invalid").forEach((el) => el.classList.remove("gm-invalid-input", "npw-invalid"));
       modalEl.querySelectorAll(".gm-form-card.gm-invalid").forEach((el) => el.classList.remove("gm-invalid"));
