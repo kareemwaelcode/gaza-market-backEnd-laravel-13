@@ -27,7 +27,6 @@
 <meta name="twitter:description" content="اختر منطقتك في قطاع غزة وتابع أسعار المواد الغذائية والسلع الأساسية اليوم، وقارن الأسعار بين المتاجر والأسواق. منصة مجتمعية من الناس وللناس." />
 <meta name="twitter:image" content="https://gazaprice.com/assets/img/logo.gazamarket.png" />
 <link rel="icon" href="assets/img/logo.gazamarket.png" />
-{{--  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://gazaprice.com/#org","name":"سوق غزة","alternateName":"Gaza Market","url":"https://gazaprice.com/","logo":{"@type":"ImageObject","url":"https://gazaprice.com/assets/img/logo.gazamarket.png","width":501,"height":498}},{"@type":"WebSite","@id":"https://gazaprice.com/#website","url":"https://gazaprice.com/","name":"سوق غزة","alternateName":"Gaza Market","inLanguage":["ar","en"],"publisher":{"@id":"https://gazaprice.com/#org"}},{"@type":"WebPage","@id":"https://gazaprice.com/#webpage","url":"https://gazaprice.com/","name":"سوق غزة | أسعار السلع والمنتجات في غزة حسب منطقتك","description":"اختر منطقتك في قطاع غزة وتابع أسعار المواد الغذائية والسلع الأساسية اليوم، وقارن الأسعار بين المتاجر والأسواق. منصة مجتمعية من الناس وللناس.","inLanguage":"ar","isPartOf":{"@id":"https://gazaprice.com/#website"},"about":{"@id":"https://gazaprice.com/#org"}}]}</script>  --}}
 <script type="application/ld+json">{"@@context":"https://schema.org","@graph":[ ... ]}</script>
   <link href="{{ asset('gazamarket/css/vendor/bootstrap.min.css') }}" rel="stylesheet" />
   <link rel="stylesheet" href="{{ asset('gazamarket/css/main.css') }}" />
@@ -421,7 +420,6 @@
 
           <div class="add-price-field">
             <div class="npw-region-grid" id="addPriceRegionGrid" role="group" aria-labelledby="addPriceRegionLabel">
-              <!-- تُعبَّأ من GET /api/product-options عبر main.js -->
             </div>
             <select class="npw-visually-hidden-select" id="regionSelect" name="region" tabindex="-1" aria-hidden="true">
               <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>
@@ -646,7 +644,6 @@
           <div class="add-listing-field">
             <label class="add-listing-label" id="listingCategoryLabel" data-i18n="addListing.adType">Category</label>
             <div class="npw-region-grid" id="listingCategoryGrid" role="group" aria-labelledby="listingCategoryLabel">
-              <!-- تُعبَّأ من GET /api/listing-categories/options عبر main.js (الفعّالة فقط من جدول listing_categories) -->
             </div>
             <span class="gm-field-err" id="listingCategoryErr" data-i18n="addListing.errRequired">This field is required</span>
           </div>
@@ -711,9 +708,11 @@
           <div class="add-listing-field">
             <label class="add-listing-label" for="listingPrice">
               <span data-i18n="addListing.price">Price</span>
+              <span class="add-price-optional" data-i18n="addListing.required">(required)</span>
             </label>
             <input type="number" class="add-listing-input" id="listingPrice" name="listingPrice"
-              placeholder="100" min="0" step="0.01" aria-label="Price in New Israeli Shekel" />
+              placeholder="100" min="1" step="0.01" inputmode="decimal" aria-label="Price in New Israeli Shekel" aria-required="true" />
+            <span class="gm-field-err" id="listingPriceErr" data-i18n="addListing.errPriceRequired">The price is required. Enter the price of your ad</span>
           </div>
 
           <div class="add-listing-field">
@@ -765,25 +764,7 @@
           </div>
 
           <div class="add-listing-field">
-            <div class="npw-region-grid" id="listingRegionGrid" role="group" aria-labelledby="listingRegionTitle">
-              <button type="button" class="npw-region-btn" data-value="Nuseirat" data-i18n="Nuseirat">Nuseirat</button>
-              <button type="button" class="npw-region-btn" data-value="Deir al-Balah" data-i18n="DeirBalah">Deir al-Balah</button>
-              <button type="button" class="npw-region-btn" data-value="Zawayda" data-i18n="Zawayda">Zawayda</button>
-              <button type="button" class="npw-region-btn" data-value="Breij" data-i18n="Breij">Breij</button>
-              <button type="button" class="npw-region-btn" data-value="Maghazi" data-i18n="Maghazi">Maghazi</button>
-              <button type="button" class="npw-region-btn" data-value="Alrimal" data-i18n="Alrimal">Al-Rimal</button>
-              <button type="button" class="npw-region-btn" data-value="Alshaati" data-i18n="Alshaati">Al-Shaati</button>
-              <button type="button" class="npw-region-btn" data-value="Sheikh Radwan" data-i18n="SheikhRadwan">Sheikh Radwan</button>
-              <button type="button" class="npw-region-btn" data-value="Saftawi" data-i18n="Saftawi">Saftawi</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Hanoun" data-i18n="BeitHanoun">Beit Hanoun</button>
-              <button type="button" class="npw-region-btn" data-value="Beit Lahia" data-i18n="BeitLahia">Beit Lahia</button>
-              <button type="button" class="npw-region-btn" data-value="Tal Al-Hawa" data-i18n="TalHawa">Tal Al-Hawa</button>
-              <button type="button" class="npw-region-btn" data-value="Jabalia" data-i18n="Jabalia">Jabalia</button>
-              <button type="button" class="npw-region-btn" data-value="Khan Yunis" data-i18n="KhanYunis">Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Rafah" data-i18n="Rafah">Rafah</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi Khan Yunis" data-i18n="MawasiKhanYunis">Mawasi Khan Yunis</button>
-              <button type="button" class="npw-region-btn" data-value="Mawasi al-Qarara" data-i18n="MawasiQarara">Mawasi al-Qarara</button>
-            </div>
+            <div class="npw-region-grid" id="listingRegionGrid" role="group" aria-labelledby="listingRegionTitle"></div>
             <span class="gm-field-err" id="listingRegionErr" data-i18n="addListing.errRegionRequired">Please select a region</span>
           </div>
         </section>
@@ -944,7 +925,6 @@
           <div class="add-price-field">
             <label class="add-price-label" data-i18n="npw.category">Category</label>
               <div class="npw-category-grid" id="npwCategoryGrid">
-              <!-- تُعبَّأ من GET /api/product-options عبر main.js -->
             </div>
             <span class="npw-field-err" id="npwCategoryErr" data-i18n="npw.errCategoryRequired">Please select a category</span>
           </div>
@@ -982,7 +962,6 @@
                 </button>
 
                 <div class="npw-custom-select-panel" data-select-panel role="listbox" aria-labelledby="npwUnitLabel">
-                  <!-- تُعبَّأ من الـ API عبر main.js -->
                 </div>
 
                 <select class="npw-visually-hidden-select" id="npwUnitSelect" name="unit" tabindex="-1" aria-hidden="true">
@@ -1059,7 +1038,6 @@
 
           <div class="add-price-field">
             <div class="npw-region-grid" id="npwRegionGrid" role="group" aria-labelledby="npwRegionLabel">
-              <!-- تُعبَّأ من الـ API عبر main.js -->
             </div>
             <select class="npw-visually-hidden-select" id="npwRegionSelect" name="region" tabindex="-1" aria-hidden="true">
               <option value="" disabled selected data-i18n="addPrice.regionPlaceholder">Select your region</option>

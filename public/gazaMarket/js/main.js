@@ -1566,7 +1566,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const storeAddressErr = document.getElementById("storeAddressErr");
     const storePhoneErr = document.getElementById("storePhoneErr");
 
-    // حدود الباك (StoreProductPriceRequest)
     const STORE_NAME_MAX = 120;
     const STORE_ADDRESS_MAX = 255;
     const PRICE_MAX = 99999999.99;
@@ -1578,7 +1577,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const quickPriceRow = document.getElementById("quickPriceRow");
 
-    // الباك بيقبل إيصال لحد 4MB (StoreProductPriceRequest: max:4096)
     const RECEIPT_MAX_MB = 4;
     const receiptUpload = initSingleImageUpload("uploadArea", "receiptImage", RECEIPT_MAX_MB);
 
@@ -1613,16 +1611,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (match) setRegionSelection(match);
     }
 
-    /* ================================================================
-       المناطق من الداتابيز + الإرسال الحقيقي
-       GET  /api/product-options -> areas (id, slug, name_ar, name_en)
-       POST /api/prices          -> يضيف السعر (يحتاج تسجيل دخول)
-       قيمة الزر = slug المنطقة (هيك بيتحقق منها الباك إند)
-       ================================================================ */
     const OPTIONS_URL = "/api/product-options";
     const PRICE_SUBMIT_URL = "/api/prices";
-    // التطبيق ما بيستخدم Sanctum: أي GET على مسار web بيحط كوكي XSRF-TOKEN،
-    // ونفس الرابط اللي بيستخدمه auth.js (GET /api/auth/me، بيرجّع 401 للضيف وهذا عادي)
     const CSRF_COOKIE_URL = "/api/auth/me";
     const REQUEST_TIMEOUT_MS = 30000;
 
@@ -1773,13 +1763,11 @@ document.addEventListener("DOMContentLoaded", () => {
         )
         .then((res) => {
           window.clearTimeout(timer);
-          // انتهت صلاحية رمز CSRF: نجدده ونعيد المحاولة مرة وحدة فقط
           if (res.status === 419 && !isRetry) return postPrice(formData, true);
           return res;
         });
     }
 
-    // الباك بيرجّع رسالة التحقق بالإنجليزي؛ بنحوّلها لرسالة بلغة المستخدم حسب الحقل
     function localizeServerError(title) {
       const raw = typeof title === "string" ? title.trim() : "";
       const generic = t("addPrice.errInvalidData", uiText(
@@ -1787,7 +1775,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "Some details are invalid. Please review and try again."
       ));
       if (!raw) return generic;
-      // إذا الرسالة أصلاً بالعربي بنعرضها كما هي بس لو اللغة عربي
       if (/[\u0600-\u06ff]/.test(raw)) return isArabicUi() ? raw.slice(0, 200) : generic;
 
       const m = raw.toLowerCase();
@@ -1878,14 +1865,12 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(priceErr, priceInput);
     });
 
-    // يغيّر نص رسالة الخطأ ويربطها بمفتاح ترجمة (فبتتبدل مع تغيير اللغة)
     function setErrKey(errEl, key, fallback) {
       if (!errEl) return;
       errEl.setAttribute("data-i18n", key);
       errEl.textContent = t(key, fallback);
     }
 
-    // يرجّع مفتاح الخطأ أو null إذا السعر سليم (نفس شروط الباك)
     function priceErrorKey(raw) {
       const v = normalizeDigits(raw);
       if (!v) return "addPrice.errRequired";
@@ -1912,7 +1897,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const typed = !!productInput?.value?.trim();
         const picked = !!productInput?.dataset?.productId;
         const pickErr = document.getElementById("productPickErr");
-        // فاضي: "مطلوب" / مكتوب بس ما انختار من القائمة: "اختر من القائمة"
         typed ? clearFieldError(productErr, productInput) : showFieldError(productErr, productInput);
         if (typed && !picked) {
           pickErr?.classList.add("show");
@@ -1964,7 +1948,6 @@ document.addEventListener("DOMContentLoaded", () => {
           clearFieldError(storeAddressErr, storeAddressInput);
         }
 
-        // الهاتف اختياري، بس إذا انكتب لازم يطابق صيغة الباك (6–20 خانة)
         const phone = normalizeDigits(storePhoneInput?.value || "");
         if (phone && !PHONE_PATTERN.test(phone)) {
           setErrKey(storePhoneErr, "addPrice.errPhoneInvalid", "رقم الهاتف غير صحيح (من 6 إلى 20 خانة)");
@@ -2101,12 +2084,10 @@ document.addEventListener("DOMContentLoaded", () => {
       switchModal("priceSuccessModal", "additionModal");
     });
 
-    // "المنتج مش موجود؟ اقترحه كمنتج جديد": بنفتح مودال المنتج الجديد واسم المنتج جاهز
     document.addEventListener("gm:suggest-product", (e) => {
       const name = String(e.detail?.name || "").trim().slice(0, 100);
       const target = document.getElementById("addNewProductModal");
       if (!target) return;
-      // إعادة ضبط الفورم بتصير عند show، فبنعبّي الاسم بعد ما يظهر المودال
       target.addEventListener("shown.bs.modal", () => {
         const nameEl = document.getElementById("npwProductName");
         if (nameEl && name) nameEl.value = name;
@@ -2135,7 +2116,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const whatsappErr = document.getElementById("listingWhatsappErr");
     const regionGrid = document.getElementById("listingRegionGrid");
     const regionErr = document.getElementById("listingRegionErr");
+    const priceErr = document.getElementById("listingPriceErr");
+    const imagesErr = document.getElementById("listingImagesErr");
+    const imageGrid = document.getElementById("listingImageGrid");
+    const imageInput = document.getElementById("listingImages");
     const submitErr = document.getElementById("listingSubmitErr");
+
+    const PRICE_MIN = 1;
+    const PRICE_MAX = 99999999.99;
 
     const images = initMultiImageUpload({
       gridId: "listingImageGrid",
@@ -2170,7 +2158,6 @@ document.addEventListener("DOMContentLoaded", () => {
       clearFieldError(categoryErr, categoryGrid);
     });
 
-    // الشبكة بتنبني بس من تصنيفات الجدول (الفعّالة)؛ ما في أزرار ثابتة. لو فشل التحميل بتظهر رسالة مع إعادة محاولة
     function renderListingCategoriesMessage(state) {
       if (!categoryGrid) return;
       const wrap = document.createElement("div");
@@ -2197,7 +2184,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const market = window.GMMarket;
       if (market && typeof market.loadOptions === "function") {
         renderListingCategoriesMessage("loading");
-        market.loadOptions().then(renderListingCategories);
+        loadListingOptions();
       }
     });
 
@@ -2233,25 +2220,116 @@ document.addEventListener("DOMContentLoaded", () => {
         keepBtn.setAttribute("aria-pressed", "true");
         selectedCategoryLabel = keepBtn.textContent?.trim() || "";
       } else if (keep) {
-        // التصنيف المختار انشال/تعطّل من الـ CMS
         selectedCategory = null;
         selectedCategoryLabel = "";
       }
     }
 
-    renderListingCategories();
-    document.addEventListener("gmMarketOptionsReady", renderListingCategories);
-    document.addEventListener("languageChanged", renderListingCategories);
-    modalEl.addEventListener("show.bs.modal", () => {
-      const market = window.GMMarket;
-      if (market && typeof market.loadOptions === "function") market.loadOptions().then(renderListingCategories);
-      else renderListingCategories();
-    });
-
     let selectedRegion = null;
     let selectedRegionLabel = "";
+    let desiredRegion = null;
+    let regionsState = "loading";
+
+    function listingAreas() {
+      const market = window.GMMarket;
+      const opts = market && typeof market.options === "function" ? market.options() : null;
+      if (opts && opts.areas.length) return opts.areas;
+      if (market && market.isMock && window.GMRegions && typeof window.GMRegions.list === "function") {
+        return window.GMRegions.list();
+      }
+      return [];
+    }
+
+    function renderListingRegionsMessage(state) {
+      if (!regionGrid) return;
+      const wrap = document.createElement("div");
+      wrap.className = "text-muted small";
+      wrap.setAttribute("data-listing-regions-msg", "");
+      if (state === "loading") {
+        wrap.textContent = t("addListing.regionsLoading", "Loading regions…");
+      } else if (state === "empty") {
+        wrap.textContent = t("addListing.regionsEmpty", "No regions available right now");
+      } else {
+        wrap.textContent = t("addListing.regionsError", "Could not load regions") + " ";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn btn-sm btn-outline-secondary";
+        retry.setAttribute("data-listing-regions-retry", "");
+        retry.textContent = t("market.categoriesRetry", "Retry");
+        wrap.appendChild(retry);
+      }
+      regionGrid.replaceChildren(wrap);
+    }
+
+    function renderListingRegions() {
+      if (!regionGrid) return;
+      const areas = listingAreas();
+      if (!areas.length) {
+        renderListingRegionsMessage(regionsState);
+        return;
+      }
+
+      const lang = document.documentElement.lang?.startsWith("en") ? "en" : "ar";
+      const keep = selectedRegion || desiredRegion;
+
+      regionGrid.replaceChildren(
+        ...areas.map((a) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "npw-region-btn";
+          b.dataset.value = a.code;
+          b.setAttribute("aria-pressed", "false");
+          b.textContent = (lang === "en" ? (a.name_en || a.name_ar) : (a.name_ar || a.name_en)) || a.code;
+          return b;
+        })
+      );
+
+      const keepBtn = keep
+        ? Array.from(regionGrid.querySelectorAll(".npw-region-btn")).find((b) => b.dataset.value === keep)
+        : null;
+      if (keepBtn) {
+        keepBtn.classList.add("active");
+        keepBtn.setAttribute("aria-pressed", "true");
+        selectedRegion = keepBtn.dataset.value;
+        selectedRegionLabel = keepBtn.textContent?.trim() || "";
+      } else {
+        selectedRegion = null;
+        selectedRegionLabel = "";
+      }
+    }
+
+    function loadListingOptions() {
+      const market = window.GMMarket;
+      if (!market || typeof market.loadOptions !== "function") {
+        renderListingCategories();
+        renderListingRegions();
+        return Promise.resolve();
+      }
+      regionsState = "loading";
+      if (!listingAreas().length) renderListingRegionsMessage("loading");
+      return market.loadOptions().then(() => {
+        regionsState = "error";
+        renderListingCategories();
+        renderListingRegions();
+      });
+    }
+
+    function refreshListingOptionViews() {
+      renderListingCategories();
+      renderListingRegions();
+    }
+
+    renderListingCategories();
+    renderListingRegions();
+    document.addEventListener("gmMarketOptionsReady", refreshListingOptionViews);
+    document.addEventListener("languageChanged", refreshListingOptionViews);
+    modalEl.addEventListener("show.bs.modal", loadListingOptions);
 
     regionGrid?.addEventListener("click", (e) => {
+      if (e.target.closest("[data-listing-regions-retry]")) {
+        loadListingOptions();
+        return;
+      }
       const btn = e.target.closest(".npw-region-btn");
       if (!btn) return;
 
@@ -2264,12 +2342,14 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.setAttribute("aria-pressed", "true");
 
       selectedRegion = btn.dataset.value;
+      desiredRegion = null;
       selectedRegionLabel = btn.textContent?.trim() || "";
       clearFieldError(regionErr, regionGrid);
     });
 
     function clearRegionSelection() {
       selectedRegion = null;
+      desiredRegion = null;
       selectedRegionLabel = "";
       regionGrid?.querySelectorAll(".npw-region-btn").forEach((b) => {
         b.classList.remove("active");
@@ -2322,8 +2402,48 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!descOk) return { valid: false, focusEl: descriptionInput };
         return { valid: true };
       }
+      if (step === 5) {
+        const raw = normalizeDigits(priceInput?.value);
+        if (priceInput && raw !== priceInput.value) priceInput.value = raw;
+
+        let priceKey = null;
+        if (!raw) priceKey = "addListing.errPriceRequired";
+        else if (!/^\d+(\.\d{1,2})?$/.test(raw)) priceKey = "addPrice.errPriceInvalid";
+        else if (parseFloat(raw) < PRICE_MIN) priceKey = "npw.errPriceMin";
+        else if (parseFloat(raw) > PRICE_MAX) priceKey = "addPrice.errPriceMax";
+
+        if (priceKey) {
+          const fallbacks = {
+            "addListing.errPriceRequired": "السعر إجباري، اكتب سعر الإعلان",
+            "addPrice.errPriceInvalid": "اكتب سعراً صحيحاً (أرقام فقط وبحد أقصى خانتين عشريتين)",
+            "npw.errPriceMin": "السعر لازم يكون 1 شيكل على الأقل",
+            "addPrice.errPriceMax": "السعر كبير جداً (الحد الأقصى 99,999,999.99)",
+          };
+          priceErr?.setAttribute("data-i18n", priceKey);
+          if (priceErr) priceErr.textContent = t(priceKey, fallbacks[priceKey]);
+          showFieldError(priceErr, priceInput);
+          return { valid: false, focusEl: priceInput };
+        }
+        clearFieldError(priceErr, priceInput);
+        return { valid: true };
+      }
+      if (step === 6) {
+        const total = images ? images.count : 0;
+        const imagesOk = total >= 1 && total <= MAX_LISTING_IMAGES;
+        if (!imagesOk) {
+          if (imagesErr) {
+            imagesErr.removeAttribute("data-i18n");
+            imagesErr.textContent = t("addListing.errImagesRequired", "أضف صورة وحدة على الأقل (حتى 3 صور)");
+            imagesErr.classList.add("show");
+          }
+          showFieldError(null, imageGrid);
+          return { valid: false, focusEl: imageGrid };
+        }
+        clearFieldError(imagesErr, imageGrid);
+        return { valid: true };
+      }
       if (step === 7) {
-        const regionOk = !!selectedRegion && (!window.GMRegions || !!window.GMRegions.normalize(selectedRegion));
+        const regionOk = !!selectedRegion && listingAreas().some((a) => a.code === selectedRegion);
         regionOk ? clearFieldError(regionErr, regionGrid) : showFieldError(regionErr, regionGrid);
         if (!regionOk) return { valid: false, focusEl: regionGrid };
         return { valid: true };
@@ -2387,9 +2507,30 @@ document.addEventListener("DOMContentLoaded", () => {
       submitErr.classList.add("show");
     }
 
+    function showSubmitMessage(text) {
+      if (!submitErr) return;
+      submitErr.removeAttribute("data-i18n");
+      submitErr.textContent = text;
+      submitErr.classList.add("show");
+    }
+
     function clearSubmitError() {
       submitErr?.classList.remove("show");
     }
+
+    function backendMessage(err) {
+      if (!err || err.status !== 400) return "";
+      const text = typeof err.message === "string" ? err.message.trim() : "";
+      return text && !/^HTTP \d+$/.test(text) ? text : "";
+    }
+
+    priceInput?.addEventListener("input", () => clearFieldError(priceErr, priceInput));
+    imageInput?.addEventListener("change", () => {
+      setTimeout(() => { if (images && images.count > 0) clearFieldError(null, imageGrid); }, 0);
+    });
+    imageGrid?.addEventListener("click", () => {
+      setTimeout(() => { if (images && images.count > 0) clearFieldError(null, imageGrid); }, 0);
+    });
 
     const FIELD_STEPS = {
       title: 1, category: 2, condition: 3, description: 4, price: 5, negotiable: 5,
@@ -2402,7 +2543,7 @@ document.addEventListener("DOMContentLoaded", () => {
         category: selectedCategory || "",
         condition: conditionGroup?.querySelector(".condition-btn.active")?.dataset.value || "new",
         description: descriptionInput?.value?.trim() || "",
-        price: priceInput?.value || "",
+        price: normalizeDigits(priceInput?.value),
         negotiable: !!negotiableInput?.checked,
         region: selectedRegion || "",
         phone: phoneInput?.value?.trim() || "",
@@ -2437,9 +2578,21 @@ document.addEventListener("DOMContentLoaded", () => {
         showSubmitError("addListing.errNetwork", "في مشكلة بالاتصال، تأكد من الإنترنت وحاول مرة أخرى");
         return;
       }
-      if (code === "validation" && err.errors && typeof err.errors === "object") {
-        const firstField = Object.keys(err.errors).find((field) => FIELD_STEPS[field]);
-        if (firstField) wizard?.goTo(FIELD_STEPS[firstField]);
+      if (code === "validation") {
+        const serverText = backendMessage(err);
+        if (serverText) {
+          showSubmitMessage(serverText);
+          return;
+        }
+        if (err.errors && typeof err.errors === "object") {
+          const firstField = Object.keys(err.errors).find((field) => FIELD_STEPS[field]);
+          if (firstField) {
+            const step = FIELD_STEPS[firstField];
+            wizard?.goTo(step);
+            if (!validateStep(step).valid) return;
+            wizard?.goTo(wizard.total);
+          }
+        }
       }
       showSubmitError("addListing.errSubmit", "تعذر إرسال الإعلان، حاول مرة أخرى");
     }
@@ -2517,8 +2670,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (whatsappInput) whatsappInput.value = src.whatsapp || "";
       clickGridButton(categoryGrid, (b) => b.dataset.value === src.category);
       clickGridButton(conditionGroup, (b) => b.dataset.value === src.condition);
-      const normalize = (v) => (window.GMRegions && typeof window.GMRegions.normalize === "function" ? window.GMRegions.normalize(v) : v);
-      clickGridButton(regionGrid, (b) => b.dataset.value === src.region || b.dataset.i18n === src.region || normalize(b.dataset.value) === src.region);
+      desiredRegion = src.region || null;
+      clickGridButton(regionGrid, (b) => b.dataset.value === src.region);
       images?.setExisting(src.images);
     }
 
@@ -2537,7 +2690,7 @@ document.addEventListener("DOMContentLoaded", () => {
         b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
       });
       images?.reset();
-      [nameErr, categoryErr, descriptionErr, phoneErr, whatsappErr, regionErr, submitErr].forEach((el) => el?.classList.remove("show"));
+      [nameErr, categoryErr, descriptionErr, priceErr, imagesErr, phoneErr, whatsappErr, regionErr, submitErr].forEach((el) => el?.classList.remove("show"));
       modalEl.querySelectorAll(".gm-invalid-input").forEach((el) => el.classList.remove("gm-invalid-input"));
       modalEl.querySelectorAll(".gm-form-card.gm-invalid").forEach((el) => el.classList.remove("gm-invalid"));
       if (!editFresh) editing = null;
@@ -2590,29 +2743,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const storeAddressErr = document.getElementById("npwStoreAddressErr");
     const storePhoneErr = document.getElementById("npwStorePhoneErr");
 
-    // حدود الباك (StoreProductRequest)
     const NAME_MAX = 100;
     const STORE_NAME_MAX = 100;
     const STORE_ADDRESS_MAX = 150;
     const DECIMAL_MAX = 99999999.99;
     const PRICE_MIN = 1;
     const PHONE_PATTERN = /^[0-9+\-\s()]{6,20}$/;
-    const RECEIPT_MAX_MB = 4; // max:4096 بالباك
+    const RECEIPT_MAX_MB = 4;
 
     const productImageUpload = initSingleImageUpload("npwUploadArea", "npwProductImage", RECEIPT_MAX_MB);
 
     let selectedCategory = null;
     let selectedCategoryLabel = "";
 
-    /* ================================================================
-       خيارات الفورم من الداتابيز (فئات / وحدات / مناطق) + الإرسال الحقيقي
-       GET  /api/product-options  -> القوائم الفعّالة بأرقامها (ids)
-       POST /api/products         -> يُنشئ المنتج بحالة pending للمراجعة
-       ================================================================ */
     const PRODUCT_OPTIONS_URL = "/api/product-options";
     const PRODUCT_SUBMIT_URL = "/api/products";
-    // التطبيق ما بيستخدم Sanctum: أي GET على مسار web بيحط كوكي XSRF-TOKEN،
-    // ونفس الرابط اللي بيستخدمه auth.js (GET /api/auth/me، بيرجّع 401 للضيف وهذا عادي)
     const CSRF_COOKIE_URL = "/api/auth/me";
     const REQUEST_TIMEOUT_MS = 30000;
 
@@ -2685,7 +2830,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const keepUnit = unitSelect?.value || "";
       const keepRegion = regionSelect?.value || "";
 
-      // --- الفئات ---
       if (categoryGrid) {
         categoryGrid.replaceChildren(
           ...productOptions.categories.map((c) => {
@@ -2703,7 +2847,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
 
-      // --- الوحدات (select مخفي + القائمة المخصصة) ---
       if (unitSelect) {
         [...unitSelect.options].slice(1).forEach((o) => o.remove());
         productOptions.units.forEach((u) => {
@@ -2742,7 +2885,6 @@ document.addEventListener("DOMContentLoaded", () => {
         unitTriggerText.classList.add("placeholder");
       }
 
-      // --- المناطق (areas) ---
       if (regionSelect) {
         [...regionSelect.options].slice(1).forEach((o) => o.remove());
         productOptions.areas.forEach((a) => {
@@ -2835,13 +2977,11 @@ document.addEventListener("DOMContentLoaded", () => {
         )
         .then((res) => {
           window.clearTimeout(timer);
-          // انتهت صلاحية رمز CSRF: نجدده ونعيد المحاولة مرة وحدة فقط
           if (res.status === 419 && !isRetry) return postProduct(formData, true);
           return res;
         });
     }
 
-    // الباك بيرجّع رسالة التحقق بالإنجليزي؛ بنحوّلها لرسالة بلغة المستخدم حسب الحقل
     function localizeServerError(title) {
       const raw = typeof title === "string" ? title.trim() : "";
       const generic = t("addPrice.errInvalidData", uiText(
@@ -3023,7 +3163,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     prefillSavedRegion();
 
-    // يغيّر نص رسالة الخطأ ويربطها بمفتاح ترجمة (فبتتبدل مع تغيير اللغة)
     function setErrKey(errEl, key, fallbackAr, fallbackEn) {
       if (!errEl) return;
       errEl.setAttribute("data-i18n", key);
@@ -3049,7 +3188,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showFieldError(errEl, inputEl);
     }
 
-    // رقم بخانتين عشريتين: يرجّع مفتاح الخطأ أو null
     function decimalErrorKey(raw, keys, isAboveMin) {
       const v = normalizeDigits(raw);
       if (!v) return "npw.errRequired";
@@ -3142,7 +3280,6 @@ document.addEventListener("DOMContentLoaded", () => {
           clearFieldError(storeAddressErr, storeAddressInput);
         }
 
-        // الهاتف اختياري، بس إذا انكتب لازم يطابق صيغة الباك (6–20 خانة)
         const phone = normalizeDigits(storePhoneInput?.value || "");
         if (phone && !PHONE_PATTERN.test(phone)) {
           showErrKey(storePhoneErr, storePhoneInput, "addPrice.errPhoneInvalid");
