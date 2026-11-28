@@ -1206,6 +1206,8 @@
   <div class="row g-3 align-items-start">
 
     <div class="col-12 col-lg-2 sidebar-col sidebar-col--left order-2 order-lg-1">
+      @php($sidebarItems = array_filter($navItems, fn ($item) => $item['navigation_item_is_desktop']))
+      @if ($sidebarItems)
       <div class="surface mb-card">
         <div class="surface__title">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-small-icon lucide-circle-small menu"><circle cx="12" cy="12" r="6"/></svg>
@@ -1213,25 +1215,20 @@
         </div>
 
         <nav class="sidebar-nav" aria-label="Sidebar navigation">
-          <a href="#" class="sidebar-nav__link sidebar-nav__link--home active" aria-current="page">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-heart"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            <span data-i18n="sidebar.home">Home</span>
-          </a>
-          <a href="places.html" class="sidebar-nav__link sidebar-nav__link--places">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-store"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/></svg>
-            <span data-i18n="sidebar.places">Places</span>
-          </a>
-          <a href="market.html" class="sidebar-nav__link sidebar-nav__link--market">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-            <span data-i18n="sidebar.market">Market</span>
-          </a>
-          <a href="#" class="sidebar-nav__link sidebar-nav__link--messages">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bike-icon lucide-bike"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-            <span data-i18n="sidebar.delivery">Delivery</span>
-            <span class="sidebar-nav__badge" aria-label="Delivery service" data-i18n="sidebar.soon">soon</span>
-          </a>
+          @foreach ($sidebarItems as $item)
+            <a href="{{ $item['navigation_item_url'] ?: '#' }}"
+               @class(['sidebar-nav__link', 'sidebar-nav__link--'.$item['navigation_item_slug'], 'active' => $item['navigation_item_slug'] === 'home'])
+               @if ($item['navigation_item_slug'] === 'home') aria-current="page" @endif>
+              {{ \App\Support\NavigationMenu::icon($item['navigation_item_icon'], 16) }}
+              <span data-name-ar="{{ $item['navigation_item_name_ar'] }}" data-name-en="{{ $item['navigation_item_name_en'] }}">{{ $item['navigation_item_name_ar'] }}</span>
+              @if ($item['navigation_item_is_coming_soon'])
+                <span class="sidebar-nav__badge" data-i18n="sidebar.soon">قريباً</span>
+              @endif
+            </a>
+          @endforeach
         </nav>
       </div>
+      @endif
 
       <div class="surface points-card mb-card">
         <div class="surface__title">
@@ -1333,19 +1330,19 @@
           <div class="hero__right">
             <div class="hero__stats is-loading" id="heroStats">
               <div class="stat-box">
-                <div class="stat-box__num" data-skel>375</div>
+                <div class="stat-box__num" data-skel>{{ $heroStats['products'] }}</div>
                 <div class="stat-box__label" data-i18n="hero.products">Products</div>
               </div>
               <div class="stat-box">
-                <div class="stat-box__num" data-skel>2356</div>
+                <div class="stat-box__num" data-skel>{{ $heroStats['prices'] }}</div>
                 <div class="stat-box__label" data-i18n="hero.prices">Prices</div>
               </div>
               <div class="stat-box">
-                <div class="stat-box__num" data-skel>100</div>
+                <div class="stat-box__num" data-skel>{{ $heroStats['listings'] }}</div>
                 <div class="stat-box__label" data-i18n="hero.forSale">For sale</div>
               </div>
               <div class="stat-box">
-                <div class="stat-box__num" data-skel>35</div>
+                <div class="stat-box__num" data-skel>{{ $heroStats['places'] }}</div>
                 <div class="stat-box__label" data-i18n="hero.businessPremises">Places</div>
               </div>
             </div>
@@ -1461,66 +1458,42 @@
           </a>
         </div>
 
-        <a class="store-row" href="menu.html?id=batikha">
-          <div>
-            <div class="store-row__name">Batikha – بطيخة</div>
-            <div class="store-row__tags">
-              <span class="store-tag" data-i18n="typeRestaurant">Restaurant</span>
-              <span class="store-tag" data-i18n="Nuseirat">Nuseirat</span>
-            </div>
-          </div>
-          <span class="badge badge--open" data-i18n="stores.open">Open</span>
-        </a>
-
-        <a class="store-row" href="menu.html?id=al-asema">
-          <div>
-            <div class="store-row__name">Al Asema – العاصمة</div>
-            <div class="store-row__tags">
-              <span class="store-tag" data-i18n="typeCafe">Café</span>
-              <span class="store-tag" data-i18n="Nuseirat">Nuseirat</span>
-            </div>
-          </div>
-          <span class="badge badge--open" data-i18n="stores.open">Open</span>
-        </a>
-
-        <a class="store-row" href="menu.html?id=roof-cafe">
-          <div>
-            <div class="store-row__name">Roof Cafe – الرووف</div>
-            <div class="store-row__tags">
-              <span class="store-tag" data-i18n="typeRestaurant">Restaurant</span>
-              <span class="store-tag" data-i18n="Nuseirat">Nuseirat</span>
-            </div>
-          </div>
-          <span class="badge badge--close" data-i18n="stores.closed">Closed</span>
-        </a>
+        <div id="nearbyPlaces" aria-live="polite"></div>
       </div>
     </div>
   </div>
 </div>
 
+@php($mobileItems = array_values(array_filter($navItems, fn ($item) => $item['navigation_item_is_mobile'])))
+@php($half = (int) ceil(count($mobileItems) / 2))
 <nav class="bottom-nav" aria-label="Mobile navigation">
-  <a href="home.html" class="bottom-nav__link bottom-nav__link--home active" aria-current="page">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-    <span data-i18n="sidebar.home">Home</span>
-  </a>
-  <a href="places.html" class="bottom-nav__link bottom-nav__link--places">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"/><path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"/><path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"/></svg>
-    <span data-i18n="sidebar.places">Places</span>
-  </a>
+  @foreach (array_slice($mobileItems, 0, $half) as $item)
+    <a href="{{ $item['navigation_item_url'] ?: '#' }}"
+       @class(['bottom-nav__link', 'bottom-nav__link--'.$item['navigation_item_slug'], 'active' => $item['navigation_item_slug'] === 'home'])
+       @if ($item['navigation_item_slug'] === 'home') aria-current="page" @endif>
+      {{ \App\Support\NavigationMenu::icon($item['navigation_item_icon'], 20) }}
+      <span data-name-ar="{{ $item['navigation_item_name_ar'] }}" data-name-en="{{ $item['navigation_item_name_en'] }}">{{ $item['navigation_item_name_ar'] }}</span>
+      @if ($item['navigation_item_is_coming_soon'])
+        <span class="bottom-nav__badge" data-i18n="sidebar.soon">قريباً</span>
+      @endif
+    </a>
+  @endforeach
 
   <button type="button" class="bottom-nav__add" data-bs-toggle="modal" data-bs-target="#additionModal" aria-label="Add">
     <svg width="22" height="22" aria-hidden="true" focusable="false"><use href="#gm-i-plus"/></svg>
   </button>
 
-  <a href="market.html" class="bottom-nav__link bottom-nav__link--market">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-    <span data-i18n="sidebar.market">Market</span>
-  </a>
-  <a href="#" class="bottom-nav__link bottom-nav__link--messages">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bike-icon lucide-bike"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-    <span data-i18n="bottomNav.delivery">Delivery service</span>
-    <span class="bottom-nav__badge" aria-label="Delivery service" data-i18n="sidebar.soon">soon</span>
-  </a>
+  @foreach (array_slice($mobileItems, $half) as $item)
+    <a href="{{ $item['navigation_item_url'] ?: '#' }}"
+       @class(['bottom-nav__link', 'bottom-nav__link--'.$item['navigation_item_slug'], 'active' => $item['navigation_item_slug'] === 'home'])
+       @if ($item['navigation_item_slug'] === 'home') aria-current="page" @endif>
+      {{ \App\Support\NavigationMenu::icon($item['navigation_item_icon'], 20) }}
+      <span data-name-ar="{{ $item['navigation_item_name_ar'] }}" data-name-en="{{ $item['navigation_item_name_en'] }}">{{ $item['navigation_item_name_ar'] }}</span>
+      @if ($item['navigation_item_is_coming_soon'])
+        <span class="bottom-nav__badge" data-i18n="sidebar.soon">قريباً</span>
+      @endif
+    </a>
+  @endforeach
 </nav>
 
 <template id="priceCardTemplate">
@@ -1575,7 +1548,7 @@
 
 
 @section('scripts')
-<script>window.GM_HERO_SECTION = @json($heroSection); window.GM_HERO_TICKER = @json($heroTicker);</script>
+<script>window.GM_HERO_SECTION = @json($heroSection); window.GM_HERO_TICKER = @json($heroTicker); window.GM_HERO_STATS = @json($heroStats);</script>
 <script src="{{ asset('gazamarket/js/prices-api.js') }}" defer></script>
 <script src="{{ asset('gazamarket/js/home.js') }}" defer></script>
 @endsection

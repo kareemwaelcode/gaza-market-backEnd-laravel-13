@@ -1212,7 +1212,7 @@ function finishHeroLoading() {
 
 async function loadHero() {
   if (window.GM_HERO_SECTION || window.GM_HERO_TICKER) {
-    heroData = { section: window.GM_HERO_SECTION || null, stats: null, ticker: window.GM_HERO_TICKER || null };
+    heroData = { section: window.GM_HERO_SECTION || null, stats: window.GM_HERO_STATS || null, ticker: window.GM_HERO_TICKER || null };
     renderHero();
     if (window.GM_HERO_TICKER) {
       const embeddedTicker = document.getElementById('heroTicker');
@@ -1244,6 +1244,105 @@ async function loadHero() {
 
   finishHeroLoading();
   renderHero();
+}
+
+function renderNavNames() {
+  const lang = getCurrentLang();
+
+  document.querySelectorAll('.sidebar-nav [data-name-ar], .bottom-nav [data-name-ar]').forEach(el => {
+    el.textContent = el.getAttribute(`data-name-${lang}`) || el.getAttribute('data-name-ar');
+  });
+}
+
+function initNavNames() {
+  renderNavNames();
+  new MutationObserver(renderNavNames)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+}
+
+const NEARBY_PLACES_LIMIT = 3;
+const PLACE_TYPE_NAMES = {
+  restaurant: { ar: 'مطعم', en: 'Restaurant' },
+  cafe: { ar: 'كافيه', en: 'Café' },
+  'restaurant-cafe': { ar: 'مطعم وكافيه', en: 'Restaurant & Café' },
+  workspace: { ar: 'مساحة عمل', en: 'Workspace' },
+  store: { ar: 'متجر', en: 'Store' },
+};
+
+let nearbyPlaces = null;
+
+function buildPlaceRow(place, lang) {
+  const row = document.createElement('a');
+  row.className = 'store-row';
+  row.href = `menu.html?id=${encodeURIComponent(place.slug)}`;
+
+  const info = document.createElement('div');
+  const name = document.createElement('div');
+  name.className = 'store-row__name';
+  name.textContent = place.name;
+
+  const tags = document.createElement('div');
+  tags.className = 'store-row__tags';
+  const type = (place.sub_category && place.sub_category[`name_${lang}`])
+    || (PLACE_TYPE_NAMES[place.type] && PLACE_TYPE_NAMES[place.type][lang]);
+  const area = place.area && place.area[`name_${lang}`];
+
+  [type, area].filter(Boolean).forEach(text => {
+    const tag = document.createElement('span');
+    tag.className = 'store-tag';
+    tag.textContent = text;
+    tags.appendChild(tag);
+  });
+
+  const badge = document.createElement('span');
+  badge.className = `badge ${place.is_open ? 'badge--open' : 'badge--close'}`;
+  if (lang === 'en') badge.textContent = place.is_open ? 'Open' : 'Closed';
+  else badge.textContent = place.is_open ? 'مفتوح' : 'مغلق';
+
+  info.append(name, tags);
+  row.append(info, badge);
+  return row;
+}
+
+function renderNearbyPlaces() {
+  const box = document.getElementById('nearbyPlaces');
+  if (!box || !nearbyPlaces) return;
+  const lang = getCurrentLang();
+
+  if (!nearbyPlaces.length) {
+    const empty = document.createElement('p');
+    empty.className = 'text-muted';
+    empty.textContent = lang === 'en' ? 'No places yet.' : 'ما في أماكن لسا.';
+    box.replaceChildren(empty);
+    return;
+  }
+
+  box.replaceChildren(...nearbyPlaces.map(place => buildPlaceRow(place, lang)));
+}
+
+async function loadNearbyPlaces() {
+  if (!document.getElementById('nearbyPlaces')) return;
+
+  const query = new URLSearchParams({ limit: String(NEARBY_PLACES_LIMIT) });
+  const area = typeof gmGetSelectedArea === 'function' ? gmGetSelectedArea() : '';
+  if (area) query.set('region', area);
+
+  try {
+    const res = await fetch(`/api/places?${query}`, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    nearbyPlaces = (await res.json()).data || [];
+  } catch (err) {
+    console.error('loadNearbyPlaces failed:', err);
+    return;
+  }
+
+  renderNearbyPlaces();
+}
+
+function initNearbyPlaces() {
+  new MutationObserver(renderNearbyPlaces)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+  loadNearbyPlaces();
 }
 
 function initHeroLangWatcher() {
@@ -1895,6 +1994,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initRegionDropdown,
     loadPrices,
     initCategoryCarousel,
+    initNavNames,
+    initNearbyPlaces,
     initHeroLangWatcher,
     loadHero,
     initHeroTickerPdfButton,

@@ -10,7 +10,8 @@ CSRF_URL: '/api/auth/me',
 };
 
 const CONFIG = Object.assign({}, DEFAULTS, window.GM_CONFIG || {});
-const USE_MOCK = window.GM_ENV.isMockAllowed();
+// الأسعار دايماً من الداتابيز، حتى على localhost.
+const USE_MOCK = false;
 const API_BASE = String(CONFIG.API_BASE).replace(/\/+$/, '');
 
 const CACHE_KEY = 'gm_prices_cache_v1';

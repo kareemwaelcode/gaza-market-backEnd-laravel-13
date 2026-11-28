@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\HeroSection;
 use App\Models\Regions;
 use App\Models\Area;
+use App\Support\HeroData;
+use App\Support\NavigationMenu;
 use App\Support\PriceTicker;
 use Illuminate\Http\Request;
 
@@ -24,8 +26,10 @@ class HomeController extends Controller
         $categories = Category::where('category_is_active', true)->ordered()->get();
         $hero = HeroSection::orderBy('id')->first();
         $heroSection = $hero?->only($hero->getFillable());
+        $heroStats = HeroData::get()['stats'];
         $heroTicker = PriceTicker::publicItems();
-        return response()->view('gazamarket.home' , compact('regions', 'areas', 'categories', 'heroSection', 'heroTicker'));
+        $navItems = NavigationMenu::items();
+        return response()->view('gazamarket.home' , compact('regions', 'areas', 'categories', 'heroSection', 'heroStats', 'heroTicker', 'navItems'));
     }
 
     public function market (Request $request) {

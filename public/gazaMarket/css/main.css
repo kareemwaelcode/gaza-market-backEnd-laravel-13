@@ -8407,7 +8407,8 @@ body.dark-mode .priceList .check-badge button {
 .sidebar-nav__link--places svg {
   color: var(--blue);
 }
-.sidebar-nav__link--messages svg {
+.sidebar-nav__link--messages svg,
+.sidebar-nav__link--delivery svg {
   color: #e34948;
 }
 .sidebar-nav__badge {
@@ -8477,7 +8478,8 @@ body.dark-mode .priceList .check-badge button {
 .bottom-nav__link--places svg {
   color: var(--blue);
 }
-.bottom-nav__link--messages svg {
+.bottom-nav__link--messages svg,
+.bottom-nav__link--delivery svg {
   color: #e34948;
 }
 .bottom-nav__badge {

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\HeroSection;
+use App\Models\Listing;
+use App\Models\Place;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\BuildsMarketData;
 use Tests\Concerns\BuildsProductPrices;
@@ -51,6 +53,32 @@ class HeroHomePageTest extends TestCase
             ->assertSee('window.GM_HERO_TICKER', false)
             ->assertSee('"name_en":"Sugar"', false)
             ->assertSee('"price":"8.50"', false);
+    }
+
+    public function test_home_page_shows_the_real_counts_in_the_stat_boxes(): void
+    {
+        $lookups = $this->lookups();
+        $user = $this->makeUser();
+
+        $active = $this->makeProduct($lookups, $user, 'active');
+        $this->makeProduct($lookups, $user, 'pending');
+        $this->makePrice($active, $lookups, $user, 'approved');
+        $this->makePrice($active, $lookups, $user, 'approved');
+        $this->makeListing($user, Listing::STATUS_APPROVED);
+        $this->makeListing($user, Listing::STATUS_APPROVED);
+        $this->makeListing($user, Listing::STATUS_APPROVED);
+        $this->makePlace($user, Place::STATUS_PENDING);
+
+        $this->get('/gazamarket/home')
+            ->assertOk()
+            ->assertViewHas('heroStats', ['products' => 1, 'prices' => 2, 'listings' => 3, 'places' => 0])
+            ->assertSeeInOrder([
+                'data-skel>1</div>',
+                'data-skel>2</div>',
+                'data-skel>3</div>',
+                'data-skel>0</div>',
+            ], false)
+            ->assertSee('window.GM_HERO_STATS = {"products":1,"prices":2,"listings":3,"places":0}', false);
     }
 
     public function test_home_page_works_when_hero_table_and_ticker_are_empty(): void
