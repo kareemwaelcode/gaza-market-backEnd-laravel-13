@@ -373,18 +373,6 @@
             <p class="stat-card__value">{{ \App\Models\Listing::count() }}</p>
         </article>
     </div>
-    <div class="col-sm-6 col-lg">
-        <article class="stat-card">
-            <div class="stat-card__head">
-                <p class="stat-card__label">Visitors today</p>
-                <span class="stat-card__icon stat-card__icon--c2"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye preview-icon"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></span>
-            </div>
-            <p class="stat-card__value">0</p>
-            <ul class="stat-card__list">
-                <li><span>Logged in last 24h</span><strong>{{ \App\Models\User::where('user_last_login_at', '>=', now()->subDay())->count() }}</strong></li>
-            </ul>
-        </article>
-    </div>
 </div>
 
 <div class="row row-tight" style="margin-top: 16px;">
