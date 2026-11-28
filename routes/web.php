@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\AppointmentController as ApiAppointmentController;
+use App\Http\Controllers\Api\HeroSectionController as ApiHeroSectionController;
 use App\Http\Controllers\Api\MarketController as ApiMarketController;
 use App\Http\Controllers\Api\MyPriceController as ApiMyPriceController;
 use App\Http\Controllers\Api\PlaceController as ApiPlaceController;
@@ -182,6 +183,10 @@ Route::withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, Pr
         Route::get('api/prices/ticker', [ApiProductPriceController::class, 'ticker'])
             ->middleware('throttle:prices-feed')
             ->name('prices.ticker');
+
+        Route::get('api/hero', [ApiHeroSectionController::class, 'hero'])
+            ->middleware('throttle:prices-feed')
+            ->name('hero.index');
 
         Route::get('api/prices', [ApiProductPriceController::class, 'index'])
             ->middleware('throttle:prices-feed')
